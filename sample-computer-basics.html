@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A five-question quiz about computer basics.">
+  <title>Computer Basics Quiz | Topic Quiz Hub</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f6f7fb;
+      --surface: #ffffff;
+      --text: #172033;
+      --muted: #667085;
+      --primary: #5b4bdb;
+      --primary-soft: rgba(91, 75, 219, 0.1);
+      --success: #087f5b;
+      --error: #c92a2a;
+      --border: #e5e7eb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    .shell { width: min(780px, calc(100% - 2rem)); margin: 0 auto; }
+
+    nav { padding: 1.25rem 0; }
+    nav a { color: var(--primary); font-weight: 700; text-decoration: none; }
+    nav a:hover { text-decoration: underline; }
+
+    header { padding: 2rem 0 2.5rem; }
+    .eyebrow { color: var(--primary); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+    h1 { margin: 0.55rem 0; font-size: clamp(2.2rem, 8vw, 4rem); letter-spacing: -0.045em; }
+    header p { max-width: 620px; margin: 0; color: var(--muted); line-height: 1.65; }
+
+    .question {
+      margin: 0 0 1.25rem;
+      padding: 1.4rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+    }
+
+    fieldset { margin: 0; padding: 0; border: 0; }
+    legend { width: 100%; margin-bottom: 1rem; font-size: 1.05rem; font-weight: 750; line-height: 1.45; }
+
+    label {
+      display: flex;
+      gap: 0.7rem;
+      align-items: flex-start;
+      margin-top: 0.55rem;
+      padding: 0.8rem;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      border-radius: 0.7rem;
+    }
+
+    label:hover { border-color: var(--primary); background: var(--primary-soft); }
+    input { margin-top: 0.18rem; accent-color: var(--primary); }
+
+    .feedback { display: none; margin: 0.9rem 0 0; padding: 0.8rem; line-height: 1.5; border-radius: 0.65rem; }
+    .feedback.correct { color: var(--success); background: color-mix(in srgb, var(--success) 10%, transparent); }
+    .feedback.incorrect { color: var(--error); background: color-mix(in srgb, var(--error) 9%, transparent); }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 1.5rem 0; }
+    button {
+      padding: 0.85rem 1.15rem;
+      font: inherit;
+      font-weight: 750;
+      cursor: pointer;
+      border: 1px solid var(--primary);
+      border-radius: 0.7rem;
+    }
+
+    button[type="submit"] { color: white; background: var(--primary); }
+    button[type="reset"] { color: var(--primary); background: transparent; }
+
+    #result {
+      display: none;
+      margin: 0 0 3rem;
+      padding: 1.4rem;
+      background: var(--primary-soft);
+      border: 1px solid var(--primary);
+      border-radius: 1rem;
+      font-size: 1.1rem;
+      line-height: 1.55;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0e1020;
+        --surface: #171a2d;
+        --text: #f4f5fb;
+        --muted: #a5acc3;
+        --primary: #a79cff;
+        --primary-soft: rgba(167, 156, 255, 0.12);
+        --success: #69dbb5;
+        --error: #ff8787;
+        --border: #2a2f48;
+      }
+      button[type="submit"] { color: #16182b; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav><a href="index.html">← Back to all quizzes</a></nav>
+
+    <header>
+      <p class="eyebrow">Sample quiz · 5 questions</p>
+      <h1>Computer Basics</h1>
+      <p>Choose one answer for every question, then submit the quiz. Your score and a short explanation for each answer will appear immediately.</p>
+    </header>
+
+    <form id="quiz-form">
+      <article class="question" data-correct="b">
+        <fieldset>
+          <legend>1. Which component is often called the “brain” of a computer?</legend>
+          <label><input type="radio" name="q1" value="a" required> RAM</label>
+          <label><input type="radio" name="q1" value="b"> CPU</label>
+          <label><input type="radio" name="q1" value="c"> SSD</label>
+          <label><input type="radio" name="q1" value="d"> Monitor</label>
+        </fieldset>
+        <p class="feedback" data-explanation="The CPU executes instructions and coordinates the computer’s operations."></p>
+      </article>
+
+      <article class="question" data-correct="c">
+        <fieldset>
+          <legend>2. Which type of memory loses its contents when power is turned off?</legend>
+          <label><input type="radio" name="q2" value="a" required> SSD</label>
+          <label><input type="radio" name="q2" value="b"> ROM</label>
+          <label><input type="radio" name="q2" value="c"> RAM</label>
+          <label><input type="radio" name="q2" value="d"> Flash storage</label>
+        </fieldset>
+        <p class="feedback" data-explanation="RAM is volatile memory, so its stored data disappears when power is removed."></p>
+      </article>
+
+      <article class="question" data-correct="a">
+        <fieldset>
+          <legend>3. What does an operating system mainly do?</legend>
+          <label><input type="radio" name="q3" value="a" required> Manages hardware and provides services to applications</label>
+          <label><input type="radio" name="q3" value="b"> Permanently stores every file on the internet</label>
+          <label><input type="radio" name="q3" value="c"> Replaces the computer’s processor</label>
+          <label><input type="radio" name="q3" value="d"> Only edits text documents</label>
+        </fieldset>
+        <p class="feedback" data-explanation="An operating system coordinates hardware resources and provides a platform for applications."></p>
+      </article>
+
+      <article class="question" data-correct="d">
+        <fieldset>
+          <legend>4. Which of these is an input device?</legend>
+          <label><input type="radio" name="q4" value="a" required> Projector</label>
+          <label><input type="radio" name="q4" value="b"> Speaker</label>
+          <label><input type="radio" name="q4" value="c"> Printer</label>
+          <label><input type="radio" name="q4" value="d"> Keyboard</label>
+        </fieldset>
+        <p class="feedback" data-explanation="A keyboard sends typed information into the computer, making it an input device."></p>
+      </article>
+
+      <article class="question" data-correct="b">
+        <fieldset>
+          <legend>5. Which file extension most commonly identifies an HTML document?</legend>
+          <label><input type="radio" name="q5" value="a" required> .jpg</label>
+          <label><input type="radio" name="q5" value="b"> .html</label>
+          <label><input type="radio" name="q5" value="c"> .mp3</label>
+          <label><input type="radio" name="q5" value="d"> .zip</label>
+        </fieldset>
+        <p class="feedback" data-explanation="Web pages written in HTML commonly use the .html extension."></p>
+      </article>
+
+      <div class="actions">
+        <button type="submit">Check my answers</button>
+        <button type="reset">Try again</button>
+      </div>
+    </form>
+
+    <section id="result" aria-live="polite" tabindex="-1"></section>
+  </div>
+
+  <script>
+    const form = document.querySelector('#quiz-form');
+    const questions = [...document.querySelectorAll('.question')];
+    const result = document.querySelector('#result');
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      let score = 0;
+
+      questions.forEach((question) => {
+        const selected = question.querySelector('input:checked');
+        const feedback = question.querySelector('.feedback');
+        const isCorrect = selected && selected.value === question.dataset.correct;
+
+        if (isCorrect) score += 1;
+        feedback.className = `feedback ${isCorrect ? 'correct' : 'incorrect'}`;
+        feedback.textContent = `${isCorrect ? 'Correct.' : 'Not quite.'} ${feedback.dataset.explanation}`;
+        feedback.style.display = 'block';
+      });
+
+      const percentage = Math.round((score / questions.length) * 100);
+      const message = percentage === 100 ? 'Excellent—perfect recall!' : percentage >= 60 ? 'Good work. Review the explanations and retry.' : 'Keep learning. Review each explanation and try once more.';
+      result.innerHTML = `<strong>${score} / ${questions.length} correct (${percentage}%).</strong><br>${message}`;
+      result.style.display = 'block';
+      result.focus();
+    });
+
+    form.addEventListener('reset', () => {
+      questions.forEach((question) => {
+        const feedback = question.querySelector('.feedback');
+        feedback.style.display = 'none';
+        feedback.textContent = '';
+      });
+      result.style.display = 'none';
+      result.textContent = '';
+    });
+  </script>
+</body>
+</html>
