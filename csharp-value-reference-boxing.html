@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An eight-question C# diagnostic covering value and reference semantics, parameter passing, boxing, unboxing, and boxed equality.">
+  <title>C# Value Semantics &amp; Boxing Quiz | Topic Quiz Hub</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f6f7fb;
+      --surface: #ffffff;
+      --text: #172033;
+      --muted: #667085;
+      --primary: #5b4bdb;
+      --primary-soft: rgba(91, 75, 219, 0.1);
+      --success: #087f5b;
+      --error: #c92a2a;
+      --border: #e5e7eb;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: var(--bg); }
+    .shell { width: min(820px, calc(100% - 2rem)); margin: 0 auto; }
+    nav { padding: 1.25rem 0; }
+    nav a { color: var(--primary); font-weight: 700; text-decoration: none; }
+    nav a:hover { text-decoration: underline; }
+    header { padding: 1.5rem 0 1.25rem; }
+    .eyebrow { margin: 0; color: var(--primary); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+    h1 { margin: 0.55rem 0; font-size: clamp(2.15rem, 8vw, 4rem); letter-spacing: -0.045em; }
+    header > p:last-child { max-width: 680px; margin: 0; color: var(--muted); line-height: 1.65; }
+    .topic-progress, .quiz-progress { margin-bottom: 1.25rem; padding: 1rem 1.15rem; background: var(--primary-soft); border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border)); border-radius: 0.85rem; }
+    .topic-progress strong, .quiz-progress strong { display: block; margin-bottom: 0.3rem; }
+    .topic-progress p, .quiz-progress p { margin: 0; color: var(--muted); line-height: 1.5; }
+    progress { width: 100%; height: 0.8rem; margin-top: 0.7rem; accent-color: var(--primary); }
+    .question { margin: 0 0 1.25rem; padding: 1.4rem; background: var(--surface); border: 1px solid var(--border); border-radius: 1rem; }
+    fieldset { margin: 0; padding: 0; border: 0; }
+    legend { width: 100%; margin-bottom: 1rem; font-size: 1.05rem; font-weight: 750; line-height: 1.5; }
+    pre { margin: 0.8rem 0 0; padding: 1rem; overflow-x: auto; color: var(--text); background: color-mix(in srgb, var(--text) 5%, var(--surface)); border: 1px solid var(--border); border-radius: 0.7rem; font-size: 0.9rem; line-height: 1.5; }
+    label { display: flex; gap: 0.7rem; align-items: flex-start; margin-top: 0.55rem; padding: 0.8rem; cursor: pointer; border: 1px solid var(--border); border-radius: 0.7rem; }
+    label:hover { border-color: var(--primary); background: var(--primary-soft); }
+    input { margin-top: 0.18rem; accent-color: var(--primary); }
+    .feedback { display: none; margin: 0.9rem 0 0; padding: 0.8rem; line-height: 1.55; border-radius: 0.65rem; }
+    .feedback.correct { color: var(--success); background: color-mix(in srgb, var(--success) 10%, transparent); }
+    .feedback.incorrect { color: var(--error); background: color-mix(in srgb, var(--error) 9%, transparent); }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 1.5rem 0; }
+    button { padding: 0.85rem 1.15rem; font: inherit; font-weight: 750; cursor: pointer; border: 1px solid var(--primary); border-radius: 0.7rem; }
+    button[type="submit"] { color: white; background: var(--primary); }
+    button[type="reset"] { color: var(--primary); background: transparent; }
+    #result { display: none; margin: 0 0 3rem; padding: 1.4rem; background: var(--primary-soft); border: 1px solid var(--primary); border-radius: 1rem; font-size: 1.05rem; line-height: 1.6; }
+    .completion-code { display: inline-block; margin-top: 0.65rem; padding: 0.35rem 0.55rem; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.88rem; background: var(--surface); border: 1px solid var(--border); border-radius: 0.4rem; }
+
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #0e1020; --surface: #171a2d; --text: #f4f5fb; --muted: #a5acc3; --primary: #a79cff; --primary-soft: rgba(167, 156, 255, 0.12); --success: #69dbb5; --error: #ff8787; --border: #2a2f48; }
+      button[type="submit"] { color: #16182b; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav><a href="index.html">← Back to all quizzes</a></nav>
+
+    <header>
+      <p class="eyebrow">C# Topic 1 · Checkpoint 9 of 10</p>
+      <h1>Value Semantics &amp; Boxing</h1>
+      <p>Predict the language and runtime behaviour. Answer from your mental model first; the explanations appear only after submission.</p>
+    </header>
+
+    <section class="topic-progress" aria-label="Topic progress">
+      <strong>Topic progress before this diagnostic: 8 / 10 checkpoints (80%)</strong>
+      <p>After this quiz, the only remaining checkpoint is the interview-ready summary and NET-01 iPad note.</p>
+    </section>
+
+    <section class="quiz-progress" aria-live="polite">
+      <strong id="progress-label">Quiz answered: 0 / 8 (0%)</strong>
+      <p>This measures answered questions, not correctness.</p>
+      <progress id="answer-progress" value="0" max="8">0%</progress>
+    </section>
+
+    <form id="quiz-form">
+      <article class="question" data-correct="a">
+        <fieldset>
+          <legend>1. What is printed after copying and changing this struct?</legend>
+          <pre><code>struct Point { public int X; }
+
+var a = new Point { X = 1 };
+var b = a;
+b.X = 9;
+Console.WriteLine(a.X);</code></pre>
+          <label><input type="radio" name="q1" value="a" required> 1</label>
+          <label><input type="radio" name="q1" value="b"> 9</label>
+          <label><input type="radio" name="q1" value="c"> A compile-time error</label>
+          <label><input type="radio" name="q1" value="d"> A runtime exception</label>
+        </fieldset>
+        <p class="feedback" data-explanation="A struct is a value type. The assignment copies its current value, so changing b does not change a."></p>
+      </article>
+
+      <article class="question" data-correct="b">
+        <fieldset>
+          <legend>2. What is printed after copying and changing this class reference?</legend>
+          <pre><code>class User { public string Name = ""; }
+
+var a = new User { Name = "A" };
+var b = a;
+b.Name = "B";
+Console.WriteLine(a.Name);</code></pre>
+          <label><input type="radio" name="q2" value="a" required> A</label>
+          <label><input type="radio" name="q2" value="b"> B</label>
+          <label><input type="radio" name="q2" value="c"> null</label>
+          <label><input type="radio" name="q2" value="d"> A runtime exception</label>
+        </fieldset>
+        <p class="feedback" data-explanation="A class is a reference type. The assignment copies the reference, so both variables point to the same User object."></p>
+      </article>
+
+      <article class="question" data-correct="b">
+        <fieldset>
+          <legend>3. What is printed when a reference is passed by value?</legend>
+          <pre><code>static void Update(User user)
+{
+    user.Name = "B";
+    user = new User { Name = "C" };
+}
+
+var user = new User { Name = "A" };
+Update(user);
+Console.WriteLine(user.Name);</code></pre>
+          <label><input type="radio" name="q3" value="a" required> A</label>
+          <label><input type="radio" name="q3" value="b"> B</label>
+          <label><input type="radio" name="q3" value="c"> C</label>
+          <label><input type="radio" name="q3" value="d"> A compile-time error</label>
+        </fieldset>
+        <p class="feedback" data-explanation="The method receives a copy of the reference. It can mutate the shared object to B, but reassigning its local reference to a new User does not replace the caller's reference."></p>
+      </article>
+
+      <article class="question" data-correct="c">
+        <fieldset>
+          <legend>4. Inside <code>static void Update(in User user)</code>, which statement is correct?</legend>
+          <label><input type="radio" name="q4" value="a" required> Neither the reference nor the object's properties can change.</label>
+          <label><input type="radio" name="q4" value="b"> The parameter can be reassigned, but the object's properties cannot change.</label>
+          <label><input type="radio" name="q4" value="c"> The object's properties can change, but the parameter cannot be reassigned.</label>
+          <label><input type="radio" name="q4" value="d"> Both the parameter and the object's properties can always change.</label>
+        </fieldset>
+        <p class="feedback" data-explanation="For a reference-type argument, in protects the parameter variable from reassignment; it does not make the referenced object immutable."></p>
+      </article>
+
+      <article class="question" data-correct="a">
+        <fieldset>
+          <legend>5. What is printed after boxing an <code>int</code> through an interface?</legend>
+          <pre><code>int number = 10;
+IComparable comparable = number;
+number = 20;
+Console.WriteLine(comparable);</code></pre>
+          <label><input type="radio" name="q5" value="a" required> 10</label>
+          <label><input type="radio" name="q5" value="b"> 20</label>
+          <label><input type="radio" name="q5" value="c"> A compile-time error</label>
+          <label><input type="radio" name="q5" value="d"> A runtime exception</label>
+        </fieldset>
+        <p class="feedback" data-explanation="Assigning the value type to the interface creates a boxed copy containing 10. Later changing number does not change that box."></p>
+      </article>
+
+      <article class="question" data-correct="d">
+        <fieldset>
+          <legend>6. What happens when this boxed <code>short</code> is directly unboxed as an <code>int</code>?</legend>
+          <pre><code>object boxed = (short)10;
+int value = (int)boxed;</code></pre>
+          <label><input type="radio" name="q6" value="a" required> value becomes 10 through implicit widening.</label>
+          <label><input type="radio" name="q6" value="b"> value becomes the Unicode value of 10.</label>
+          <label><input type="radio" name="q6" value="c"> It fails to compile.</label>
+          <label><input type="radio" name="q6" value="d"> It compiles but throws InvalidCastException.</label>
+        </fieldset>
+        <p class="feedback" data-explanation="Unboxing requires the exact boxed type. Use int value = (short)boxed; to unbox as short first and then widen to int."></p>
+      </article>
+
+      <article class="question" data-correct="c">
+        <fieldset>
+          <legend>7. What do the two comparisons print for separately boxed integers?</legend>
+          <pre><code>object a = 10;
+object b = 10;
+
+Console.WriteLine(a == b);
+Console.WriteLine(a.Equals(b));</code></pre>
+          <label><input type="radio" name="q7" value="a" required> True, True</label>
+          <label><input type="radio" name="q7" value="b"> True, False</label>
+          <label><input type="radio" name="q7" value="c"> False, True</label>
+          <label><input type="radio" name="q7" value="d"> False, followed by an exception</label>
+        </fieldset>
+        <p class="feedback" data-explanation="object == compares the two box references, which differ. Int32.Equals safely checks the other boxed value's exact type and compares the contained integers."></p>
+      </article>
+
+      <article class="question" data-correct="b">
+        <fieldset>
+          <legend>8. What is printed when the numeric values match but the boxed value types differ?</legend>
+          <pre><code>object a = 10;   // boxed Int32
+object b = 10L;  // boxed Int64
+
+Console.WriteLine(a.Equals(b));</code></pre>
+          <label><input type="radio" name="q8" value="a" required> True</label>
+          <label><input type="radio" name="q8" value="b"> False</label>
+          <label><input type="radio" name="q8" value="c"> A compile-time error</label>
+          <label><input type="radio" name="q8" value="d"> InvalidCastException</label>
+        </fieldset>
+        <p class="feedback" data-explanation="Int32.Equals requires the same runtime value type as well as the same value. It returns false for a boxed Int64; it does not numerically convert or throw."></p>
+      </article>
+
+      <div class="actions">
+        <button type="submit">Check my answers</button>
+        <button type="reset">Try again</button>
+      </div>
+    </form>
+
+    <section id="result" aria-live="polite" tabindex="-1"></section>
+  </div>
+
+  <script>
+    const form = document.querySelector('#quiz-form');
+    const questions = [...document.querySelectorAll('.question')];
+    const result = document.querySelector('#result');
+    const progressLabel = document.querySelector('#progress-label');
+    const answerProgress = document.querySelector('#answer-progress');
+
+    function updateProgress() {
+      const answered = questions.filter((question) => question.querySelector('input:checked')).length;
+      const percentage = Math.round((answered / questions.length) * 100);
+      progressLabel.textContent = `Quiz answered: ${answered} / ${questions.length} (${percentage}%)`;
+      answerProgress.value = answered;
+      answerProgress.textContent = `${percentage}%`;
+    }
+
+    form.addEventListener('change', updateProgress);
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      let score = 0;
+
+      questions.forEach((question) => {
+        const selected = question.querySelector('input:checked');
+        const feedback = question.querySelector('.feedback');
+        const isCorrect = selected && selected.value === question.dataset.correct;
+
+        if (isCorrect) score += 1;
+        feedback.className = `feedback ${isCorrect ? 'correct' : 'incorrect'}`;
+        feedback.textContent = `${isCorrect ? 'Correct.' : 'Not quite.'} ${feedback.dataset.explanation}`;
+        feedback.style.display = 'block';
+      });
+
+      const percentage = Math.round((score / questions.length) * 100);
+      const passed = score >= 6;
+      const message = score === questions.length
+        ? 'Excellent—diagnostic cleared. One topic checkpoint remains: interview summary plus the NET-01 iPad note.'
+        : passed
+          ? 'Good result. Review only the missed explanations, retry, and then finish the interview summary and iPad note.'
+          : 'Review the explanations and retry tomorrow before closing Topic 1.';
+      const code = `CSHARP-T1-${score}OF${questions.length}-XP${score * 100}-${score === questions.length ? 'CLEAR' : 'REVIEW'}`;
+
+      result.innerHTML = `<strong>${score} / ${questions.length} correct (${percentage}%).</strong><br>${message}<br><span class="completion-code">${code}</span>`;
+      result.style.display = 'block';
+      result.focus();
+    });
+
+    form.addEventListener('reset', () => {
+      questions.forEach((question) => {
+        const feedback = question.querySelector('.feedback');
+        feedback.style.display = 'none';
+        feedback.textContent = '';
+      });
+      result.style.display = 'none';
+      result.textContent = '';
+      window.setTimeout(updateProgress, 0);
+    });
+  </script>
+</body>
+</html>
