@@ -732,6 +732,11 @@
           <img src="assets/nfr-consistency-choice.svg" width="1200" height="720" loading="lazy" alt="A network partition branches into strong consistency, which waits or rejects to protect correctness, and eventual consistency, which accepts work and lets replicas converge later.">
           <figcaption><strong>3. Strong versus eventual consistency.</strong> Choose per operation: payments protect correctness; feeds and likes can often tolerate temporary staleness.</figcaption>
         </figure>
+
+        <figure class="visual-card">
+          <img src="assets/cap-theorem-partition-decision.svg" width="1200" height="900" loading="lazy" alt="CAP theorem diagram showing that consistency and availability coexist while replicas communicate, but a network partition forces either rejecting requests to preserve one value or accepting requests on both sides and reconciling conflicting values later.">
+          <figcaption><strong>4. CAP theorem without the misleading triangle.</strong> A partition is the failure condition. While it lasts, preserving one agreed value requires refusing some requests; answering every reachable client allows temporary divergence.</figcaption>
+        </figure>
       </div>
     </details>
 
