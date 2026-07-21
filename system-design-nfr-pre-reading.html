@@ -1,0 +1,837 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A 24-question pre-reading diagnostic covering non-functional requirements: availability, scalability, latency, consistency, and architectural trade-offs.">
+  <title>Non-Functional Requirements Pre-Reading Diagnostic | Topic Quiz Hub</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f3f7f7;
+      --surface: #ffffff;
+      --surface-strong: #f7faf9;
+      --text: #152329;
+      --muted: #617078;
+      --primary: #087f73;
+      --primary-strong: #05685f;
+      --primary-soft: rgba(8, 127, 115, 0.1);
+      --success: #087f5b;
+      --success-soft: rgba(8, 127, 91, 0.1);
+      --error: #c92a2a;
+      --error-soft: rgba(201, 42, 42, 0.09);
+      --border: #dce6e5;
+      --shadow: 0 14px 36px rgba(21, 35, 41, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(8, 127, 115, 0.14), transparent 31rem),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .shell { width: min(900px, calc(100% - 2rem)); margin: 0 auto; }
+
+    nav { padding: 1.25rem 0; }
+    nav a { color: var(--primary); font-weight: 750; text-decoration: none; }
+    nav a:hover { text-decoration: underline; }
+
+    header { padding: 1.5rem 0 1.25rem; }
+
+    .eyebrow {
+      margin: 0;
+      color: var(--primary);
+      font-size: 0.78rem;
+      font-weight: 850;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 820px;
+      margin: 0.55rem 0 0.7rem;
+      font-size: clamp(2.2rem, 8vw, 4.25rem);
+      line-height: 1;
+      letter-spacing: -0.05em;
+    }
+
+    header > p:last-child {
+      max-width: 740px;
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .session-card,
+    .progress-card,
+    .references {
+      margin-bottom: 1.25rem;
+      padding: 1.1rem 1.2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      box-shadow: var(--shadow);
+    }
+
+    .session-card h2,
+    .progress-card strong { margin: 0 0 0.4rem; font-size: 1rem; }
+
+    .session-card p,
+    .progress-card p { margin: 0; color: var(--muted); line-height: 1.55; }
+
+    .scope-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 0.9rem 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .scope-list li {
+      padding: 0.4rem 0.65rem;
+      color: var(--primary);
+      background: var(--primary-soft);
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 750;
+    }
+
+    .instructions {
+      margin-top: 0.85rem !important;
+      padding-top: 0.85rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .progress-card {
+      position: sticky;
+      top: 0.65rem;
+      z-index: 10;
+      background: color-mix(in srgb, var(--surface) 94%, transparent);
+      backdrop-filter: blur(12px);
+    }
+
+    .progress-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .progress-row span { color: var(--muted); font-size: 0.84rem; }
+
+    progress {
+      width: 100%;
+      height: 0.75rem;
+      margin-top: 0.7rem;
+      accent-color: var(--primary);
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      margin: 2rem 0 0.9rem;
+    }
+
+    .section-number {
+      display: grid;
+      width: 2rem;
+      height: 2rem;
+      place-items: center;
+      flex: 0 0 auto;
+      color: white;
+      background: var(--primary);
+      border-radius: 50%;
+      font-size: 0.85rem;
+      font-weight: 850;
+    }
+
+    .section-heading h2 { margin: 0; font-size: 1.2rem; }
+    .section-heading p { margin: 0.15rem 0 0; color: var(--muted); font-size: 0.88rem; }
+
+    .question {
+      margin: 0 0 1.15rem;
+      padding: 1.4rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      box-shadow: 0 5px 18px rgba(21, 35, 41, 0.04);
+    }
+
+    fieldset { margin: 0; padding: 0; border: 0; }
+
+    legend {
+      width: 100%;
+      margin-bottom: 1rem;
+      font-size: 1.04rem;
+      font-weight: 780;
+      line-height: 1.5;
+    }
+
+    .scenario {
+      margin: 0.75rem 0 0;
+      padding: 0.85rem 0.95rem;
+      color: var(--muted);
+      background: var(--surface-strong);
+      border-left: 4px solid var(--primary);
+      border-radius: 0.65rem;
+      line-height: 1.55;
+    }
+
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+    label {
+      display: flex;
+      gap: 0.7rem;
+      align-items: flex-start;
+      margin-top: 0.55rem;
+      padding: 0.8rem;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      transition: border-color 140ms ease, background 140ms ease;
+    }
+
+    label:hover { border-color: var(--primary); background: var(--primary-soft); }
+    label:has(input:focus-visible) { outline: 3px solid color-mix(in srgb, var(--primary) 28%, transparent); }
+    label.answer-key { border-color: var(--success); background: var(--success-soft); }
+    label.wrong-choice { border-color: var(--error); background: var(--error-soft); }
+
+    input { margin-top: 0.18rem; accent-color: var(--primary); }
+
+    .feedback {
+      display: none;
+      margin: 0.9rem 0 0;
+      padding: 0.85rem;
+      line-height: 1.55;
+      border-radius: 0.7rem;
+    }
+
+    .feedback.correct { color: var(--success); background: var(--success-soft); }
+    .feedback.incorrect { color: var(--error); background: var(--error-soft); }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin: 1.6rem 0;
+    }
+
+    button {
+      min-height: 46px;
+      padding: 0.85rem 1.15rem;
+      font: inherit;
+      font-weight: 780;
+      cursor: pointer;
+      border: 1px solid var(--primary);
+      border-radius: 0.75rem;
+    }
+
+    button[type="submit"] { color: white; background: var(--primary); }
+    button[type="reset"] { color: var(--primary); background: transparent; }
+    button:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 30%, transparent); outline-offset: 2px; }
+
+    #result {
+      display: none;
+      margin: 0 0 1.25rem;
+      padding: 1.4rem;
+      background: var(--primary-soft);
+      border: 1px solid var(--primary);
+      border-radius: 1rem;
+      font-size: 1.02rem;
+      line-height: 1.6;
+    }
+
+    #result h2 { margin: 0 0 0.45rem; font-size: 1.3rem; }
+    #result p { margin: 0.35rem 0; }
+
+    .breakdown {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 0.65rem;
+      margin: 1rem 0;
+    }
+
+    .breakdown span {
+      padding: 0.7rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0.65rem;
+      font-size: 0.9rem;
+    }
+
+    .completion-code {
+      display: inline-block;
+      margin-top: 0.55rem;
+      padding: 0.4rem 0.55rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.86rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0.45rem;
+    }
+
+    .references { margin-top: 1.25rem; color: var(--muted); box-shadow: none; }
+    .references summary { color: var(--text); cursor: pointer; font-weight: 750; }
+    .references p { margin: 0.8rem 0 0; line-height: 1.55; }
+    .references ul { margin: 0.7rem 0 0; padding-left: 1.2rem; line-height: 1.65; }
+    .references a { color: var(--primary); }
+
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 1rem, 900px); }
+      .question { padding: 1.05rem; }
+      .progress-card { top: 0.3rem; }
+      .progress-row { align-items: flex-start; flex-direction: column; gap: 0.15rem; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1719;
+        --surface: #152326;
+        --surface-strong: #101d20;
+        --text: #f1f7f6;
+        --muted: #a4b5b4;
+        --primary: #63d7ca;
+        --primary-strong: #8ce4da;
+        --primary-soft: rgba(99, 215, 202, 0.12);
+        --success: #69dbb5;
+        --success-soft: rgba(105, 219, 181, 0.11);
+        --error: #ff8787;
+        --error-soft: rgba(255, 135, 135, 0.1);
+        --border: #294044;
+        --shadow: 0 14px 36px rgba(0, 0, 0, 0.24);
+      }
+
+      button[type="submit"] { color: #0d2422; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      * { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav><a href="index.html">← Back to all quizzes</a></nav>
+
+    <header>
+      <p class="eyebrow">System Design · RoadMap ID 2 · Pre-reading</p>
+      <h1>Non-Functional Requirements Diagnostic</h1>
+      <p>Twenty-four scenario questions covering every concept in the primer: availability, scalability, latency, consistency, their design patterns, and the trade-offs between them. Predict first; answers and explanations stay hidden until submission.</p>
+    </header>
+
+    <section class="session-card" aria-labelledby="session-title">
+      <h2 id="session-title">Your baseline before reading</h2>
+      <p><strong>This is intentionally not pass/fail.</strong> Wrong answers reveal what your attention should lock onto when you read the primer. The quiz includes both direct recall and small architecture decisions.</p>
+      <ul class="scope-list" aria-label="Concepts covered">
+        <li>Requirements &amp; priorities</li>
+        <li>Availability</li>
+        <li>Scalability</li>
+        <li>Latency</li>
+        <li>Consistency</li>
+        <li>Architectural trade-offs</li>
+      </ul>
+      <p class="instructions"><strong>First-attempt rule:</strong> use no notes and do not open the primer yet. Time-box yourself to 25–35 minutes. Your selections are saved in this browser while you work; after submitting, send the completion code back to your coach.</p>
+    </section>
+
+    <section class="progress-card" aria-live="polite">
+      <div class="progress-row">
+        <strong id="progress-label">Quiz answered: 0 / 24 (0%)</strong>
+        <span>Baseline only · no pass/fail</span>
+      </div>
+      <progress id="answer-progress" value="0" max="24">0%</progress>
+    </section>
+
+    <form id="quiz-form">
+      <section aria-labelledby="section-framing">
+        <div class="section-heading">
+          <span class="section-number" aria-hidden="true">1</span>
+          <div>
+            <h2 id="section-framing">Framing requirements and priorities</h2>
+            <p>Questions 1–4 · 4 points</p>
+          </div>
+        </div>
+
+        <article class="question" data-correct="c" data-section="framing">
+          <fieldset>
+            <legend>1. Which option correctly separates a functional requirement from non-functional requirements?</legend>
+            <label><input type="radio" name="q1" value="a" required> “Upload a video” and “return a share link” are non-functional; capacity and response time are functional.</label>
+            <label><input type="radio" name="q1" value="b"> Every statement about users is functional, while every statement about servers is non-functional.</label>
+            <label><input type="radio" name="q1" value="c"> “Users can upload a video” is functional; “acknowledge 95% within two seconds, survive a zone failure, and support ten million daily users” is non-functional.</label>
+            <label><input type="radio" name="q1" value="d"> All four statements are functional because they affect the product.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Functional requirements describe what the product does. Non-functional requirements constrain how it behaves—such as response time, availability, capacity, and failure tolerance—and those constraints drive the architecture."></p>
+        </article>
+
+        <article class="question" data-correct="a" data-section="framing">
+          <fieldset>
+            <legend>2. A chat product has the same messaging features at 100 users and 100 million users. Why might the larger version need caches, queues, and distributed databases?</legend>
+            <label><input type="radio" name="q2" value="a" required> The feature is unchanged, but the scale constraint changes the architecture needed to preserve performance and reliability.</label>
+            <label><input type="radio" name="q2" value="b"> Distributed components automatically add new product features.</label>
+            <label><input type="radio" name="q2" value="c"> Request-response communication stops working once a product has more than 100 users.</label>
+            <label><input type="radio" name="q2" value="d"> Every large system must use exactly the same technology stack.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Scale drives complexity. A simple query path may work at small scale, while very large demand can require precomputed results, caching, asynchronous work, and partitioned or distributed storage to meet the same user-visible behavior."></p>
+        </article>
+
+        <article class="question" data-correct="d" data-section="framing">
+          <fieldset>
+            <legend>3. Which set contains the primer’s four central non-functional constraints?</legend>
+            <label><input type="radio" name="q3" value="a" required> Authentication, authorization, encryption, and auditing</label>
+            <label><input type="radio" name="q3" value="b"> Compute, storage, networking, and deployment</label>
+            <label><input type="radio" name="q3" value="c"> APIs, databases, queues, and load balancers</label>
+            <label><input type="radio" name="q3" value="d"> Availability, scalability, latency, and consistency</label>
+          </fieldset>
+          <p class="feedback" data-explanation="The primer organizes the topic around availability (staying online), scalability (handling growth), latency (response speed), and consistency (data accuracy across replicas)."></p>
+        </article>
+
+        <article class="question" data-correct="b" data-section="framing">
+          <fieldset>
+            <legend>4. In an interview, someone says, “I will maximize availability, consistency, and speed at any cost.” What is the stronger response?</legend>
+            <label><input type="radio" name="q4" value="a" required> Agree; a correct architecture optimizes every quality equally.</label>
+            <label><input type="radio" name="q4" value="b"> Ask for measurable business priorities, then choose and explain the trade-offs that satisfy the most important constraints.</label>
+            <label><input type="radio" name="q4" value="c"> Ignore non-functional requirements until after drawing the complete architecture.</label>
+            <label><input type="radio" name="q4" value="d"> Always choose availability over every other requirement.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Requirements conflict and perfect targets are expensive or impossible. Strong system design prioritizes the qualities the business actually needs, makes them measurable, and explains what is sacrificed."></p>
+        </article>
+      </section>
+
+      <section aria-labelledby="section-availability">
+        <div class="section-heading">
+          <span class="section-number" aria-hidden="true">2</span>
+          <div>
+            <h2 id="section-availability">Availability: staying online</h2>
+            <p>Questions 5–8 · 4 points</p>
+          </div>
+        </div>
+
+        <article class="question" data-correct="c" data-section="availability">
+          <fieldset>
+            <legend>5. Over a 365-day year, which downtime budget is closest to 99.99% availability?</legend>
+            <label><input type="radio" name="q5" value="a" required> 8.76 hours</label>
+            <label><input type="radio" name="q5" value="b"> 5.26 hours</label>
+            <label><input type="radio" name="q5" value="c"> 52.6 minutes</label>
+            <label><input type="radio" name="q5" value="d"> 5.26 minutes</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Four nines allows 0.01% downtime: 525,600 minutes × 0.0001 ≈ 52.6 minutes per year. Three nines (99.9%) allows about 8.76 hours, so one extra nine can require a very different design and operating model."></p>
+        </article>
+
+        <article class="question" data-correct="a" data-section="availability">
+          <fieldset>
+            <legend>6. Which deployment best removes a single application server—and one data-center fault—as a single point of failure?</legend>
+            <label><input type="radio" name="q6" value="a" required> Multiple healthy service instances spread across independent availability zones, with traffic distributed by a load balancer</label>
+            <label><input type="radio" name="q6" value="b"> One very large server behind a load balancer</label>
+            <label><input type="radio" name="q6" value="c"> Multiple processes on one server with no traffic failover</label>
+            <label><input type="radio" name="q6" value="d"> One server with a larger disk and more memory</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Redundancy only helps when replicas do not share the same failure domain. A Netflix-like multi-AZ layout combines multiple service instances with traffic distribution so one server—or one zone—can fail without stopping the service."></p>
+        </article>
+
+        <article class="question" data-correct="d" data-section="availability">
+          <fieldset>
+            <legend>7. What is the primary job of backend health checks used by a load balancer?</legend>
+            <label><input type="radio" name="q7" value="a" required> Make every request complete faster by caching its response</label>
+            <label><input type="radio" name="q7" value="b"> Prove that a server will never fail in the future</label>
+            <label><input type="radio" name="q7" value="c"> Keep routing traffic to a failed instance until an operator intervenes</label>
+            <label><input type="radio" name="q7" value="d"> Detect unhealthy instances and stop sending them new traffic, according to the configured interval and failure thresholds</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Health checks enable automated detection and rerouting. Recovery is not literally instant: probe frequency, timeout, and failure thresholds determine whether failover takes seconds or longer and help balance fast detection against false positives."></p>
+        </article>
+
+        <article class="question" data-correct="b" data-section="availability">
+          <fieldset>
+            <legend>8. A globally critical DNS-like service must keep operating even if an entire cloud region fails. Which design most directly reduces that blast radius?</legend>
+            <label><input type="radio" name="q8" value="a" required> Put every replica in different racks inside the same region.</label>
+            <label><input type="radio" name="q8" value="b"> Replicate across independent regions and prepare traffic and data failover between them.</label>
+            <label><input type="radio" name="q8" value="c"> Replace health checks with a longer request timeout.</label>
+            <label><input type="radio" name="q8" value="d"> Store all state only in one regional database.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Geographic distribution isolates a regional failure, as Route 53-like critical services are designed to do. Multi-region operation also adds replication, failover, consistency, and cost complexity, so it should be driven by the required failure tolerance."></p>
+        </article>
+      </section>
+
+      <section aria-labelledby="section-scalability">
+        <div class="section-heading">
+          <span class="section-number" aria-hidden="true">3</span>
+          <div>
+            <h2 id="section-scalability">Scalability: handling growth</h2>
+            <p>Questions 9–13 · 5 points</p>
+          </div>
+        </div>
+
+        <article class="question" data-correct="a" data-section="scalability">
+          <fieldset>
+            <legend>9. Which statement best defines scalability?</legend>
+            <label><input type="radio" name="q9" value="a" required> The system can maintain acceptable performance as load increases by adding or reorganizing capacity.</label>
+            <label><input type="radio" name="q9" value="b"> The system never fails, regardless of its load.</label>
+            <label><input type="radio" name="q9" value="c"> Every replica immediately exposes the latest write.</label>
+            <label><input type="radio" name="q9" value="d"> A single request always uses the smallest possible number of milliseconds.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Scalability is about preserving the required performance as demand grows. It is related to—but different from—availability, consistency, and the latency of one request."></p>
+        </article>
+
+        <article class="question" data-correct="c" data-section="scalability">
+          <fieldset>
+            <legend>10. Which comparison between scaling up and scaling out is correct?</legend>
+            <label><input type="radio" name="q10" value="a" required> Scaling out means replacing one machine with a larger machine.</label>
+            <label><input type="radio" name="q10" value="b"> Scaling up always has a higher capacity ceiling and smaller failure impact than scaling out.</label>
+            <label><input type="radio" name="q10" value="c"> Scaling up adds resources to one machine; scaling out adds instances, often enabling more elastic growth and reducing the impact of one instance failing.</label>
+            <label><input type="radio" name="q10" value="d"> The two terms are interchangeable.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Vertical scaling makes one machine more powerful. Horizontal scaling distributes work across more machines. Cloud systems often favor scaling out because instances can be added or removed elastically and one small instance represents a smaller share of total capacity."></p>
+        </article>
+
+        <article class="question" data-correct="b" data-section="scalability">
+          <fieldset>
+            <legend>11. Which change most directly makes an application tier stateless and easier to scale horizontally?</legend>
+            <label><input type="radio" name="q11" value="a" required> Keep each user’s session only in the memory of whichever server handled login.</label>
+            <label><input type="radio" name="q11" value="b"> Put shared session state in an external store or carry it in a verifiable token so any healthy instance can handle the next request.</label>
+            <label><input type="radio" name="q11" value="c"> Pin each user permanently to one application instance.</label>
+            <label><input type="radio" name="q11" value="d"> Store more temporary state on every local disk.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="A stateless service instance does not own irreplaceable session or temporary data. Any replica can handle a request, so an Uber-like fleet of identical containers can scale up, scale down, or replace failed instances without losing user state."></p>
+        </article>
+
+        <article class="question" data-correct="d" data-section="scalability">
+          <fieldset>
+            <legend>12. A read-heavy service receives 10,000 reads per second. If a cache serves 90% of them and every miss reaches the database, approximately how many reads per second reach the database?</legend>
+            <label><input type="radio" name="q12" value="a" required> 9,000</label>
+            <label><input type="radio" name="q12" value="b"> 10,000</label>
+            <label><input type="radio" name="q12" value="c"> 100</label>
+            <label><input type="radio" name="q12" value="d"> 1,000</label>
+          </fieldset>
+          <p class="feedback" data-explanation="A 90% hit rate leaves 10% as misses: 10,000 × 0.10 = 1,000 database reads per second. This is why Redis-style caching can sharply reduce database pressure for read-heavy workloads, although invalidation and stale data still require design decisions."></p>
+        </article>
+
+        <article class="question" data-correct="a" data-section="scalability">
+          <fieldset>
+            <legend>13. Video transcoding takes several minutes and traffic arrives in bursts. Which design best protects the upload experience and smooths the work?</legend>
+            <label><input type="radio" name="q13" value="a" required> Persist the upload, enqueue a transcoding job, acknowledge intake, and let a scalable worker pool process the queue asynchronously.</label>
+            <label><input type="radio" name="q13" value="b"> Keep the user’s HTTP request open until every video format is generated.</label>
+            <label><input type="radio" name="q13" value="c"> Run all transcoding in the upload server with no backlog buffer.</label>
+            <label><input type="radio" name="q13" value="d"> Add a CDN but leave transcoding synchronous.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="A message queue decouples intake from background processing and absorbs bursts, like a YouTube-style upload pipeline. It does not make work disappear: if producers stay faster than consumers, queue depth and completion latency grow, so workers and backlog must be monitored."></p>
+        </article>
+      </section>
+
+      <section aria-labelledby="section-latency">
+        <div class="section-heading">
+          <span class="section-number" aria-hidden="true">4</span>
+          <div>
+            <h2 id="section-latency">Latency: speed matters</h2>
+            <p>Questions 14–17 · 4 points</p>
+          </div>
+        </div>
+
+        <article class="question" data-correct="c" data-section="latency">
+          <fieldset>
+            <legend>14. Which metric is a latency measurement?</legend>
+            <label><input type="radio" name="q14" value="a" required> The service completes 25,000 requests per second.</label>
+            <label><input type="radio" name="q14" value="b"> The service is usable for 99.9% of the measurement window.</label>
+            <label><input type="radio" name="q14" value="c"> The time from a client sending a request until it receives the response is 80 milliseconds.</label>
+            <label><input type="radio" name="q14" value="d"> All replicas return the latest committed value.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Latency is delay—here, request-to-response time. Requests per second measures throughput, usable-time or successful-request fraction measures availability, and replica agreement is a consistency property."></p>
+        </article>
+
+        <article class="question" data-correct="b" data-section="latency">
+          <fieldset>
+            <legend>15. Users far from the origin are slow when loading the same images, CSS, and JavaScript. Which intervention most directly reduces the unavoidable distance-related network delay?</legend>
+            <label><input type="radio" name="q15" value="a" required> Add a database transaction around every asset request.</label>
+            <label><input type="radio" name="q15" value="b"> Cache and serve static assets from CDN edge locations near users.</label>
+            <label><input type="radio" name="q15" value="c"> Move all users’ sessions into the origin server’s memory.</label>
+            <label><input type="radio" name="q15" value="d"> Require strong consistency for every static file read.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Physical distance and network round trips impose a latency floor. A CDN places cached content close to users, reducing the path to the origin and often reducing origin load at the same time."></p>
+        </article>
+
+        <article class="question" data-correct="d" data-section="latency">
+          <fieldset>
+            <legend>16. A feed endpoint spends almost all of its one-second response time inside one database query. What is the best first optimization path?</legend>
+            <label><input type="radio" name="q16" value="a" required> Add application servers without measuring the query.</label>
+            <label><input type="radio" name="q16" value="b"> Add more network hops so the database receives smaller requests.</label>
+            <label><input type="radio" name="q16" value="c"> Move the database farther from the application tier.</label>
+            <label><input type="radio" name="q16" value="d"> Profile the query, inspect its execution plan, add an appropriate index, and reduce unnecessary joins or scanned data.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Measure the bottleneck before scaling unrelated components. Query profiling can expose missing indexes, excessive scans, and expensive joins; targeted database changes can turn a roughly second-long path into a tens-of-milliseconds path."></p>
+        </article>
+
+        <article class="question" data-correct="a" data-section="latency">
+          <fieldset>
+            <legend>17. What distinguishes edge computing from merely storing static files in a CDN cache?</legend>
+            <label><input type="radio" name="q17" value="a" required> Edge computing executes logic near users, avoiding some round trips to a central origin; the benefit depends on workload and data placement.</label>
+            <label><input type="radio" name="q17" value="b"> Edge computing guarantees zero latency for every operation.</label>
+            <label><input type="radio" name="q17" value="c"> Edge computing requires all writes to use one central server before returning.</label>
+            <label><input type="radio" name="q17" value="d"> Edge computing and static caching are always identical.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="A Fastly-like edge platform can run request logic close to users, not just serve cached assets. It can remove origin round trips, but exact gains depend on computation, user geography, and whether required data is also available near the edge."></p>
+        </article>
+      </section>
+
+      <section aria-labelledby="section-consistency">
+        <div class="section-heading">
+          <span class="section-number" aria-hidden="true">5</span>
+          <div>
+            <h2 id="section-consistency">Consistency and architectural synthesis</h2>
+            <p>Questions 18–24 · 7 points</p>
+          </div>
+        </div>
+
+        <article class="question" data-correct="c" data-section="consistency">
+          <fieldset>
+            <legend>18. Why is consistency harder after the same data is replicated across multiple servers?</legend>
+            <label><input type="radio" name="q18" value="a" required> Replicas remove the need to communicate changes.</label>
+            <label><input type="radio" name="q18" value="b"> Every replica is physically guaranteed to receive each update at the same instant.</label>
+            <label><input type="radio" name="q18" value="c"> Propagation delay, network partitions, and server failures can leave replicas temporarily disagreeing about the latest value.</label>
+            <label><input type="radio" name="q18" value="d"> Consistency only applies when the system has a single copy of the data.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Replication introduces coordination. Messages take time and can be delayed or lost, while nodes can fail, so different replicas may temporarily hold different states unless a protocol coordinates reads and writes."></p>
+        </article>
+
+        <article class="question" data-correct="b" data-section="consistency">
+          <fieldset>
+            <legend>19. Two withdrawals race against the same $100 bank balance. Which approach best protects against spending the same money twice?</legend>
+            <label><input type="radio" name="q19" value="a" required> Let every replica approve independently and reconcile negative balances later.</label>
+            <label><input type="radio" name="q19" value="b"> Use strict transactional isolation and a strongly consistent write path—such as a leader, quorum, or consensus-backed protocol—before acknowledging success.</label>
+            <label><input type="radio" name="q19" value="c"> Cache the balance indefinitely on each client.</label>
+            <label><input type="radio" name="q19" value="d"> Put the withdrawal into a CDN.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Money movement prioritizes correctness. A coordinated transaction must serialize or otherwise prevent conflicting withdrawals. Requiring sufficient replicas or a leader to agree protects the invariant, but the write may wait or fail when coordination is unavailable."></p>
+        </article>
+
+        <article class="question" data-correct="d" data-section="consistency">
+          <fieldset>
+            <legend>20. During a network partition, a write cannot reach the replicas required by the strong-consistency protocol. What is the honest trade-off?</legend>
+            <label><input type="radio" name="q20" value="a" required> A correct design can always guarantee both the latest value and a successful response from every partition.</label>
+            <label><input type="radio" name="q20" value="b"> The system must permanently delete one replica.</label>
+            <label><input type="radio" name="q20" value="c"> Network partitions affect latency but never availability or consistency.</label>
+            <label><input type="radio" name="q20" value="d"> Reject or delay the write to preserve strong consistency, or accept it to remain available while risking temporary inconsistency.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="When communication is partitioned, a node cannot both prove it has the latest state and guarantee every request succeeds. Strong consistency commonly sacrifices some write availability; an availability-first path may accept operations that replicas reconcile later."></p>
+        </article>
+
+        <article class="question" data-correct="a" data-section="consistency">
+          <fieldset>
+            <legend>21. Which observation is compatible with eventual consistency?</legend>
+            <label><input type="radio" name="q21" value="a" required> A new social post is accepted, some users see it a few seconds later than others, and all healthy replicas converge after propagation completes.</label>
+            <label><input type="radio" name="q21" value="b"> Every read is guaranteed to return the newest write before that write is acknowledged.</label>
+            <label><input type="radio" name="q21" value="c"> Replicas may disagree forever even after writes stop and communication is healthy.</label>
+            <label><input type="radio" name="q21" value="d"> The service must become unavailable for every read whenever one replica is slow.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Eventual consistency permits temporary disagreement for better availability or performance, but replicas converge once updates propagate and the system becomes quiescent. Social feeds often tolerate this short visibility delay."></p>
+        </article>
+
+        <article class="question" data-correct="c" data-section="consistency">
+          <fieldset>
+            <legend>22. Which consistency choice is most appropriate for an e-commerce system?</legend>
+            <label><input type="radio" name="q22" value="a" required> Use eventual consistency for payment capture because duplicate charges can be corrected later.</label>
+            <label><input type="radio" name="q22" value="b"> Use the strongest possible consistency for every recommendation and view counter, regardless of latency or availability.</label>
+            <label><input type="radio" name="q22" value="c"> Allow bounded temporary staleness for recommendations or cart views where acceptable, but require strong correctness for payment and finalized orders.</label>
+            <label><input type="radio" name="q22" value="d"> Choose one consistency model for the entire company and never vary by operation.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Most real systems mix guarantees by data and operation. Amazon-like catalog, recommendation, or cart experiences can tolerate some temporary staleness; payment, billing, and finalized order records demand much stronger correctness."></p>
+        </article>
+
+        <article class="question" data-correct="b" data-section="consistency">
+          <fieldset>
+            <legend>23. Which requirement-to-strategy mapping is entirely correct?</legend>
+            <label><input type="radio" name="q23" value="a" required> Availability → one powerful server; scalability → sticky in-memory sessions; latency → more origin round trips; consistency → independent uncoordinated writes</label>
+            <label><input type="radio" name="q23" value="b"> Availability → redundancy and health-based failover; scalability → stateless scale-out, caching, and queues; latency → CDN, indexes, and edge execution; consistency → select replication and coordination guarantees</label>
+            <label><input type="radio" name="q23" value="c"> Availability → database indexes; scalability → consensus for every read; latency → multi-region synchronous writes; consistency → a CDN for payments</label>
+            <label><input type="radio" name="q23" value="d"> Availability → no replicas; scalability → one fixed-size machine; latency → store every request in a queue before replying; consistency → never coordinate replicas</label>
+          </fieldset>
+          <p class="feedback" data-explanation="That mapping captures the primer’s pattern table: remove single points of failure for availability; use elastic, stateless, buffered designs for scale; reduce distance and processing for latency; and choose the coordination model that provides the required data correctness."></p>
+        </article>
+
+        <article class="question" data-correct="d" data-section="consistency">
+          <fieldset>
+            <legend>24. A global marketplace wants a fast product feed, tolerates likes appearing a few seconds late, must never double-charge, and must survive an availability-zone failure. Which design reasoning is strongest?</legend>
+            <label><input type="radio" name="q24" value="a" required> Pick one database consistency mode and use it unchanged for every requirement.</label>
+            <label><input type="radio" name="q24" value="b"> Optimize only latency; the other qualities will improve automatically.</label>
+            <label><input type="radio" name="q24" value="c"> Make every operation synchronously coordinate across continents, because maximum consistency is always free.</label>
+            <label><input type="radio" name="q24" value="d"> Use nearby caches or edge delivery for the feed, eventual propagation for likes, a strongly consistent payment path, and redundant health-checked instances across zones—then state the cost and complexity trade-offs.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Non-functional requirements are applied per user journey and failure mode, not as one global switch. The design combines the appropriate pattern for each constraint and explicitly accepts that lower latency, stronger correctness, broader failure isolation, and greater scale all carry different costs."></p>
+        </article>
+      </section>
+
+      <div class="actions">
+        <button id="submit-button" type="submit">Submit baseline</button>
+        <button type="reset">Clear and restart</button>
+      </div>
+    </form>
+
+    <section id="result" aria-live="polite" tabindex="-1"></section>
+
+    <details class="references">
+      <summary>Validation references — open after your first attempt</summary>
+      <p>The questions follow the attached System Design School primer. These authoritative references were used only to check calculations and sharpen the explanations:</p>
+      <ul>
+        <li><a href="https://sre.google/sre-book/service-level-objectives/" target="_blank" rel="noopener">Google SRE: Service Level Objectives</a></li>
+        <li><a href="https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/rel_fault_isolation_multiaz_region_system.html" target="_blank" rel="noopener">AWS Well-Architected: Deploy to multiple locations</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/architecture/patterns/queue-based-load-leveling" target="_blank" rel="noopener">Azure Architecture Center: Queue-Based Load Leveling</a></li>
+        <li><a href="https://developers.cloudflare.com/reference-architecture/architectures/cdn/" target="_blank" rel="noopener">Cloudflare: CDN Reference Architecture</a></li>
+        <li><a href="https://docs.aws.amazon.com/wellarchitected/latest/performance-efficiency-pillar/perf_data_access_patterns_caching.html" target="_blank" rel="noopener">AWS Well-Architected: Caching data-access patterns</a></li>
+        <li><a href="https://groups.csail.mit.edu/tds/papers/Gilbert/Brewer2.pdf" target="_blank" rel="noopener">Gilbert &amp; Lynch: Perspectives on the CAP Theorem</a></li>
+      </ul>
+    </details>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'system-design-nfr-pre-reading-v1';
+    const form = document.querySelector('#quiz-form');
+    const questions = [...document.querySelectorAll('.question')];
+    const result = document.querySelector('#result');
+    const progressLabel = document.querySelector('#progress-label');
+    const answerProgress = document.querySelector('#answer-progress');
+    const submitButton = document.querySelector('#submit-button');
+
+    function selectedAnswers() {
+      return Object.fromEntries(
+        questions
+          .map((question) => question.querySelector('input:checked'))
+          .filter(Boolean)
+          .map((input) => [input.name, input.value])
+      );
+    }
+
+    function updateProgress() {
+      const answered = Object.keys(selectedAnswers()).length;
+      const percentage = Math.round((answered / questions.length) * 100);
+      progressLabel.textContent = `Quiz answered: ${answered} / ${questions.length} (${percentage}%)`;
+      answerProgress.value = answered;
+      answerProgress.textContent = `${percentage}%`;
+    }
+
+    function saveProgress() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedAnswers()));
+      } catch (error) {
+        // The quiz remains usable when browser storage is unavailable.
+      }
+    }
+
+    function restoreProgress() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        Object.entries(saved).forEach(([name, value]) => {
+          const input = form.querySelector(`input[name="${name}"][value="${value}"]`);
+          if (input) input.checked = true;
+        });
+      } catch (error) {
+        try { localStorage.removeItem(STORAGE_KEY); } catch (storageError) { /* no-op */ }
+      }
+      updateProgress();
+    }
+
+    function clearMarking(question) {
+      question.querySelectorAll('label').forEach((label) => {
+        label.classList.remove('answer-key', 'wrong-choice');
+      });
+      const feedback = question.querySelector('.feedback');
+      feedback.style.display = 'none';
+      feedback.textContent = '';
+    }
+
+    form.addEventListener('change', () => {
+      updateProgress();
+      saveProgress();
+    });
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      let score = 0;
+      const sectionScores = {
+        framing: { correct: 0, total: 0, label: 'Framing & priorities' },
+        availability: { correct: 0, total: 0, label: 'Availability' },
+        scalability: { correct: 0, total: 0, label: 'Scalability' },
+        latency: { correct: 0, total: 0, label: 'Latency' },
+        consistency: { correct: 0, total: 0, label: 'Consistency & synthesis' }
+      };
+
+      questions.forEach((question) => {
+        const selected = question.querySelector('input:checked');
+        const correctValue = question.dataset.correct;
+        const feedback = question.querySelector('.feedback');
+        const section = sectionScores[question.dataset.section];
+        const isCorrect = selected && selected.value === correctValue;
+
+        section.total += 1;
+        if (isCorrect) {
+          score += 1;
+          section.correct += 1;
+        }
+
+        question.querySelectorAll('label').forEach((label) => {
+          const input = label.querySelector('input');
+          label.classList.toggle('answer-key', input.value === correctValue);
+          label.classList.toggle('wrong-choice', input.checked && input.value !== correctValue);
+          input.disabled = true;
+        });
+
+        feedback.className = `feedback ${isCorrect ? 'correct' : 'incorrect'}`;
+        feedback.textContent = `${isCorrect ? 'Correct.' : 'Not quite.'} ${feedback.dataset.explanation}`;
+        feedback.style.display = 'block';
+      });
+
+      const percentage = Math.round((score / questions.length) * 100);
+      const rankedSections = Object.entries(sectionScores)
+        .map(([key, section]) => ({ key, ...section, ratio: section.correct / section.total }))
+        .sort((a, b) => a.ratio - b.ratio || a.label.localeCompare(b.label));
+      const weakest = rankedSections[0];
+      const breakdown = Object.values(sectionScores)
+        .map((section) => `<span><strong>${section.label}</strong><br>${section.correct} / ${section.total}</span>`)
+        .join('');
+      const message = score === questions.length
+        ? 'Exceptional baseline. Read the primer for terminology, evidence, and interview-ready trade-off language rather than basic discovery.'
+        : score >= 18
+          ? 'Strong baseline. Read actively for the missed nuances and for how each requirement maps to an architectural pattern.'
+          : score >= 12
+            ? 'Useful baseline. You already have the frame; the primer should now connect the individual patterns into one decision model.'
+            : 'This is exactly what a pre-reading diagnostic is for. Read without rushing, and use the explanations as signposts rather than as a score judgment.';
+      const code = `SD-NFR-PRE-${score}OF${questions.length}-${weakest.key.toUpperCase()}`;
+
+      result.innerHTML = `
+        <h2>${score} / ${questions.length} correct (${percentage}%)</h2>
+        <p>${message}</p>
+        <div class="breakdown">${breakdown}</div>
+        <p><strong>Reading focus:</strong> your lowest first-attempt section was ${weakest.label} (${weakest.correct}/${weakest.total}). Read that section slowly, but still complete the entire primer because the final questions combine all four constraints.</p>
+        <p>Send this completion code back after the attempt:</p>
+        <span class="completion-code">${code}</span>
+      `;
+      result.style.display = 'block';
+      submitButton.disabled = true;
+      submitButton.textContent = 'Baseline submitted';
+      result.focus();
+      result.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    form.addEventListener('reset', () => {
+      questions.forEach((question) => {
+        clearMarking(question);
+        question.querySelectorAll('input').forEach((input) => { input.disabled = false; });
+      });
+      result.style.display = 'none';
+      result.textContent = '';
+      submitButton.disabled = false;
+      submitButton.textContent = 'Submit baseline';
+      try { localStorage.removeItem(STORAGE_KEY); } catch (error) { /* no-op */ }
+      window.setTimeout(updateProgress, 0);
+    });
+
+    restoreProgress();
+  </script>
+</body>
+</html>
