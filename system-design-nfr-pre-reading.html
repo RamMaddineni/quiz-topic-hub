@@ -285,6 +285,46 @@
     .references ul { margin: 0.7rem 0 0; padding-left: 1.2rem; line-height: 1.65; }
     .references a { color: var(--primary); }
 
+    .visual-review {
+      margin: 0 0 1.25rem;
+      padding: 1.15rem 1.2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      box-shadow: var(--shadow);
+    }
+
+    .visual-review > summary {
+      cursor: pointer;
+      color: var(--text);
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+
+    .visual-review > p { margin: 0.8rem 0 1rem; color: var(--muted); line-height: 1.6; }
+
+    .visual-grid { display: grid; gap: 1.15rem; }
+
+    .visual-card {
+      margin: 0;
+      padding: 0.8rem;
+      background: var(--surface-strong);
+      border: 1px solid var(--border);
+      border-radius: 0.9rem;
+    }
+
+    .visual-card img {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #f5fbfa;
+      border: 1px solid var(--border);
+      border-radius: 0.7rem;
+    }
+
+    .visual-card figcaption { padding: 0.8rem 0.35rem 0.2rem; color: var(--muted); line-height: 1.55; }
+    .visual-card figcaption strong { color: var(--text); }
+
     @media (max-width: 560px) {
       .shell { width: min(100% - 1rem, 900px); }
       .question { padding: 1.05rem; }
@@ -673,6 +713,27 @@
     </form>
 
     <section id="result" aria-live="polite" tabindex="-1"></section>
+
+    <details id="visual-review" class="visual-review">
+      <summary>Visual review — open after your first attempt</summary>
+      <p>Use these diagrams after submitting the baseline. Together they show how to frame NFRs, contain failures, and choose consistency by operation.</p>
+      <div class="visual-grid">
+        <figure class="visual-card">
+          <img src="assets/nfr-four-pillars.svg" width="1200" height="720" loading="lazy" alt="Availability, scalability, latency, and consistency surrounding a central business-priority decision, with common strategies listed for each constraint.">
+          <figcaption><strong>1. The four-pillar decision model.</strong> Start with measurable business targets; architectural components come afterward.</figcaption>
+        </figure>
+
+        <figure class="visual-card">
+          <img src="assets/nfr-high-availability.svg" width="1200" height="720" loading="lazy" alt="Users flow through a global traffic manager to load-balanced services across availability zones and regions; a failed service is removed by health checks and traffic is rerouted.">
+          <figcaption><strong>2. High availability through fault isolation.</strong> Redundancy, health-based routing, and independent zones or regions progressively reduce the blast radius.</figcaption>
+        </figure>
+
+        <figure class="visual-card">
+          <img src="assets/nfr-consistency-choice.svg" width="1200" height="720" loading="lazy" alt="A network partition branches into strong consistency, which waits or rejects to protect correctness, and eventual consistency, which accepts work and lets replicas converge later.">
+          <figcaption><strong>3. Strong versus eventual consistency.</strong> Choose per operation: payments protect correctness; feeds and likes can often tolerate temporary staleness.</figcaption>
+        </figure>
+      </div>
+    </details>
 
     <details class="references">
       <summary>Validation references — open after your first attempt</summary>
