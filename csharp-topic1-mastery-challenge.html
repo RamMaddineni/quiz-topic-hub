@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A twelve-question C# mastery diagnostic covering value and reference behavior, parameter passing, boxing, conversions, and equality.">
+  <title>C# Topic 1 Mastery Challenge | Topic Quiz Hub</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-strong: #f9fafb;
+      --text: #172033;
+      --muted: #667085;
+      --primary: #5b4bdb;
+      --primary-soft: rgba(91, 75, 219, 0.1);
+      --success: #087f5b;
+      --success-soft: rgba(8, 127, 91, 0.1);
+      --error: #c92a2a;
+      --error-soft: rgba(201, 42, 42, 0.09);
+      --border: #e2e6ee;
+      --shadow: 0 14px 36px rgba(23, 32, 51, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(91, 75, 219, 0.12), transparent 30rem),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .shell { width: min(860px, calc(100% - 2rem)); margin: 0 auto; }
+
+    nav { padding: 1.25rem 0; }
+    nav a { color: var(--primary); font-weight: 750; text-decoration: none; }
+    nav a:hover { text-decoration: underline; }
+
+    header { padding: 1.5rem 0 1.25rem; }
+
+    .eyebrow {
+      margin: 0;
+      color: var(--primary);
+      font-size: 0.78rem;
+      font-weight: 850;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 760px;
+      margin: 0.55rem 0 0.7rem;
+      font-size: clamp(2.2rem, 8vw, 4.25rem);
+      line-height: 1;
+      letter-spacing: -0.05em;
+    }
+
+    header > p:last-child {
+      max-width: 700px;
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .session-card,
+    .progress-card {
+      margin-bottom: 1.25rem;
+      padding: 1.1rem 1.2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      box-shadow: var(--shadow);
+    }
+
+    .session-card h2,
+    .progress-card strong { margin: 0 0 0.4rem; font-size: 1rem; }
+
+    .session-card p,
+    .progress-card p { margin: 0; color: var(--muted); line-height: 1.55; }
+
+    .scope-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 0.9rem 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .scope-list li {
+      padding: 0.4rem 0.65rem;
+      color: var(--primary);
+      background: var(--primary-soft);
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 750;
+    }
+
+    .instructions {
+      margin-top: 0.85rem;
+      padding-top: 0.85rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .progress-card {
+      position: sticky;
+      top: 0.65rem;
+      z-index: 10;
+      background: color-mix(in srgb, var(--surface) 94%, transparent);
+      backdrop-filter: blur(12px);
+    }
+
+    .progress-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .progress-row span { color: var(--muted); font-size: 0.84rem; }
+
+    progress {
+      width: 100%;
+      height: 0.75rem;
+      margin-top: 0.7rem;
+      accent-color: var(--primary);
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      margin: 2rem 0 0.9rem;
+    }
+
+    .section-number {
+      display: grid;
+      width: 2rem;
+      height: 2rem;
+      place-items: center;
+      flex: 0 0 auto;
+      color: white;
+      background: var(--primary);
+      border-radius: 50%;
+      font-size: 0.85rem;
+      font-weight: 850;
+    }
+
+    .section-heading h2 { margin: 0; font-size: 1.2rem; }
+    .section-heading p { margin: 0.15rem 0 0; color: var(--muted); font-size: 0.88rem; }
+
+    .question {
+      margin: 0 0 1.15rem;
+      padding: 1.4rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      box-shadow: 0 5px 18px rgba(23, 32, 51, 0.04);
+    }
+
+    fieldset { margin: 0; padding: 0; border: 0; }
+
+    legend {
+      width: 100%;
+      margin-bottom: 1rem;
+      font-size: 1.04rem;
+      font-weight: 780;
+      line-height: 1.5;
+    }
+
+    pre {
+      margin: 0.8rem 0 0;
+      padding: 1rem;
+      overflow-x: auto;
+      color: var(--text);
+      background: var(--surface-strong);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      tab-size: 4;
+    }
+
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+    label {
+      display: flex;
+      gap: 0.7rem;
+      align-items: flex-start;
+      margin-top: 0.55rem;
+      padding: 0.8rem;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      transition: border-color 140ms ease, background 140ms ease;
+    }
+
+    label:hover { border-color: var(--primary); background: var(--primary-soft); }
+    label:has(input:focus-visible) { outline: 3px solid color-mix(in srgb, var(--primary) 28%, transparent); }
+    label.answer-key { border-color: var(--success); background: var(--success-soft); }
+    label.wrong-choice { border-color: var(--error); background: var(--error-soft); }
+
+    input { margin-top: 0.18rem; accent-color: var(--primary); }
+
+    .feedback {
+      display: none;
+      margin: 0.9rem 0 0;
+      padding: 0.85rem;
+      line-height: 1.55;
+      border-radius: 0.7rem;
+    }
+
+    .feedback.correct { color: var(--success); background: var(--success-soft); }
+    .feedback.incorrect { color: var(--error); background: var(--error-soft); }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin: 1.6rem 0;
+    }
+
+    button {
+      min-height: 46px;
+      padding: 0.85rem 1.15rem;
+      font: inherit;
+      font-weight: 780;
+      cursor: pointer;
+      border: 1px solid var(--primary);
+      border-radius: 0.75rem;
+    }
+
+    button[type="submit"] { color: white; background: var(--primary); }
+    button[type="reset"] { color: var(--primary); background: transparent; }
+    button:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 30%, transparent); outline-offset: 2px; }
+
+    #result {
+      display: none;
+      margin: 0 0 3rem;
+      padding: 1.4rem;
+      background: var(--primary-soft);
+      border: 1px solid var(--primary);
+      border-radius: 1rem;
+      font-size: 1.02rem;
+      line-height: 1.6;
+    }
+
+    #result h2 { margin: 0 0 0.45rem; font-size: 1.3rem; }
+    #result p { margin: 0.35rem 0; }
+
+    .breakdown {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 0.65rem;
+      margin: 1rem 0;
+    }
+
+    .breakdown span {
+      padding: 0.7rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0.65rem;
+      font-size: 0.9rem;
+    }
+
+    .completion-code {
+      display: inline-block;
+      margin-top: 0.55rem;
+      padding: 0.4rem 0.55rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.86rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0.45rem;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 1rem, 860px); }
+      .question { padding: 1.05rem; }
+      .progress-card { top: 0.3rem; }
+      .progress-row { align-items: flex-start; flex-direction: column; gap: 0.15rem; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0e1020;
+        --surface: #171a2d;
+        --surface-strong: #121527;
+        --text: #f4f5fb;
+        --muted: #a5acc3;
+        --primary: #a79cff;
+        --primary-soft: rgba(167, 156, 255, 0.12);
+        --success: #69dbb5;
+        --success-soft: rgba(105, 219, 181, 0.11);
+        --error: #ff8787;
+        --error-soft: rgba(255, 135, 135, 0.1);
+        --border: #2a2f48;
+        --shadow: 0 14px 36px rgba(0, 0, 0, 0.24);
+      }
+
+      button[type="submit"] { color: #16182b; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      * { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav><a href="index.html">← Back to all quizzes</a></nav>
+
+    <header>
+      <p class="eyebrow">Today · C# Topic 1 · Fresh diagnostic</p>
+      <h1>Topic 1 Mastery Challenge</h1>
+      <p>Twelve new interview-style questions on the exact concepts in today’s 80% → 100% session. Predict first; explanations and answer markings stay hidden until you submit.</p>
+    </header>
+
+    <section class="session-card" aria-labelledby="session-title">
+      <h2 id="session-title">Today’s target: clear checkpoint 9</h2>
+      <p><strong>Topic progress before the quiz: 8 / 10 checkpoints (80%).</strong> Score at least 10 / 12 to clear the diagnostic checkpoint and move to 90%. The final checkpoint is your interview summary plus NET-01 iPad note.</p>
+      <ul class="scope-list" aria-label="Concepts covered">
+        <li>Copying &amp; mutation</li>
+        <li>ref / out / in</li>
+        <li>Boxing through object &amp; interfaces</li>
+        <li>Casts vs parsing/conversion</li>
+        <li>Identity vs value equality</li>
+      </ul>
+      <p class="instructions"><strong>First-attempt rule:</strong> use no notes, time-box yourself to 15–20 minutes, and submit only when every question is answered. Your selections are saved in this browser while you work.</p>
+    </section>
+
+    <section class="progress-card" aria-live="polite">
+      <div class="progress-row">
+        <strong id="progress-label">Quiz answered: 0 / 12 (0%)</strong>
+        <span>Passing score: 10 / 12</span>
+      </div>
+      <progress id="answer-progress" value="0" max="12">0%</progress>
+    </section>
+
+    <form id="quiz-form">
+      <section aria-labelledby="section-copying">
+        <div class="section-heading">
+          <span class="section-number" aria-hidden="true">1</span>
+          <div>
+            <h2 id="section-copying">Copying and parameter passing</h2>
+            <p>Questions 1–4 · 4 points</p>
+          </div>
+        </div>
+
+        <article class="question" data-correct="b" data-section="parameters">
+          <fieldset>
+            <legend>1. What is printed when this struct is passed to a normal parameter?</legend>
+            <pre><code>struct Counter { public int Value; }
+
+static void Increment(Counter counter)
+{
+    counter.Value++;
+}
+
+var counter = new Counter { Value = 10 };
+Increment(counter);
+Console.WriteLine(counter.Value);</code></pre>
+            <label><input type="radio" name="q1" value="a" required> 11</label>
+            <label><input type="radio" name="q1" value="b"> 10</label>
+            <label><input type="radio" name="q1" value="c"> A compile-time error</label>
+            <label><input type="radio" name="q1" value="d"> A runtime exception</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Counter is a value type, and a normal parameter receives a copy. Increment changes only that local copy, so the caller’s Counter still contains 10."></p>
+        </article>
+
+        <article class="question" data-correct="c" data-section="parameters">
+          <fieldset>
+            <legend>2. What is printed after this reference-type argument is mutated and then reassigned?</legend>
+            <pre><code>class User { public string Name = ""; }
+
+static void Update(User user)
+{
+    user.Name = "B";
+    user = new User { Name = "C" };
+}
+
+var user = new User { Name = "A" };
+Update(user);
+Console.WriteLine(user.Name);</code></pre>
+            <label><input type="radio" name="q2" value="a" required> A</label>
+            <label><input type="radio" name="q2" value="b"> C</label>
+            <label><input type="radio" name="q2" value="c"> B</label>
+            <label><input type="radio" name="q2" value="d"> null</label>
+          </fieldset>
+          <p class="feedback" data-explanation="The parameter receives a copy of the reference. It can mutate the shared User to B, but reassigning the local parameter to a new User does not replace the caller’s reference."></p>
+        </article>
+
+        <article class="question" data-correct="a" data-section="parameters">
+          <fieldset>
+            <legend>3. What changes when the same reference variable is passed with <code>ref</code>?</legend>
+            <pre><code>class User { public string Name = ""; }
+
+static void Replace(ref User user)
+{
+    user = new User { Name = "C" };
+}
+
+var user = new User { Name = "A" };
+Replace(ref user);
+Console.WriteLine(user.Name);</code></pre>
+            <label><input type="radio" name="q3" value="a" required> It prints C because the method can replace the caller’s variable.</label>
+            <label><input type="radio" name="q3" value="b"> It prints A because references are always passed by value.</label>
+            <label><input type="radio" name="q3" value="c"> It fails because <code>ref</code> is only for value types.</label>
+            <label><input type="radio" name="q3" value="d"> It throws because the original object becomes unreachable.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="ref passes access to the caller’s variable itself. Assigning a new User inside Replace therefore changes what the caller’s user variable references."></p>
+        </article>
+
+        <article class="question" data-correct="d" data-section="parameters">
+          <fieldset>
+            <legend>4. Which statement correctly distinguishes <code>ref</code>, <code>out</code>, and <code>in</code>?</legend>
+            <label><input type="radio" name="q4" value="a" required> <code>ref</code> and <code>out</code> never require assignment; <code>in</code> makes referenced objects immutable.</label>
+            <label><input type="radio" name="q4" value="b"> <code>out</code> requires the caller to initialize the variable; <code>ref</code> does not.</label>
+            <label><input type="radio" name="q4" value="c"> <code>in</code> prevents both parameter reassignment and mutation of every referenced object.</label>
+            <label><input type="radio" name="q4" value="d"> <code>ref</code> requires prior initialization; <code>out</code> must be assigned by the callee; <code>in</code> blocks parameter reassignment but not necessarily object mutation.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="That is the correct parameter-variable model. in protects the parameter slot; for a reference type, it does not deep-freeze the object reached through that reference."></p>
+        </article>
+      </section>
+
+      <section aria-labelledby="section-boxing">
+        <div class="section-heading">
+          <span class="section-number" aria-hidden="true">2</span>
+          <div>
+            <h2 id="section-boxing">Boxing, casts, and conversion</h2>
+            <p>Questions 5–9 · 5 points</p>
+          </div>
+        </div>
+
+        <article class="question" data-correct="a" data-section="boxing">
+          <fieldset>
+            <legend>5. What is printed after this value is boxed?</legend>
+            <pre><code>int number = 10;
+object boxed = number;
+number = 20;
+Console.WriteLine(boxed);</code></pre>
+            <label><input type="radio" name="q5" value="a" required> 10</label>
+            <label><input type="radio" name="q5" value="b"> 20</label>
+            <label><input type="radio" name="q5" value="c"> A compile-time error</label>
+            <label><input type="radio" name="q5" value="d"> A runtime exception</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Boxing copies the current Int32 value into a separate boxed object. Changing number later does not modify the box, so WriteLine sees the boxed 10."></p>
+        </article>
+
+        <article class="question" data-correct="b" data-section="boxing">
+          <fieldset>
+            <legend>6. Why does this compile and print 10 without an explicit cast?</legend>
+            <pre><code>IComparable comparable = 10;
+Console.WriteLine(comparable);</code></pre>
+            <label><input type="radio" name="q6" value="a" required> WriteLine implicitly unboxes every interface value to <code>int</code>.</label>
+            <label><input type="radio" name="q6" value="b"> The <code>WriteLine(object)</code> overload accepts the interface reference and calls the boxed Int32’s <code>ToString()</code>; no unboxing is required.</label>
+            <label><input type="radio" name="q6" value="c"> IComparable has an implicit numeric conversion operator.</label>
+            <label><input type="radio" name="q6" value="d"> The compiler parses the characters in the boxed value.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="The operation only needs an object reference, so the box stays closed. Converting the IComparable reference to object is a reference conversion, and WriteLine uses virtual ToString on the boxed Int32."></p>
+        </article>
+
+        <article class="question" data-correct="c" data-section="boxing">
+          <fieldset>
+            <legend>7. What happens here?</legend>
+            <pre><code>IComparable comparable = 10;
+int copy = comparable;</code></pre>
+            <label><input type="radio" name="q7" value="a" required> copy becomes 10 through implicit unboxing.</label>
+            <label><input type="radio" name="q7" value="b"> It compiles but throws InvalidCastException.</label>
+            <label><input type="radio" name="q7" value="c"> It is a compile-time error because there is no implicit conversion from IComparable to int.</label>
+            <label><input type="radio" name="q7" value="d"> copy receives the reference address converted to an integer.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="The destination requires a concrete int, so the compiler requires an explicit unboxing cast: int copy = (int)comparable. That cast succeeds only when the runtime box contains an Int32."></p>
+        </article>
+
+        <article class="question" data-correct="a" data-section="boxing">
+          <fieldset>
+            <legend>8. What is printed, and why does this version work?</legend>
+            <pre><code>object boxed = (short)10;
+int value = (short)boxed;
+Console.WriteLine(value);</code></pre>
+            <label><input type="radio" name="q8" value="a" required> 10; it unboxes the exact Int16 first, then widens that value to Int32.</label>
+            <label><input type="radio" name="q8" value="b"> 10; every boxed number can be directly unboxed as any larger numeric type.</label>
+            <label><input type="radio" name="q8" value="c"> A compile-time error because two conversions cannot occur in one assignment.</label>
+            <label><input type="radio" name="q8" value="d"> InvalidCastException because the destination variable is an int.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="The explicit cast exactly matches the boxed type: short. After unboxing produces a short value, the normal implicit numeric conversion widens it to int. Convert.ToInt32(boxed) is another valid route, but it is an API conversion—not direct int unboxing."></p>
+        </article>
+
+        <article class="question" data-correct="d" data-section="boxing">
+          <fieldset>
+            <legend>9. What does this print?</legend>
+            <pre><code>IComparable comparable = "10";
+int value = int.Parse((string)comparable);
+Console.WriteLine(value);</code></pre>
+            <label><input type="radio" name="q9" value="a" required> The ASCII value of the character 1</label>
+            <label><input type="radio" name="q9" value="b"> InvalidCastException</label>
+            <label><input type="radio" name="q9" value="c"> A compile-time error</label>
+            <label><input type="radio" name="q9" value="d"> 10</label>
+          </fieldset>
+          <p class="feedback" data-explanation="The reference cast retrieves the String object, and int.Parse interprets its characters as a number. A cast alone never parses: (int)comparable would instead throw because the runtime object is a String."></p>
+        </article>
+      </section>
+
+      <section aria-labelledby="section-equality">
+        <div class="section-heading">
+          <span class="section-number" aria-hidden="true">3</span>
+          <div>
+            <h2 id="section-equality">Identity, value equality, and the box boundary</h2>
+            <p>Questions 10–12 · 3 points</p>
+          </div>
+        </div>
+
+        <article class="question" data-correct="c" data-section="equality">
+          <fieldset>
+            <legend>10. What do these two comparisons print?</legend>
+            <pre><code>object a = 10;
+object b = 10;
+
+Console.WriteLine(a == b);
+Console.WriteLine(a.Equals(b));</code></pre>
+            <label><input type="radio" name="q10" value="a" required> True, True</label>
+            <label><input type="radio" name="q10" value="b"> True, False</label>
+            <label><input type="radio" name="q10" value="c"> False, True</label>
+            <label><input type="radio" name="q10" value="d"> False, followed by an exception</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Each assignment creates a different box, so object == compares two different references and returns false. a.Equals(b) dispatches to Int32.Equals, which checks the boxed type and contained value and returns true."></p>
+        </article>
+
+        <article class="question" data-correct="b" data-section="equality">
+          <fieldset>
+            <legend>11. What is printed when the numeric values match but their boxed runtime types differ?</legend>
+            <pre><code>object a = 10;   // boxed Int32
+object b = 10L;  // boxed Int64
+
+Console.WriteLine(a.Equals(b));</code></pre>
+            <label><input type="radio" name="q11" value="a" required> True, because both numbers represent ten.</label>
+            <label><input type="radio" name="q11" value="b"> False, because Int32.Equals does not convert a boxed Int64.</label>
+            <label><input type="radio" name="q11" value="c"> InvalidCastException</label>
+            <label><input type="radio" name="q11" value="d"> A compile-time error</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Int32.Equals(object) safely tests the other object’s runtime type. A boxed Int64 is not an Int32, so the method returns false; it neither performs numeric conversion nor throws."></p>
+        </article>
+
+        <article class="question" data-correct="d" data-section="equality">
+          <fieldset>
+            <legend>12. Which line actually opens the box to retrieve a concrete <code>int</code>?</legend>
+            <pre><code>IComparable comparable = 10;</code></pre>
+            <label><input type="radio" name="q12" value="a" required> <code>Console.WriteLine(comparable);</code></label>
+            <label><input type="radio" name="q12" value="b"> <code>object value = comparable;</code></label>
+            <label><input type="radio" name="q12" value="c"> <code>string text = comparable.ToString();</code></label>
+            <label><input type="radio" name="q12" value="d"> <code>int value = (int)comparable;</code></label>
+          </fieldset>
+          <p class="feedback" data-explanation="Only the final line demands an Int32 value, so it explicitly unboxes. The other lines use the existing interface/object reference and leave the box closed. Mental rule: if the destination/API accepts object or the current interface, no unboxing cast is needed; if your code needs an int operation, unbox or use an intentional conversion API."></p>
+        </article>
+      </section>
+
+      <div class="actions">
+        <button id="submit-button" type="submit">Submit diagnostic</button>
+        <button type="reset">Clear and restart</button>
+      </div>
+    </form>
+
+    <section id="result" aria-live="polite" tabindex="-1"></section>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'csharp-topic1-mastery-challenge-v1';
+    const form = document.querySelector('#quiz-form');
+    const questions = [...document.querySelectorAll('.question')];
+    const result = document.querySelector('#result');
+    const progressLabel = document.querySelector('#progress-label');
+    const answerProgress = document.querySelector('#answer-progress');
+    const submitButton = document.querySelector('#submit-button');
+
+    function selectedAnswers() {
+      return Object.fromEntries(
+        questions
+          .map((question) => question.querySelector('input:checked'))
+          .filter(Boolean)
+          .map((input) => [input.name, input.value])
+      );
+    }
+
+    function updateProgress() {
+      const answered = Object.keys(selectedAnswers()).length;
+      const percentage = Math.round((answered / questions.length) * 100);
+      progressLabel.textContent = `Quiz answered: ${answered} / ${questions.length} (${percentage}%)`;
+      answerProgress.value = answered;
+      answerProgress.textContent = `${percentage}%`;
+    }
+
+    function saveProgress() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedAnswers()));
+      } catch (error) {
+        // The quiz remains fully usable when browser storage is unavailable.
+      }
+    }
+
+    function restoreProgress() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        Object.entries(saved).forEach(([name, value]) => {
+          const input = form.querySelector(`input[name="${name}"][value="${value}"]`);
+          if (input) input.checked = true;
+        });
+      } catch (error) {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+      updateProgress();
+    }
+
+    function clearMarking(question) {
+      question.querySelectorAll('label').forEach((label) => {
+        label.classList.remove('answer-key', 'wrong-choice');
+      });
+      const feedback = question.querySelector('.feedback');
+      feedback.style.display = 'none';
+      feedback.textContent = '';
+    }
+
+    form.addEventListener('change', () => {
+      updateProgress();
+      saveProgress();
+    });
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      let score = 0;
+      const sectionScores = {
+        parameters: { correct: 0, total: 0, label: 'Copying & parameters' },
+        boxing: { correct: 0, total: 0, label: 'Boxing & conversion' },
+        equality: { correct: 0, total: 0, label: 'Equality & box boundary' }
+      };
+
+      questions.forEach((question) => {
+        const selected = question.querySelector('input:checked');
+        const correctValue = question.dataset.correct;
+        const feedback = question.querySelector('.feedback');
+        const section = sectionScores[question.dataset.section];
+        const isCorrect = selected && selected.value === correctValue;
+
+        section.total += 1;
+        if (isCorrect) {
+          score += 1;
+          section.correct += 1;
+        }
+
+        question.querySelectorAll('label').forEach((label) => {
+          const input = label.querySelector('input');
+          label.classList.toggle('answer-key', input.value === correctValue);
+          label.classList.toggle('wrong-choice', input.checked && input.value !== correctValue);
+          input.disabled = true;
+        });
+
+        feedback.className = `feedback ${isCorrect ? 'correct' : 'incorrect'}`;
+        feedback.textContent = `${isCorrect ? 'Correct.' : 'Not quite.'} ${feedback.dataset.explanation}`;
+        feedback.style.display = 'block';
+      });
+
+      const percentage = Math.round((score / questions.length) * 100);
+      const passed = score >= 10;
+      const perfect = score === questions.length;
+      const breakdown = Object.values(sectionScores)
+        .map((section) => `<span><strong>${section.label}</strong><br>${section.correct} / ${section.total}</span>`)
+        .join('');
+      const message = perfect
+        ? 'Perfect recall. Checkpoint 9 is cleared: your topic progress is now 9 / 10 (90%).'
+        : passed
+          ? 'Diagnostic cleared. Your topic progress can move to 9 / 10 (90%); review the missed explanation before the final summary.'
+          : score >= 8
+            ? 'Very close. Review only the missed explanations, restart, and aim for 10 / 12 before closing the diagnostic checkpoint.'
+            : 'Keep the topic at 8 / 10 (80%). Ask for a short drill on your weakest section, then restart this diagnostic.';
+      const nextStep = passed
+        ? 'Remaining checkpoint: give an interview-ready explanation and finish the NET-01 iPad note.'
+        : 'The result breakdown shows where the next targeted lesson should begin.';
+      const code = `CSHARP-T1B-${score}OF${questions.length}-${passed ? 'CLEAR' : 'REVIEW'}`;
+
+      result.innerHTML = `
+        <h2>${score} / ${questions.length} correct (${percentage}%)</h2>
+        <p>${message}</p>
+        <div class="breakdown">${breakdown}</div>
+        <p>${nextStep}</p>
+        <span class="completion-code">${code}</span>
+      `;
+      result.style.display = 'block';
+      submitButton.disabled = true;
+      submitButton.textContent = 'Diagnostic submitted';
+      result.focus();
+      result.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    form.addEventListener('reset', () => {
+      questions.forEach((question) => {
+        clearMarking(question);
+        question.querySelectorAll('input').forEach((input) => { input.disabled = false; });
+      });
+      result.style.display = 'none';
+      result.textContent = '';
+      submitButton.disabled = false;
+      submitButton.textContent = 'Submit diagnostic';
+      try { localStorage.removeItem(STORAGE_KEY); } catch (error) { /* no-op */ }
+      window.setTimeout(updateProgress, 0);
+    });
+
+    restoreProgress();
+  </script>
+</body>
+</html>
