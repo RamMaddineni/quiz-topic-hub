@@ -325,6 +325,19 @@
     .visual-card figcaption { padding: 0.8rem 0.35rem 0.2rem; color: var(--muted); line-height: 1.55; }
     .visual-card figcaption strong { color: var(--text); }
 
+    .visual-guide-link {
+      display: inline-flex;
+      margin-top: 1rem;
+      padding: 0.75rem 0.95rem;
+      color: white;
+      background: var(--primary);
+      border-radius: 0.7rem;
+      font-weight: 780;
+      text-decoration: none;
+    }
+
+    .visual-guide-link:hover { background: var(--primary-strong); }
+
     @media (max-width: 560px) {
       .shell { width: min(100% - 1rem, 900px); }
       .question { padding: 1.05rem; }
@@ -738,6 +751,7 @@
           <figcaption><strong>4. CAP theorem without the misleading triangle.</strong> A partition is the failure condition. While it lasts, preserving one agreed value requires refusing some requests; answering every reachable client allows temporary divergence.</figcaption>
         </figure>
       </div>
+      <a class="visual-guide-link" href="cap-theorem-visual-guide.html">Open the complete 8-step CAP visual guide →</a>
     </details>
 
     <details class="references">
