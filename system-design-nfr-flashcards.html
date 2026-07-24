@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Twelve active-recall flashcards for the Non-Functional Requirements introduction: availability, scalability, latency, consistency, CAP, and architectural trade-offs.">
+  <title>NFR Active-Recall Flashcards | Topic Quiz Hub</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f3f7f7;
+      --surface: #ffffff;
+      --surface-soft: #f7faf9;
+      --text: #152329;
+      --muted: #617078;
+      --primary: #087f73;
+      --primary-strong: #05685f;
+      --primary-soft: rgba(8, 127, 115, 0.1);
+      --review: #a45c00;
+      --review-soft: rgba(164, 92, 0, 0.1);
+      --success: #087f5b;
+      --success-soft: rgba(8, 127, 91, 0.1);
+      --border: #dce6e5;
+      --shadow: 0 18px 45px rgba(21, 35, 41, 0.1);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(8, 127, 115, 0.14), transparent 31rem),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button { font: inherit; }
+
+    .shell {
+      width: min(860px, calc(100% - 2rem));
+      margin: 0 auto;
+    }
+
+    nav { padding: 1.25rem 0; }
+
+    nav a {
+      color: var(--primary);
+      font-weight: 750;
+      text-decoration: none;
+    }
+
+    nav a:hover { text-decoration: underline; }
+
+    header { padding: 1rem 0 1.5rem; }
+
+    .eyebrow {
+      margin: 0;
+      color: var(--primary);
+      font-size: 0.78rem;
+      font-weight: 850;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0.55rem 0 0.75rem;
+      font-size: clamp(2.1rem, 7vw, 4rem);
+      line-height: 1;
+      letter-spacing: -0.045em;
+    }
+
+    header > p:last-child {
+      max-width: 700px;
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .progress-panel {
+      position: sticky;
+      top: 0.5rem;
+      z-index: 10;
+      margin-bottom: 1.15rem;
+      padding: 0.9rem 1rem;
+      background: color-mix(in srgb, var(--surface) 94%, transparent);
+      border: 1px solid var(--border);
+      border-radius: 0.9rem;
+      box-shadow: 0 10px 30px rgba(21, 35, 41, 0.07);
+      backdrop-filter: blur(12px);
+    }
+
+    .progress-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .progress-row strong { font-size: 0.95rem; }
+    .progress-row span { color: var(--muted); font-size: 0.84rem; }
+
+    progress {
+      width: 100%;
+      height: 0.65rem;
+      margin-top: 0.65rem;
+      accent-color: var(--primary);
+    }
+
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      margin-top: 0.7rem;
+    }
+
+    .status {
+      padding: 0.32rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 750;
+    }
+
+    .status.review { color: var(--review); background: var(--review-soft); }
+    .status.known { color: var(--success); background: var(--success-soft); }
+    .status.unseen { color: var(--muted); background: var(--surface-soft); }
+
+    .flashcard {
+      display: grid;
+      min-height: 430px;
+      padding: clamp(1.3rem, 4vw, 2.25rem);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1.25rem;
+      box-shadow: var(--shadow);
+    }
+
+    .card-topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      align-self: start;
+    }
+
+    .category {
+      padding: 0.4rem 0.65rem;
+      color: var(--primary);
+      background: var(--primary-soft);
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .card-number { color: var(--muted); font-size: 0.84rem; }
+
+    .card-content {
+      display: grid;
+      place-items: center;
+      padding: 1.5rem 0;
+      text-align: center;
+    }
+
+    .prompt {
+      max-width: 700px;
+      margin: 0;
+      font-size: clamp(1.5rem, 5vw, 2.35rem);
+      line-height: 1.25;
+      letter-spacing: -0.025em;
+    }
+
+    .recall-cue {
+      margin: 1rem 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .answer {
+      width: 100%;
+      max-width: 720px;
+      text-align: left;
+    }
+
+    .answer[hidden] { display: none; }
+    .question-side[hidden] { display: none; }
+
+    .answer h2 {
+      margin: 0 0 0.85rem;
+      color: var(--primary);
+      font-size: 1rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .answer p {
+      margin: 0.65rem 0;
+      line-height: 1.65;
+    }
+
+    .answer ul {
+      margin: 0.75rem 0;
+      padding-left: 1.2rem;
+      line-height: 1.65;
+    }
+
+    .answer strong { color: var(--text); }
+
+    .decision-rule {
+      margin-top: 1rem !important;
+      padding: 0.8rem 0.9rem;
+      background: var(--primary-soft);
+      border-left: 4px solid var(--primary);
+      border-radius: 0.65rem;
+    }
+
+    .visual-anchor {
+      display: block;
+      width: 100%;
+      max-height: 310px;
+      margin: 1rem auto 0;
+      object-fit: contain;
+      background: #f5fbfa;
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+    }
+
+    .card-footer {
+      display: grid;
+      gap: 0.75rem;
+      align-self: end;
+    }
+
+    .primary-actions,
+    .rating-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      justify-content: center;
+    }
+
+    button {
+      min-height: 44px;
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      border-radius: 0.72rem;
+      font-weight: 750;
+    }
+
+    button:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--primary) 30%, transparent);
+      outline-offset: 2px;
+    }
+
+    button:disabled { cursor: not-allowed; opacity: 0.48; }
+
+    .button-primary {
+      color: white;
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .button-primary:hover:not(:disabled) { background: var(--primary-strong); }
+
+    .button-secondary {
+      color: var(--text);
+      background: var(--surface-soft);
+    }
+
+    .button-review {
+      color: var(--review);
+      background: var(--review-soft);
+      border-color: color-mix(in srgb, var(--review) 32%, var(--border));
+    }
+
+    .button-known {
+      color: var(--success);
+      background: var(--success-soft);
+      border-color: color-mix(in srgb, var(--success) 32%, var(--border));
+    }
+
+    .shortcut-note {
+      margin: 1rem 0 3rem;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.55;
+      text-align: center;
+    }
+
+    kbd {
+      padding: 0.12rem 0.35rem;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-bottom-width: 2px;
+      border-radius: 0.35rem;
+      font-family: inherit;
+    }
+
+    .reset-row {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 3rem;
+    }
+
+    .reset-button {
+      color: var(--muted);
+      background: transparent;
+    }
+
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 1rem, 860px); }
+      .progress-panel { top: 0.25rem; }
+      .flashcard { min-height: 490px; }
+      .progress-row { align-items: flex-start; flex-direction: column; gap: 0.15rem; }
+      .primary-actions button { flex: 1 1 40%; }
+      .rating-actions button { flex: 1 1 45%; }
+      .shortcut-note { display: none; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1719;
+        --surface: #152326;
+        --surface-soft: #101d20;
+        --text: #f1f7f6;
+        --muted: #a4b5b4;
+        --primary: #63d7ca;
+        --primary-strong: #8ce4da;
+        --primary-soft: rgba(99, 215, 202, 0.12);
+        --review: #ffc078;
+        --review-soft: rgba(255, 192, 120, 0.1);
+        --success: #69dbb5;
+        --success-soft: rgba(105, 219, 181, 0.11);
+        --border: #294044;
+        --shadow: 0 18px 45px rgba(0, 0, 0, 0.26);
+      }
+
+      .button-primary { color: #0d2422; }
+      .visual-anchor { background: #f5fbfa; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { scroll-behavior: auto !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <nav><a href="index.html">← Back to learning hub</a></nav>
+
+    <header>
+      <p class="eyebrow">System Design · Introduction · Active recall</p>
+      <h1>NFR Flashcards</h1>
+      <p>Twelve cards covering the whole introduction. Say your answer aloud before revealing it. Mark a card “Need review” when your reasoning is incomplete—not only when the final word is wrong.</p>
+    </header>
+
+    <section class="progress-panel" aria-label="Deck progress">
+      <div class="progress-row">
+        <strong id="progress-label">Card 1 of 12</strong>
+        <span id="completion-label">0 of 12 rated</span>
+      </div>
+      <progress id="deck-progress" max="12" value="0">0 of 12 rated</progress>
+      <div class="status-row" aria-live="polite">
+        <span class="status review" id="review-count">Need review: 0</span>
+        <span class="status known" id="known-count">Got it: 0</span>
+        <span class="status unseen" id="unseen-count">Unrated: 12</span>
+      </div>
+    </section>
+
+    <article class="flashcard" aria-live="polite">
+      <div class="card-topline">
+        <span class="category" id="card-category"></span>
+        <span class="card-number" id="card-number"></span>
+      </div>
+
+      <div class="card-content">
+        <section class="question-side" id="question-side">
+          <h2 class="prompt" id="card-prompt"></h2>
+          <p class="recall-cue" id="recall-cue"></p>
+        </section>
+
+        <section class="answer" id="card-answer" hidden>
+          <h2>Answer</h2>
+          <div id="answer-content"></div>
+          <img class="visual-anchor" id="visual-anchor" alt="" hidden>
+        </section>
+      </div>
+
+      <div class="card-footer">
+        <div class="primary-actions">
+          <button class="button-secondary" id="previous-button" type="button">← Previous</button>
+          <button class="button-primary" id="reveal-button" type="button">Reveal answer</button>
+          <button class="button-secondary" id="next-button" type="button">Next →</button>
+        </div>
+        <div class="rating-actions">
+          <button class="button-review" id="review-button" type="button" disabled>Need review</button>
+          <button class="button-known" id="known-button" type="button" disabled>Got it</button>
+        </div>
+      </div>
+    </article>
+
+    <p class="shortcut-note">
+      Keyboard: <kbd>Space</kbd> reveal · <kbd>←</kbd>/<kbd>→</kbd> navigate ·
+      <kbd>1</kbd> need review · <kbd>2</kbd> got it
+    </p>
+
+    <div class="reset-row">
+      <button class="reset-button" id="reset-button" type="button">Reset deck progress</button>
+    </div>
+  </main>
+
+  <script>
+    const cards = [
+      {
+        category: 'Framing',
+        prompt: 'What is the difference between a functional requirement and a non-functional requirement?',
+        cue: 'Use one feature and one measurable quality target in your answer.',
+        answer: `
+          <p>A <strong>functional requirement</strong> says what the system does: for example, “users can send messages.”</p>
+          <p>A <strong>non-functional requirement</strong> says how well that behavior must work: for example, “99.99% available” or “95% of messages delivered within 200 ms.”</p>
+          <p class="decision-rule"><strong>Reasoning chain:</strong> feature → quality target → architecture needed to meet it.</p>
+        `,
+        image: 'assets/nfr-four-pillars.svg',
+        imageAlt: 'The four non-functional requirement lenses—availability, scalability, latency, and consistency—surrounding business priorities.'
+      },
+      {
+        category: 'Framing',
+        prompt: 'Why should architecture start with business targets instead of technologies?',
+        cue: 'Explain why the same feature can require two very different designs.',
+        answer: `
+          <p>Technology is a response to constraints. The same messaging feature may need a simple server for 100 users, but redundancy, partitions, queues, and caching for millions of users with strict uptime and latency targets.</p>
+          <p class="decision-rule"><strong>Decision rule:</strong> state the measurable target and failure tolerance first; choose components second.</p>
+        `
+      },
+      {
+        category: 'Availability',
+        prompt: 'What does availability measure—and what does 99.9% availability still allow?',
+        cue: 'Do not answer “the system never fails.”',
+        answer: `
+          <p><strong>Availability</strong> is the proportion of time the service is usable when users need it.</p>
+          <p>99.9% availability still permits about <strong>8 hours 46 minutes of downtime per year</strong>. Availability does not mean components never fail; it means the service meets its usable-time target despite expected failures.</p>
+          <p class="decision-rule"><strong>Key distinction:</strong> component failure can occur without service downtime when redundancy masks it.</p>
+        `
+      },
+      {
+        category: 'Availability',
+        prompt: 'One application instance crashes. How can the service remain available?',
+        cue: 'Name the detection, routing, and isolation mechanisms.',
+        answer: `
+          <ul>
+            <li>Run <strong>redundant instances</strong> so another copy can serve traffic.</li>
+            <li>Use <strong>health checks</strong> to detect the failed instance.</li>
+            <li>Let a <strong>load balancer</strong> stop routing to it and send requests elsewhere.</li>
+            <li>Use multiple zones or regions when the failure boundary is larger than one machine.</li>
+          </ul>
+          <p class="decision-rule"><strong>Causal chain:</strong> duplicate → detect → reroute → isolate the blast radius.</p>
+        `
+      },
+      {
+        category: 'Scalability',
+        prompt: 'Vertical scaling versus horizontal scaling: what changes, and why is horizontal scaling often preferred?',
+        cue: 'Mention both the growth limit and the failure implication.',
+        answer: `
+          <p><strong>Vertical scaling</strong> makes one machine larger. It is simple, but the machine has a ceiling and can remain a large single point of failure.</p>
+          <p><strong>Horizontal scaling</strong> adds more machines. It can grow incrementally and improves redundancy, but requires distribution, coordination, and stateless design.</p>
+          <p class="decision-rule"><strong>Use the trade-off:</strong> vertical for simplicity at modest scale; horizontal when growth and fault isolation matter.</p>
+        `
+      },
+      {
+        category: 'Scalability',
+        prompt: 'How do stateless services, caching, and queues each help a system scale?',
+        cue: 'Give a different causal role for each pattern.',
+        answer: `
+          <ul>
+            <li><strong>Stateless services:</strong> any instance can handle any request, so instances can be added or removed easily.</li>
+            <li><strong>Caching:</strong> repeated work is avoided, reducing database and compute load.</li>
+            <li><strong>Queues:</strong> traffic bursts are buffered, letting workers process work at a sustainable rate.</li>
+          </ul>
+          <p class="decision-rule"><strong>Memory hook:</strong> stateless spreads, cache avoids, queue smooths.</p>
+        `
+      },
+      {
+        category: 'Latency',
+        prompt: 'What is latency, and why can an average hide a bad user experience?',
+        cue: 'Think about the slowest meaningful group of requests.',
+        answer: `
+          <p><strong>Latency</strong> is the time from sending a request until receiving its response.</p>
+          <p>An average can look healthy while a smaller group waits much longer. Percentiles such as <strong>p95 or p99</strong> reveal the experience of the slower requests.</p>
+          <p class="decision-rule"><strong>Example:</strong> p99 = 800 ms means roughly 1% of requests are slower than 800 ms.</p>
+        `
+      },
+      {
+        category: 'Latency',
+        prompt: 'CDN, database index, and edge computing reduce latency in three different ways. What does each remove?',
+        cue: 'Classify the wasted time as distance, work, or round trips.',
+        answer: `
+          <ul>
+            <li><strong>CDN:</strong> reduces network distance by serving content near users.</li>
+            <li><strong>Database index:</strong> reduces the amount of data the database must examine.</li>
+            <li><strong>Edge computing:</strong> performs suitable work near the user, reducing distant round trips.</li>
+          </ul>
+          <p class="decision-rule"><strong>Reasoning chain:</strong> identify where time is spent → remove distance, processing, or hops.</p>
+        `
+      },
+      {
+        category: 'Consistency',
+        prompt: 'What is the practical difference between strong consistency and eventual consistency?',
+        cue: 'State what a read may observe immediately after a write.',
+        answer: `
+          <p>With <strong>strong consistency</strong>, a successful write is followed by reads that observe the agreed latest value, usually requiring coordination such as a leader, quorum, or consensus.</p>
+          <p>With <strong>eventual consistency</strong>, replicas may temporarily show different values, but converge once updates propagate and communication is healthy.</p>
+          <p class="decision-rule"><strong>Trade-off:</strong> strong gives a stricter correctness guarantee; eventual can improve availability, latency, and scale when temporary staleness is acceptable.</p>
+        `
+      },
+      {
+        category: 'CAP',
+        prompt: 'During a network partition, why must a replicated system choose between consistency and availability?',
+        cue: 'Explain what a replica knows—and cannot know—when it cannot contact the other copy.',
+        answer: `
+          <p>A partition means replicas cannot communicate. A replica cannot prove whether the unreachable copy has accepted a newer conflicting write.</p>
+          <ul>
+            <li>To preserve <strong>consistency</strong>, it waits or rejects some requests until agreement is possible—reducing availability.</li>
+            <li>To preserve <strong>availability</strong>, it responds using its reachable state—risking temporary disagreement.</li>
+          </ul>
+          <p class="decision-rule"><strong>The choice exists only while communication is partitioned:</strong> refuse uncertainty or answer despite uncertainty.</p>
+        `,
+        image: 'assets/cap-theorem-partition-decision.svg',
+        imageAlt: 'A network partition forces a choice between refusing some requests to preserve one agreed value and serving from both sides with temporary divergence.'
+      },
+      {
+        category: 'Consistency',
+        prompt: 'Why should consistency be chosen per operation instead of once for the whole application?',
+        cue: 'Contrast a money operation with a social feature.',
+        answer: `
+          <p>Different operations protect different business invariants.</p>
+          <ul>
+            <li><strong>Payment or finalized stock:</strong> stale or conflicting data can lose money, so strong correctness is worth waiting or failing safely.</li>
+            <li><strong>Feed, likes, or recommendations:</strong> brief staleness is usually acceptable, so eventual consistency can improve speed and availability.</li>
+          </ul>
+          <p class="decision-rule"><strong>Ask:</strong> what damage occurs if this value is briefly stale or two writes conflict?</p>
+        `
+      },
+      {
+        category: 'Synthesis',
+        prompt: 'Design a global marketplace that needs a fast feed, slightly delayed likes, no double charges, and survival of one zone failure.',
+        cue: 'Map each requirement to one architecture choice; do not search for one universal component.',
+        answer: `
+          <ul>
+            <li><strong>Fast feed:</strong> nearby cache, CDN, or edge delivery.</li>
+            <li><strong>Delayed likes are acceptable:</strong> asynchronous propagation with eventual consistency.</li>
+            <li><strong>No double charges:</strong> transactional, strongly consistent payment path with idempotency.</li>
+            <li><strong>Zone failure:</strong> redundant health-checked instances across independent zones with failover.</li>
+          </ul>
+          <p class="decision-rule"><strong>Final lesson:</strong> combine patterns per requirement and state their cost. Lower latency, stronger consistency, broader redundancy, and greater scale all add complexity or expense.</p>
+        `
+      }
+    ];
+
+    const STORAGE_KEY = 'system-design-nfr-flashcards-v1';
+    const state = {
+      index: 0,
+      revealed: false,
+      ratings: loadRatings()
+    };
+
+    const category = document.querySelector('#card-category');
+    const cardNumber = document.querySelector('#card-number');
+    const prompt = document.querySelector('#card-prompt');
+    const recallCue = document.querySelector('#recall-cue');
+    const questionSide = document.querySelector('#question-side');
+    const answer = document.querySelector('#card-answer');
+    const answerContent = document.querySelector('#answer-content');
+    const visualAnchor = document.querySelector('#visual-anchor');
+    const revealButton = document.querySelector('#reveal-button');
+    const previousButton = document.querySelector('#previous-button');
+    const nextButton = document.querySelector('#next-button');
+    const reviewButton = document.querySelector('#review-button');
+    const knownButton = document.querySelector('#known-button');
+    const resetButton = document.querySelector('#reset-button');
+    const progressLabel = document.querySelector('#progress-label');
+    const completionLabel = document.querySelector('#completion-label');
+    const deckProgress = document.querySelector('#deck-progress');
+    const reviewCount = document.querySelector('#review-count');
+    const knownCount = document.querySelector('#known-count');
+    const unseenCount = document.querySelector('#unseen-count');
+
+    function loadRatings() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        return saved && typeof saved === 'object' ? saved : {};
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function saveRatings() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.ratings));
+      } catch (error) {
+        // The deck remains usable when browser storage is unavailable.
+      }
+    }
+
+    function ratingTotals() {
+      const values = Object.values(state.ratings);
+      return {
+        review: values.filter((value) => value === 'review').length,
+        known: values.filter((value) => value === 'known').length
+      };
+    }
+
+    function render() {
+      const card = cards[state.index];
+      const totals = ratingTotals();
+      const rated = totals.review + totals.known;
+      const currentRating = state.ratings[state.index];
+
+      category.textContent = card.category;
+      cardNumber.textContent = `${state.index + 1} / ${cards.length}`;
+      prompt.textContent = card.prompt;
+      recallCue.textContent = card.cue;
+      answerContent.innerHTML = card.answer;
+      questionSide.hidden = state.revealed;
+      answer.hidden = !state.revealed;
+      revealButton.textContent = state.revealed ? 'Hide answer' : 'Reveal answer';
+      reviewButton.disabled = !state.revealed;
+      knownButton.disabled = !state.revealed;
+      reviewButton.setAttribute('aria-pressed', String(currentRating === 'review'));
+      knownButton.setAttribute('aria-pressed', String(currentRating === 'known'));
+      previousButton.disabled = state.index === 0;
+      nextButton.disabled = state.index === cards.length - 1;
+
+      if (card.image && state.revealed) {
+        visualAnchor.src = card.image;
+        visualAnchor.alt = card.imageAlt;
+        visualAnchor.hidden = false;
+      } else {
+        visualAnchor.hidden = true;
+        visualAnchor.removeAttribute('src');
+        visualAnchor.alt = '';
+      }
+
+      progressLabel.textContent = `Card ${state.index + 1} of ${cards.length}`;
+      completionLabel.textContent = `${rated} of ${cards.length} rated`;
+      deckProgress.max = cards.length;
+      deckProgress.value = rated;
+      deckProgress.textContent = `${rated} of ${cards.length} rated`;
+      reviewCount.textContent = `Need review: ${totals.review}`;
+      knownCount.textContent = `Got it: ${totals.known}`;
+      unseenCount.textContent = `Unrated: ${cards.length - rated}`;
+    }
+
+    function reveal() {
+      state.revealed = !state.revealed;
+      render();
+    }
+
+    function move(offset) {
+      const target = state.index + offset;
+      if (target < 0 || target >= cards.length) return;
+      state.index = target;
+      state.revealed = false;
+      render();
+    }
+
+    function rate(value) {
+      if (!state.revealed) return;
+      state.ratings[state.index] = value;
+      saveRatings();
+      if (state.index < cards.length - 1) {
+        state.index += 1;
+        state.revealed = false;
+      }
+      render();
+    }
+
+    revealButton.addEventListener('click', reveal);
+    previousButton.addEventListener('click', () => move(-1));
+    nextButton.addEventListener('click', () => move(1));
+    reviewButton.addEventListener('click', () => rate('review'));
+    knownButton.addEventListener('click', () => rate('known'));
+
+    resetButton.addEventListener('click', () => {
+      if (!window.confirm('Reset every flashcard rating?')) return;
+      state.ratings = {};
+      state.index = 0;
+      state.revealed = false;
+      try { localStorage.removeItem(STORAGE_KEY); } catch (error) { /* no-op */ }
+      render();
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.target instanceof HTMLButtonElement) return;
+      if (event.key === ' ') {
+        event.preventDefault();
+        reveal();
+      } else if (event.key === 'ArrowLeft') {
+        move(-1);
+      } else if (event.key === 'ArrowRight') {
+        move(1);
+      } else if (event.key === '1') {
+        rate('review');
+      } else if (event.key === '2') {
+        rate('known');
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>
