@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Twelve active-recall flashcards for the Non-Functional Requirements introduction: availability, scalability, latency, consistency, CAP, and architectural trade-offs.">
+  <meta name="description" content="Twelve mechanism-first flashcards for the Non-Functional Requirements introduction: availability, scalability, latency, consistency, CAP, and architectural trade-offs.">
   <title>NFR Active-Recall Flashcards | Topic Quiz Hub</title>
   <style>
     :root {
@@ -353,7 +353,7 @@
     <header>
       <p class="eyebrow">System Design · Introduction · Active recall</p>
       <h1>NFR Flashcards</h1>
-      <p>Twelve cards covering the whole introduction. Say your answer aloud before revealing it. Mark a card “Need review” when your reasoning is incomplete—not only when the final word is wrong.</p>
+      <p>Twelve mechanism-first cards covering the whole introduction. Say the cause-and-effect chain aloud before revealing the answer. If you can name a component but cannot explain which requirement forces it, mark the card “Need review.”</p>
     </header>
 
     <section class="progress-panel" aria-label="Deck progress">
@@ -415,150 +415,164 @@
     const cards = [
       {
         category: 'Framing',
-        prompt: 'What is the difference between a functional requirement and a non-functional requirement?',
-        cue: 'Use one feature and one measurable quality target in your answer.',
+        prompt: '“Users can send messages.” What does this requirement tell us—and what important information is still missing?',
+        cue: 'Separate the capability from the conditions under which it must work.',
         answer: `
-          <p>A <strong>functional requirement</strong> says what the system does: for example, “users can send messages.”</p>
-          <p>A <strong>non-functional requirement</strong> says how well that behavior must work: for example, “99.99% available” or “95% of messages delivered within 200 ms.”</p>
-          <p class="decision-rule"><strong>Reasoning chain:</strong> feature → quality target → architecture needed to meet it.</p>
+          <p>It tells us the <strong>functional requirement</strong>: the system must provide the capability to send a message.</p>
+          <p>It does not tell us the operating conditions: How many users? How quickly must delivery happen? How much downtime is acceptable? Can an acknowledged message be lost or briefly invisible on another replica?</p>
+          <p>Those measurable conditions are <strong>non-functional requirements</strong>: for example, “support 100,000 concurrent users,” “p99 delivery latency below 300 ms,” or “survive one availability-zone failure.”</p>
+          <p class="decision-rule"><strong>Key idea:</strong> the feature defines the behavior; NFRs define the load and failure conditions under which that behavior must remain acceptable.</p>
         `,
         image: 'assets/nfr-four-pillars.svg',
         imageAlt: 'The four non-functional requirement lenses—availability, scalability, latency, and consistency—surrounding business priorities.'
       },
       {
         category: 'Framing',
-        prompt: 'Why should architecture start with business targets instead of technologies?',
-        cue: 'Explain why the same feature can require two very different designs.',
+        prompt: 'How can the same “send a message” feature correctly use one server in one product and a distributed design in another?',
+        cue: 'Map each measurable requirement to the design problem it creates.',
         answer: `
-          <p>Technology is a response to constraints. The same messaging feature may need a simple server for 100 users, but redundancy, partitions, queues, and caching for millions of users with strict uptime and latency targets.</p>
-          <p class="decision-rule"><strong>Decision rule:</strong> state the measurable target and failure tolerance first; choose components second.</p>
+          <p><strong>Office chat:</strong> 100 users, low traffic, two-second delivery is acceptable, and an hour of downtime is tolerable. One application server and one database may satisfy those targets at the lowest cost.</p>
+          <p><strong>Global critical chat:</strong> one million concurrent users, p99 delivery below 300 ms, no loss after acknowledgement, and continued service when one zone fails. One server cannot meet those conditions.</p>
+          <ul>
+            <li>Traffic and availability targets require multiple service instances and failure-aware routing.</li>
+            <li>No-loss acknowledgement requires durable, replicated storage or a durable log.</li>
+            <li>Global latency may require regional entry points.</li>
+            <li>Partitioning is needed only if the data or write volume exceeds one database’s capacity.</li>
+          </ul>
+          <p class="decision-rule"><strong>Linkage:</strong> business consequence → measurable NFR → problem a simple design cannot handle → architectural response. The target rules out insufficient designs; it does not uniquely choose a vendor or product.</p>
         `
       },
       {
         category: 'Availability',
-        prompt: 'What does availability measure—and what does 99.9% availability still allow?',
-        cue: 'Do not answer “the system never fails.”',
+        prompt: 'Does 99.99% availability mean that no server may ever fail?',
+        cue: 'Distinguish component failure from service availability, then explain the downtime budget.',
         answer: `
-          <p><strong>Availability</strong> is the proportion of time the service is usable when users need it.</p>
-          <p>99.9% availability still permits about <strong>8 hours 46 minutes of downtime per year</strong>. Availability does not mean components never fail; it means the service meets its usable-time target despite expected failures.</p>
-          <p class="decision-rule"><strong>Key distinction:</strong> component failure can occur without service downtime when redundancy masks it.</p>
+          <p>No. <strong>Availability is measured at the service boundary</strong>: could the user successfully use the service? Individual components may fail without creating user-visible downtime if another healthy component takes over.</p>
+          <p>Over one year, 99.9% permits about <strong>8.77 hours</strong> of downtime; 99.99% permits about <strong>52.6 minutes</strong>. The tighter target leaves far less time to detect, recover from, or repair failures.</p>
+          <p class="decision-rule"><strong>Consequence:</strong> a stricter availability target usually requires redundancy plus automatic detection and failover. A more powerful single server still leaves one failure capable of taking down the service.</p>
         `
       },
       {
         category: 'Availability',
-        prompt: 'One application instance crashes. How can the service remain available?',
-        cue: 'Name the detection, routing, and isolation mechanisms.',
+        prompt: 'A service must survive (1) one process failure, (2) one availability-zone failure, and (3) one regional failure. How does the design change at each level?',
+        cue: 'The backup must live outside the failure boundary it is meant to survive.',
         answer: `
           <ul>
-            <li>Run <strong>redundant instances</strong> so another copy can serve traffic.</li>
-            <li>Use <strong>health checks</strong> to detect the failed instance.</li>
-            <li>Let a <strong>load balancer</strong> stop routing to it and send requests elsewhere.</li>
-            <li>Use multiple zones or regions when the failure boundary is larger than one machine.</li>
+            <li><strong>Process or machine:</strong> run multiple instances. Health checks identify the failed copy; a load balancer stops routing traffic to it.</li>
+            <li><strong>Availability zone:</strong> place healthy copies and critical dependencies in another independent zone. Copies inside the same failed zone do not help.</li>
+            <li><strong>Region:</strong> maintain service and required data in another region, then use global routing or failover to send users there.</li>
           </ul>
-          <p class="decision-rule"><strong>Causal chain:</strong> duplicate → detect → reroute → isolate the blast radius.</p>
+          <p>Each larger failure boundary costs more and makes data replication and consistency harder. Multi-region is therefore justified by the required blast-radius protection, not added automatically.</p>
+          <p class="decision-rule"><strong>Mechanism:</strong> keep another capable copy outside the failure domain → detect failure → stop sending work to the failed domain → reroute.</p>
         `
       },
       {
         category: 'Scalability',
-        prompt: 'Vertical scaling versus horizontal scaling: what changes, and why is horizontal scaling often preferred?',
-        cue: 'Mention both the growth limit and the failure implication.',
+        prompt: 'A service responds in 100 ms at 100 requests/second but takes five seconds at 10,000 requests/second. Is it scalable?',
+        cue: 'Separate current performance from the ability to preserve performance as load grows.',
         answer: `
-          <p><strong>Vertical scaling</strong> makes one machine larger. It is simple, but the machine has a ceiling and can remain a large single point of failure.</p>
-          <p><strong>Horizontal scaling</strong> adds more machines. It can grow incrementally and improves redundancy, but requires distribution, coordination, and stateless design.</p>
-          <p class="decision-rule"><strong>Use the trade-off:</strong> vertical for simplicity at modest scale; horizontal when growth and fault isolation matter.</p>
+          <p>Not at 10,000 requests/second. <strong>Scalability means the system can add resources and continue meeting an explicit performance target as load increases.</strong></p>
+          <p>A system can be fast at today’s load but still be unscalable. Conversely, a scalable system may not be the fastest at low load; its important property is that capacity can grow without performance collapsing.</p>
+          <p>A useful requirement joins the two dimensions: “support 10,000 requests/second while keeping p95 latency below 300 ms.”</p>
+          <p class="decision-rule"><strong>Causal chain:</strong> forecast load → define acceptable latency or throughput at that load → identify the saturated resource → scale or redesign that bottleneck.</p>
         `
       },
       {
         category: 'Scalability',
-        prompt: 'How do stateless services, caching, and queues each help a system scale?',
-        cue: 'Give a different causal role for each pattern.',
+        prompt: 'Why is adding a larger machine simpler than adding more machines—and why might a growing system still scale horizontally?',
+        cue: 'Explain the ceiling, failure impact, and coordination cost.',
+        answer: `
+          <p><strong>Vertical scaling</strong> adds CPU or memory to one machine. The application may require little change, so it is often the simplest first step. But machine sizes have a ceiling, upgrades can be expensive, and that machine remains a large failure domain.</p>
+          <p><strong>Horizontal scaling</strong> adds machines. Capacity can grow incrementally and one node carries less of the total impact, but work and data must be distributed. That introduces routing, replication, coordination, and consistency problems.</p>
+          <p>Stateless application servers are easier to scale horizontally because any instance can handle the next request. Databases are harder because their nodes must agree about shared data.</p>
+          <p class="decision-rule"><strong>Decision rule:</strong> use the simplest approach that meets forecast capacity and failure targets; horizontal scaling is a trade-off, not a universal upgrade.</p>
+        `
+      },
+      {
+        category: 'Scalability',
+        prompt: 'The system is overloaded. How do you decide whether to add stateless instances, a cache, or a queue?',
+        cue: 'Choose from the observed bottleneck; each pattern solves a different problem.',
         answer: `
           <ul>
-            <li><strong>Stateless services:</strong> any instance can handle any request, so instances can be added or removed easily.</li>
-            <li><strong>Caching:</strong> repeated work is avoided, reducing database and compute load.</li>
-            <li><strong>Queues:</strong> traffic bursts are buffered, letting workers process work at a sustainable rate.</li>
+            <li><strong>Stateless instances:</strong> use when independent requests are exhausting application CPU or concurrency. More interchangeable workers process requests in parallel.</li>
+            <li><strong>Cache:</strong> use when many requests repeatedly fetch or compute the same result. Reuse avoids work and reduces database pressure, at the cost of invalidation and possible staleness.</li>
+            <li><strong>Queue:</strong> use when work can happen asynchronously or bursts temporarily exceed worker capacity. The queue buffers the burst; workers drain it later.</li>
           </ul>
-          <p class="decision-rule"><strong>Memory hook:</strong> stateless spreads, cache avoids, queue smooths.</p>
+          <p>A queue does not create processing capacity—it trades immediate completion for waiting. A cache does not help write-heavy unique data. Extra instances do not fix a database that is already the bottleneck.</p>
+          <p class="decision-rule"><strong>Diagnose first:</strong> parallel work → instances; repeated work → cache; deferrable burst → queue.</p>
         `
       },
       {
         category: 'Latency',
-        prompt: 'What is latency, and why can an average hide a bad user experience?',
-        cue: 'Think about the slowest meaningful group of requests.',
+        prompt: 'Average latency is 80 ms, but one request in every hundred takes four seconds. Is “average below 100 ms” a sufficient requirement?',
+        cue: 'Explain what the average hides and write a more useful target.',
         answer: `
           <p><strong>Latency</strong> is the time from sending a request until receiving its response.</p>
-          <p>An average can look healthy while a smaller group waits much longer. Percentiles such as <strong>p95 or p99</strong> reveal the experience of the slower requests.</p>
-          <p class="decision-rule"><strong>Example:</strong> p99 = 800 ms means roughly 1% of requests are slower than 800 ms.</p>
+          <p>The average is insufficient because a small set of extremely slow requests can be hidden by many fast ones. In this example, thousands of users could still experience four-second responses even while the average looks healthy.</p>
+          <p>A requirement such as <strong>“p99 latency below 500 ms at 10,000 requests/second”</strong> states both the slow-user boundary and the load under which it must hold.</p>
+          <p>End-to-end latency can contain network travel, queue waiting, application processing, and database time. Measure the breakdown before choosing a fix.</p>
+          <p class="decision-rule"><strong>Do not optimize “latency” generically:</strong> locate the stage consuming the time, then reduce that stage.</p>
         `
       },
       {
         category: 'Latency',
-        prompt: 'CDN, database index, and edge computing reduce latency in three different ways. What does each remove?',
-        cue: 'Classify the wasted time as distance, work, or round trips.',
+        prompt: 'A page takes 800 ms. How do you determine whether a CDN, a database index, or edge computing will actually help?',
+        cue: 'Match the tool to the place where the time is being spent.',
         answer: `
           <ul>
-            <li><strong>CDN:</strong> reduces network distance by serving content near users.</li>
-            <li><strong>Database index:</strong> reduces the amount of data the database must examine.</li>
-            <li><strong>Edge computing:</strong> performs suitable work near the user, reducing distant round trips.</li>
+            <li>If distant users spend time downloading static images, CSS, or cacheable responses from the origin, a <strong>CDN</strong> serves those bytes nearby and removes network distance.</li>
+            <li>If the backend waits on a query that scans too many rows, a <strong>database index or query change</strong> reduces database work.</li>
+            <li>If a suitable dynamic decision still requires a long trip to a central region, <strong>edge computing</strong> can perform that work nearer the user and remove an origin round trip.</li>
           </ul>
-          <p class="decision-rule"><strong>Reasoning chain:</strong> identify where time is spent → remove distance, processing, or hops.</p>
+          <p>A CDN cannot repair an uncached slow database query. An index cannot shorten the physical network trip across continents. Edge execution adds deployment and data-access complexity and only helps work that can safely run there.</p>
+          <p class="decision-rule"><strong>Mapping:</strong> byte distance → CDN; database work → index/query optimization; avoidable central round trip → edge.</p>
         `
       },
       {
         category: 'Consistency',
-        prompt: 'What is the practical difference between strong consistency and eventual consistency?',
-        cue: 'State what a read may observe immediately after a write.',
+        prompt: 'A write changes X from 10 to 20 on replica A. An immediate read from replica B returns 10. What would strong and eventual consistency each require?',
+        cue: 'State the observable guarantee, not merely “replicas agree.”',
         answer: `
-          <p>With <strong>strong consistency</strong>, a successful write is followed by reads that observe the agreed latest value, usually requiring coordination such as a leader, quorum, or consensus.</p>
-          <p>With <strong>eventual consistency</strong>, replicas may temporarily show different values, but converge once updates propagate and communication is healthy.</p>
-          <p class="decision-rule"><strong>Trade-off:</strong> strong gives a stricter correctness guarantee; eventual can improve availability, latency, and scale when temporary staleness is acceptable.</p>
+          <p>Under a <strong>strong consistency</strong> guarantee, once the write of 20 is reported successful, a later read must not return the older value 10. The system coordinates the write/read path—commonly through a leader, quorum, or consensus—before acknowledging or serving the read.</p>
+          <p>Under <strong>eventual consistency</strong>, replica B may temporarily return 10 while the update propagates. If new writes stop and communication remains healthy, the replicas must eventually converge to 20.</p>
+          <p>Strong consistency describes what clients can observe; it does not necessarily mean every physical replica is updated at the exact same instant. Eventual consistency permits temporary staleness, not permanent disagreement.</p>
+          <p class="decision-rule"><strong>Trade-off:</strong> coordination protects an immediate correctness guarantee but can add latency or reject work during failures; asynchronous propagation improves responsiveness but exposes staleness.</p>
         `
       },
       {
         category: 'CAP',
-        prompt: 'During a network partition, why must a replicated system choose between consistency and availability?',
-        cue: 'Explain what a replica knows—and cannot know—when it cannot contact the other copy.',
+        prompt: 'Two replicas lose communication. One client writes X = 20 to replica A while another writes X = 30 to replica B. Why can the system not guarantee both CAP consistency and CAP availability?',
+        cue: 'Define the partition condition and explain the decision each replica must make without information from the other side.',
         answer: `
-          <p>A partition means replicas cannot communicate. A replica cannot prove whether the unreachable copy has accepted a newer conflicting write.</p>
+          <p>A <strong>network partition</strong> means messages between the replica groups are lost or delayed long enough that they cannot coordinate. Each side therefore lacks the information needed to know which value should be the one globally accepted value.</p>
           <ul>
-            <li>To preserve <strong>consistency</strong>, it waits or rejects some requests until agreement is possible—reducing availability.</li>
-            <li>To preserve <strong>availability</strong>, it responds using its reachable state—risking temporary disagreement.</li>
+            <li>To preserve <strong>CAP consistency</strong>, at least one side must wait or reject the operation so both writes cannot be reported successful. That side is unavailable for the request.</li>
+            <li>To preserve <strong>CAP availability</strong>, every request reaching a non-failing replica must receive a response. Accepting both writes allows the sides to diverge until they reconnect and reconcile.</li>
           </ul>
-          <p class="decision-rule"><strong>The choice exists only while communication is partitioned:</strong> refuse uncertainty or answer despite uncertainty.</p>
+          <p>Partition tolerance is not a third normal-time feature selected from a triangle. It means the distributed system has defined behavior when network communication breaks. When there is no partition, consistency and availability can coexist.</p>
+          <p class="decision-rule"><strong>Forced choice during the partition:</strong> refuse some requests to preserve one agreed value, or answer all reachable clients without being able to guarantee one current value.</p>
         `,
         image: 'assets/cap-theorem-partition-decision.svg',
         imageAlt: 'A network partition forces a choice between refusing some requests to preserve one agreed value and serving from both sides with temporary divergence.'
       },
       {
-        category: 'Consistency',
-        prompt: 'Why should consistency be chosen per operation instead of once for the whole application?',
-        cue: 'Contrast a money operation with a social feature.',
-        answer: `
-          <p>Different operations protect different business invariants.</p>
-          <ul>
-            <li><strong>Payment or finalized stock:</strong> stale or conflicting data can lose money, so strong correctness is worth waiting or failing safely.</li>
-            <li><strong>Feed, likes, or recommendations:</strong> brief staleness is usually acceptable, so eventual consistency can improve speed and availability.</li>
-          </ul>
-          <p class="decision-rule"><strong>Ask:</strong> what damage occurs if this value is briefly stale or two writes conflict?</p>
-        `
-      },
-      {
         category: 'Synthesis',
-        prompt: 'Design a global marketplace that needs a fast feed, slightly delayed likes, no double charges, and survival of one zone failure.',
-        cue: 'Map each requirement to one architecture choice; do not search for one universal component.',
+        prompt: 'An online store needs fast product pages, support for traffic spikes, no double charges, and continued service after one zone fails. Map each requirement to a design response.',
+        cue: 'Give the cause for every component and state at least one resulting cost.',
         answer: `
           <ul>
-            <li><strong>Fast feed:</strong> nearby cache, CDN, or edge delivery.</li>
-            <li><strong>Delayed likes are acceptable:</strong> asynchronous propagation with eventual consistency.</li>
-            <li><strong>No double charges:</strong> transactional, strongly consistent payment path with idempotency.</li>
-            <li><strong>Zone failure:</strong> redundant health-checked instances across independent zones with failover.</li>
+            <li><strong>Fast product pages:</strong> CDN for cacheable assets, cache for repeated catalog reads, and indexes for measured slow queries. These reduce distance or repeated work, but caching can return stale catalog data.</li>
+            <li><strong>Traffic spikes:</strong> stateless application instances can scale out; a queue can defer suitable work such as email or image processing. Queued work completes later rather than instantly.</li>
+            <li><strong>No double charges:</strong> use a transactional, strongly consistent payment write path. Coordination may add latency or reject a write when the required nodes cannot agree.</li>
+            <li><strong>Zone failure:</strong> run health-checked service and data copies across independent zones so traffic can be rerouted outside the failed zone. This increases infrastructure and operational cost.</li>
           </ul>
-          <p class="decision-rule"><strong>Final lesson:</strong> combine patterns per requirement and state their cost. Lower latency, stronger consistency, broader redundancy, and greater scale all add complexity or expense.</p>
+          <p>Recommendations may use eventual consistency even though payments use strong consistency. The consistency decision belongs to the operation and its business invariant, not to the company as a whole.</p>
+          <p class="decision-rule"><strong>Final method:</strong> requirement → failure or bottleneck → pattern that addresses it → new cost or trade-off. Do not add a component that cannot be justified by this chain.</p>
         `
       }
     ];
 
-    const STORAGE_KEY = 'system-design-nfr-flashcards-v1';
+    const STORAGE_KEY = 'system-design-nfr-flashcards-v2';
     const state = {
       index: 0,
       revealed: false,
