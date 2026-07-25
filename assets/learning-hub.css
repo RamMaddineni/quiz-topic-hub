@@ -233,6 +233,11 @@ h1 {
   font-size: 0.82rem;
 }
 
+.topic-order {
+  color: var(--category);
+  font-weight: 800;
+}
+
 .category-card h2,
 .topic-card h2,
 .resource-card h3,
@@ -329,6 +334,86 @@ h1 {
 .page-header h1 {
   max-width: 780px;
   font-size: clamp(2.35rem, 7vw, 4.2rem);
+}
+
+.topic-navigation {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: stretch;
+  margin: 0 0 2rem;
+  padding: 0.8rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  box-shadow: 0 8px 26px rgba(23, 32, 51, 0.05);
+}
+
+.sequence-link,
+.sequence-boundary {
+  display: flex;
+  min-width: 0;
+  min-height: 72px;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.75rem;
+}
+
+.sequence-link {
+  color: var(--text);
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  text-decoration: none;
+}
+
+.sequence-link:hover,
+.sequence-link:focus-visible {
+  color: var(--category);
+  border-color: var(--category);
+  outline: none;
+}
+
+.sequence-link strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sequence-next {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.sequence-direction {
+  margin-bottom: 0.25rem;
+  color: var(--category);
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sequence-position {
+  align-self: center;
+  padding: 0.45rem 0.65rem;
+  color: var(--category);
+  background: var(--category-soft);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.sequence-boundary {
+  color: var(--muted);
+  border: 1px dashed var(--border);
+  font-size: 0.82rem;
+}
+
+.sequence-boundary-end {
+  align-items: flex-end;
+  text-align: right;
 }
 
 .resource-section {
@@ -592,6 +677,10 @@ kbd {
   .hero { padding-top: 3rem; }
   .section-heading { align-items: flex-start; flex-direction: column; }
   .section-count { white-space: normal; }
+  .topic-navigation { grid-template-columns: 1fr; }
+  .sequence-position { order: -1; justify-self: center; }
+  .sequence-next,
+  .sequence-boundary-end { align-items: flex-start; text-align: left; }
   .recall-card { min-height: 480px; }
   .recall-actions .button { flex: 1 1 42%; }
   .rating-actions .button { flex: 1 1 45%; }
