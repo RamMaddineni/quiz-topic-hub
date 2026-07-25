@@ -353,7 +353,7 @@
     <header>
       <p class="eyebrow">System Design · Introduction · Active recall</p>
       <h1>NFR Flashcards</h1>
-      <p>Twelve mechanism-first cards covering the whole introduction. Say the cause-and-effect chain aloud before revealing the answer. If you can name a component but cannot explain which requirement forces it, mark the card “Need review.”</p>
+      <p>Twelve mechanism-first cards covering the whole introduction. Say the cause-and-effect chain aloud before revealing the answer. If you can name a component but cannot explain which requirement forces it, mark the card “Need review.” This is a session-only deck; Google Sheets remains the long-term tracker.</p>
     </header>
 
     <section class="progress-panel" aria-label="Deck progress">
@@ -407,7 +407,7 @@
     </p>
 
     <div class="reset-row">
-      <button class="reset-button" id="reset-button" type="button">Reset deck progress</button>
+      <button class="reset-button" id="reset-button" type="button">Reset recall session</button>
     </div>
   </main>
 
@@ -572,11 +572,10 @@
       }
     ];
 
-    const STORAGE_KEY = 'system-design-nfr-flashcards-v2';
     const state = {
       index: 0,
       revealed: false,
-      ratings: loadRatings()
+      ratings: {}
     };
 
     const category = document.querySelector('#card-category');
@@ -599,23 +598,6 @@
     const reviewCount = document.querySelector('#review-count');
     const knownCount = document.querySelector('#known-count');
     const unseenCount = document.querySelector('#unseen-count');
-
-    function loadRatings() {
-      try {
-        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-        return saved && typeof saved === 'object' ? saved : {};
-      } catch (error) {
-        return {};
-      }
-    }
-
-    function saveRatings() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.ratings));
-      } catch (error) {
-        // The deck remains usable when browser storage is unavailable.
-      }
-    }
 
     function ratingTotals() {
       const values = Object.values(state.ratings);
@@ -682,7 +664,6 @@
     function rate(value) {
       if (!state.revealed) return;
       state.ratings[state.index] = value;
-      saveRatings();
       if (state.index < cards.length - 1) {
         state.index += 1;
         state.revealed = false;
@@ -701,7 +682,6 @@
       state.ratings = {};
       state.index = 0;
       state.revealed = false;
-      try { localStorage.removeItem(STORAGE_KEY); } catch (error) { /* no-op */ }
       render();
     });
 
