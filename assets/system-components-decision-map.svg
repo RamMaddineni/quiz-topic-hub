@@ -40,7 +40,7 @@
     <text class="body" x="150" y="146">Choose a healthy backend per request</text>
     <text class="label" x="35" y="181">GAIN</text>
     <text class="body" x="90" y="181">Scale + failover; avoid overload latency</text>
-    <text class="cost" x="35" y="211">Cost: health-check errors; the balancer also needs redundancy</text>
+    <text class="cost" x="35" y="211">Cost: bad health checks; one balancer can become a failure point</text>
   </g>
 
   <!-- Cache -->
