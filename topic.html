@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Learning, quiz, and active-recall resources for this topic.">
+  <title>Learning Topic</title>
+  <link rel="stylesheet" href="assets/learning-hub.css">
+  <script src="assets/learning-catalog.js" defer></script>
+  <script src="assets/learning-hub.js" defer></script>
+</head>
+<body data-page="topic">
+  <header class="topbar">
+    <div class="site-shell topbar-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-mark" aria-hidden="true">L</span>
+        <span>Learning Library</span>
+      </a>
+      <span class="tracker-note">Learn · Quiz · Recall</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="site-shell">
+      <nav class="breadcrumbs" id="breadcrumbs" aria-label="Breadcrumb"></nav>
+
+      <header class="page-header">
+        <p class="eyebrow" id="topic-eyebrow"></p>
+        <h1 id="topic-title"></h1>
+        <p class="lead" id="topic-description"></p>
+      </header>
+
+      <section class="resource-section" aria-labelledby="learn-title">
+        <div class="section-heading">
+          <div>
+            <h2 id="learn-title">Learn</h2>
+            <p id="learn-description"></p>
+          </div>
+          <span class="section-count" id="learn-count"></span>
+        </div>
+        <div class="card-grid" id="learn-resources"></div>
+      </section>
+
+      <section class="resource-section" aria-labelledby="quiz-title">
+        <div class="section-heading">
+          <div>
+            <h2 id="quiz-title">Quiz</h2>
+            <p id="quiz-description"></p>
+          </div>
+          <span class="section-count" id="quiz-count"></span>
+        </div>
+        <div class="card-grid" id="quiz-resources"></div>
+      </section>
+
+      <section class="resource-section" aria-labelledby="recall-title">
+        <div class="section-heading">
+          <div>
+            <h2 id="recall-title">Active Recall</h2>
+            <p id="recall-description"></p>
+          </div>
+          <span class="section-count" id="recall-count"></span>
+        </div>
+        <div class="card-grid" id="recall-resources"></div>
+      </section>
+
+      <noscript><p class="empty-state">JavaScript is required to render this topic.</p></noscript>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-shell">Complete each session in one browser; no progress is persisted by this catalogue.</div>
+  </footer>
+</body>
+</html>
