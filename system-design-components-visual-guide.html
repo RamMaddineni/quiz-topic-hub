@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Two visual diagrams explaining when to use load balancing, caching, partitioning, replication, message queues, and batch processing—and what each component costs.">
+  <meta name="description" content="A beginner-friendly visual guide to load balancing, caching, partitioning, replication, message queues, and batch processing, with mechanisms, examples, limits, and trade-offs.">
   <title>System Design Components Visual Guide | Learning Library</title>
   <style>
     :root {
@@ -16,6 +16,7 @@
       --primary: #087f73;
       --primary-strong: #05685f;
       --primary-soft: rgba(8, 127, 115, 0.11);
+      --success: #087f5b;
       --border: #dce7e4;
       --warning: #9a4c16;
       --warning-soft: rgba(154, 76, 22, 0.09);
@@ -181,6 +182,181 @@
       font-weight: 900;
     }
 
+    .walkthrough {
+      margin: 0 0 4rem;
+    }
+
+    .walkthrough-intro {
+      max-width: 820px;
+      margin: 0.65rem 0 1.3rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .concept-stack {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .concept-card {
+      padding: clamp(1.2rem, 3vw, 1.7rem);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1.15rem;
+      box-shadow: 0 10px 30px rgba(21, 38, 44, 0.06);
+    }
+
+    .concept-header {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.9rem;
+      align-items: start;
+      margin-bottom: 1.2rem;
+    }
+
+    .concept-number {
+      display: grid;
+      width: 2.35rem;
+      height: 2.35rem;
+      place-items: center;
+      color: white;
+      background: var(--primary);
+      border-radius: 0.72rem;
+      font-size: 0.85rem;
+      font-weight: 900;
+    }
+
+    .concept-header h3 {
+      margin: 0;
+      font-size: clamp(1.25rem, 3vw, 1.55rem);
+    }
+
+    .concept-summary {
+      margin: 0.35rem 0 0;
+      color: var(--muted);
+      line-height: 1.62;
+    }
+
+    .explanation-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.85rem;
+    }
+
+    .explanation-block {
+      padding: 0.95rem 1rem;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 0.85rem;
+    }
+
+    .explanation-block h4 {
+      margin: 0 0 0.4rem;
+      color: var(--primary);
+      font-size: 0.82rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .explanation-block p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.66;
+    }
+
+    .explanation-block strong { color: var(--text); }
+
+    .decision-rule {
+      margin: 0.9rem 0 0;
+      padding: 0.85rem 1rem;
+      color: var(--text);
+      background: var(--primary-soft);
+      border-left: 4px solid var(--primary);
+      border-radius: 0.7rem;
+      line-height: 1.62;
+    }
+
+    .redundancy-visual {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.85rem;
+      margin: 0 0 1rem;
+    }
+
+    .topology-panel {
+      padding: 1rem;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 0.9rem;
+    }
+
+    .topology-panel h4 {
+      margin: 0 0 0.75rem;
+      font-size: 0.95rem;
+    }
+
+    .topology-row {
+      display: grid;
+      grid-template-columns: minmax(70px, 0.8fr) auto minmax(110px, 1.2fr) auto minmax(105px, 1fr);
+      gap: 0.45rem;
+      align-items: center;
+    }
+
+    .topology-node,
+    .topology-stack span {
+      display: grid;
+      min-height: 48px;
+      place-items: center;
+      padding: 0.55rem;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0.65rem;
+      font-size: 0.78rem;
+      font-weight: 780;
+      line-height: 1.3;
+      text-align: center;
+    }
+
+    .topology-node.failed {
+      color: #b42318;
+      background: rgba(180, 35, 24, 0.08);
+      border-color: rgba(180, 35, 24, 0.4);
+    }
+
+    .topology-node.healthy {
+      color: var(--success, #087f5b);
+      background: rgba(8, 127, 91, 0.08);
+      border-color: rgba(8, 127, 91, 0.35);
+    }
+
+    .topology-stack {
+      display: grid;
+      gap: 0.35rem;
+    }
+
+    .topology-arrow {
+      color: var(--primary);
+      font-size: 1.25rem;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .topology-result {
+      margin: 0.75rem 0 0;
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.55;
+    }
+
+    code {
+      padding: 0.1rem 0.28rem;
+      background: var(--primary-soft);
+      border-radius: 0.28rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.9em;
+    }
+
     .cta {
       margin: 0 0 4rem;
       padding: clamp(1.3rem, 4vw, 2rem);
@@ -211,8 +387,20 @@
 
     @media (max-width: 760px) {
       .lens { grid-template-columns: 1fr; }
+      .explanation-grid,
+      .redundancy-visual { grid-template-columns: 1fr; }
       .section-heading { align-items: flex-start; flex-direction: column-reverse; }
       .topbar-note { display: none; }
+    }
+
+    @media (max-width: 520px) {
+      .topology-row {
+        grid-template-columns: 1fr;
+      }
+
+      .topology-arrow {
+        transform: rotate(90deg);
+      }
     }
 
     @media (prefers-color-scheme: dark) {
@@ -225,6 +413,7 @@
         --primary: #63d7ca;
         --primary-strong: #8ce4da;
         --primary-soft: rgba(99, 215, 202, 0.12);
+        --success: #69dbb5;
         --border: #294044;
         --warning: #ffc078;
         --warning-soft: rgba(255, 192, 120, 0.09);
@@ -248,9 +437,9 @@
   <main class="shell">
     <header class="hero">
       <a class="back-link" href="topic.html?topic=system-design-components">← System Design Components</a>
-      <p class="eyebrow">Two-diagram mental model</p>
+      <p class="eyebrow">Beginner visual guide</p>
       <h1>Components are mechanisms, not decorations.</h1>
-      <p class="lead">A load balancer, cache, shard, replica, queue, and batch job solve different pressures. The interview skill is to connect <strong>observed pressure → mechanism → benefit → new failure mode</strong>.</p>
+      <p class="lead">A load balancer, cache, shard, replica, queue, and batch job solve different pressures. The diagrams give you the map; the walkthrough below explains every mechanism, follows one concrete request, and names what the component still cannot guarantee.</p>
     </header>
 
     <section class="lens" aria-label="How to read the diagrams">
@@ -283,6 +472,231 @@
       <div class="takeaway">
         <span aria-hidden="true">!</span>
         <div><strong>Most-confused pair:</strong> partitioning stores <em>different subsets</em> on different owners; replication stores <em>another copy of the same subset</em>. Partition for capacity. Replicate that partition for failover or read scale.</div>
+      </div>
+    </section>
+
+    <section class="walkthrough" aria-labelledby="walkthrough-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="walkthrough-title">Beginner walkthrough: unpack every line</h2>
+          <p>The diagram is intentionally compact for later revision. This section is the actual lesson: start with the problem, trace what the component changes, and then examine the new failure mode.</p>
+        </div>
+        <span class="diagram-number">6 COMPONENTS</span>
+      </div>
+      <p class="walkthrough-intro">Do not memorize “component → benefit” as a pair of words. Build the causal chain: <strong>what is going wrong → what new mechanism is introduced → why that mechanism helps → what the mechanism does not solve</strong>.</p>
+
+      <div class="concept-stack">
+        <article class="concept-card" id="load-balancer-explained">
+          <header class="concept-header">
+            <span class="concept-number" aria-hidden="true">1</span>
+            <div>
+              <h3>Load balancer: distribute incoming requests</h3>
+              <p class="concept-summary">A load balancer is a front door in front of multiple application servers. It receives a client connection or request, selects a backend that should be able to serve it, forwards the request, and returns the backend’s response.</p>
+            </div>
+          </header>
+
+          <div class="redundancy-visual" aria-label="Comparison of one failed load balancer and a redundant load-balancing layer">
+            <section class="topology-panel">
+              <h4>One load balancer: fragile entry point</h4>
+              <div class="topology-row">
+                <span class="topology-node">Users</span>
+                <span class="topology-arrow" aria-hidden="true">→</span>
+                <span class="topology-node failed">Only load balancer<br>failed ✕</span>
+                <span class="topology-arrow" aria-hidden="true">→</span>
+                <span class="topology-stack">
+                  <span>App A ✓</span>
+                  <span>App B ✓</span>
+                  <span>App C ✓</span>
+                </span>
+              </div>
+              <p class="topology-result"><strong>Result:</strong> all application servers are healthy, but users have no working path to reach them.</p>
+            </section>
+
+            <section class="topology-panel">
+              <h4>Redundant load-balancing layer</h4>
+              <div class="topology-row">
+                <span class="topology-node">Users</span>
+                <span class="topology-arrow" aria-hidden="true">→</span>
+                <span class="topology-stack">
+                  <span class="topology-node failed">LB A failed ✕</span>
+                  <span class="topology-node healthy">LB B healthy ✓</span>
+                </span>
+                <span class="topology-arrow" aria-hidden="true">→</span>
+                <span class="topology-stack">
+                  <span>App A ✓</span>
+                  <span>App B ✓</span>
+                  <span>App C ✓</span>
+                </span>
+              </div>
+              <p class="topology-result"><strong>Result:</strong> the stable service endpoint can still route new traffic through LB B.</p>
+            </section>
+          </div>
+
+          <div class="explanation-grid">
+            <section class="explanation-block">
+              <h4>Follow one request</h4>
+              <p>The user calls one public service address. The load balancer checks its healthy-backend list, chooses App B, and forwards the request. On the next request it may choose App A. This prevents one server from building a long queue while other servers are idle.</p>
+            </section>
+            <section class="explanation-block">
+              <h4>What “the balancer needs redundancy” means</h4>
+              <p>If there is only one load-balancer machine, it becomes a <strong>single point of failure</strong>. Production systems therefore run multiple load-balancer instances, ideally in separate failure domains such as availability zones, with the same routing configuration.</p>
+            </section>
+            <section class="explanation-block">
+              <h4>Who balances the load balancers?</h4>
+              <p>You should not place one ordinary machine in front of them, because that only moves the single point of failure. A managed cloud load balancer usually exposes one logical endpoint while the provider runs many internal nodes. Self-managed designs can publish multiple IP addresses through DNS or use a virtual/anycast address that can reach a healthy balancer.</p>
+            </section>
+            <section class="explanation-block">
+              <h4>What it does not guarantee</h4>
+              <p>It cannot create CPU or memory. If every backend is saturated, distributing traffic more evenly is not enough—you must add capacity or reduce work. Bad health checks can also remove a healthy server or keep sending traffic to a server that is alive but unable to serve real requests.</p>
+            </section>
+          </div>
+          <p class="decision-rule"><strong>Decision rule:</strong> use a load balancer when multiple interchangeable backends exist and requests need distribution or failover. In an interview, say whether the balancing layer itself is highly available; do not draw one magical box and assume it can never fail.</p>
+        </article>
+
+        <article class="concept-card" id="cache-explained">
+          <header class="concept-header">
+            <span class="concept-number" aria-hidden="true">2</span>
+            <div>
+              <h3>Cache: reuse a result instead of repeating expensive work</h3>
+              <p class="concept-summary">A cache stores a recently fetched or computed value under a key. Future requests can return that stored value without repeating the slower database query, API call, or computation.</p>
+            </div>
+          </header>
+          <div class="explanation-grid">
+            <section class="explanation-block">
+              <h4>Before the cache</h4>
+              <p>Suppose 10,000 users request the same product. Without caching, the application may execute the same database join 10,000 times. The database repeats work even though the answer changes only occasionally.</p>
+            </section>
+            <section class="explanation-block">
+              <h4>Follow one cache-aside read</h4>
+              <p>The app asks the cache for <code>product:42</code>. A <strong>hit</strong> returns the value immediately. A <strong>miss</strong> makes the app read the database, return the answer, and place a copy in the cache for later requests.</p>
+            </section>
+            <section class="explanation-block">
+              <h4>Why it helps</h4>
+              <p>Most hits avoid the slow source, so user latency and database load fall together. This works only when requests reuse values. If almost every request asks for unique data, the hit rate stays low and the cache adds complexity without removing much work.</p>
+            </section>
+            <section class="explanation-block">
+              <h4>New failure modes</h4>
+              <p>The cached copy can become <strong>stale</strong> after the database changes. Many simultaneous misses for one expired hot key can create a <strong>stampede</strong> that overloads the database. The design needs an expiry, invalidation, refresh, and source-failure policy.</p>
+            </section>
+          </div>
+          <p class="decision-rule"><strong>Decision rule:</strong> cache when the same expensive result is read repeatedly and the business can state how stale it may be. Measure hit rate; “reads are slow” alone is not enough justification.</p>
+        </article>
+
+        <article class="concept-card" id="partitioning-explained">
+          <header class="concept-header">
+            <span class="concept-number" aria-hidden="true">3</span>
+            <div>
+              <h3>Partitioning / sharding: split data ownership</h3>
+              <p class="concept-summary">Partitioning places different subsets of the data on different owners. Each shard is responsible for only part of the key space, so storage and work can grow beyond one database machine.</p>
+            </div>
+          </header>
+          <div class="explanation-grid">
+            <section class="explanation-block">
+              <h4>Follow one request</h4>
+              <p>With four shards, a router might hash <code>account_id</code> to choose an owner. Account 123 always routes to shard 3. That shard stores and processes account 123’s data; the other shards own different accounts.</p>
+            </section>
+            <section class="explanation-block">
+              <h4>Why it helps</h4>
+              <p>Four owners can provide more total storage and parallel write throughput than one owner. A good partition key also keeps data commonly queried together on one shard, avoiding network calls to every database.</p>
+            </section>
+            <section class="explanation-block">
+              <h4>Hot shards</h4>
+              <p>Distribution fails when one key or range receives most traffic. For example, partitioning by country can overload the India shard while other shards are idle. Adding empty shards does not help until the ownership rule can distribute that hot data.</p>
+            </section>
+            <section class="explanation-block">
+              <h4>Cross-shard work</h4>
+              <p>A query spanning all users must fan out to many shards and merge results. A transaction touching two owners needs coordination such as a distributed transaction—or a redesigned workflow. Partitioning alone also does not make a failed shard’s data available; that shard needs replication.</p>
+            </section>
+          </div>
+          <p class="decision-rule"><strong>Decision rule:</strong> partition when one data owner is reaching a real storage or write ceiling and you have a key that distributes load while preserving important access locality.</p>
+        </article>
+
+        <article class="concept-card" id="replication-explained">
+          <header class="concept-header">
+            <span class="concept-number" aria-hidden="true">4</span>
+            <div>
+              <h3>Replication: keep additional copies of the same data</h3>
+              <p class="concept-summary">Replication differs from partitioning: a partition owns a different subset, while a replica holds another copy of that subset. Replicas are used for failover, read scaling, or both.</p>
+            </div>
+          </header>
+          <div class="explanation-grid">
+            <section class="explanation-block">
+              <h4>Follow one write</h4>
+              <p>A client writes to the primary or current leader. That node records the change and sends it to replica nodes. Depending on the consistency contract, the system may acknowledge after the leader writes, after a quorum confirms, or after every required replica confirms.</p>
+            </section>
+            <section class="explanation-block">
+              <h4>Read scale and failover</h4>
+              <p>Read-only requests may be routed to replicas, reducing pressure on the primary. If the primary fails, an eligible replica can be promoted. Promotion needs detection and coordination so two nodes do not both act as leader with conflicting state.</p>
+            </section>
+            <section class="explanation-block">
+              <h4>Replication lag</h4>
+              <p>Copies are not updated at the same physical instant. A user may write a new profile name to the leader and immediately read the old name from a lagging replica. Read-your-writes or strong reads need routing or coordination that proves the selected copy is current enough.</p>
+            </section>
+            <section class="explanation-block">
+              <h4>What it does not solve</h4>
+              <p>Adding read replicas does not automatically multiply the write capacity for one heavily updated key, because copies still need the write. Multi-writer replication adds conflict resolution and coordination rather than removing the consistency problem.</p>
+            </section>
+          </div>
+          <p class="decision-rule"><strong>Decision rule:</strong> replicate when you need another copy to serve reads or survive a node failure, and explicitly state what staleness is acceptable and how failover chooses one safe writer.</p>
+        </article>
+
+        <article class="concept-card" id="queue-explained">
+          <header class="concept-header">
+            <span class="concept-number" aria-hidden="true">5</span>
+            <div>
+              <h3>Message queue: persist work between producer and consumer</h3>
+              <p class="concept-summary">A producer writes a message describing work; a consumer processes it later. They no longer need to run at the same speed or be healthy at the same moment.</p>
+            </div>
+          </header>
+          <div class="explanation-grid">
+            <section class="explanation-block">
+              <h4>Follow one job</h4>
+              <p>A video service durably stores an upload, places “generate thumbnails for video 91” in a queue, and returns <strong>accepted / processing</strong>. A worker later receives the message, generates the files, and records completion.</p>
+            </section>
+            <section class="explanation-block">
+              <h4>Why it helps</h4>
+              <p>A burst of 100,000 uploads can wait in durable storage while workers process at a sustainable rate. If workers are briefly down, producers may continue accepting work as long as the queue has capacity and the business tolerates delayed completion.</p>
+            </section>
+            <section class="explanation-block">
+              <h4>Accepted is not completed</h4>
+              <p>Fast enqueue latency proves only that the queue accepted the message. If the oldest message has waited two hours, the intake API is available but the business task is severely delayed. Monitor backlog size and oldest-message age.</p>
+            </section>
+            <section class="explanation-block">
+              <h4>Retries and duplicates</h4>
+              <p>A worker can finish a side effect and crash before acknowledging the message. The queue may redeliver it, so consumers need idempotency or durable deduplication. Ordering may also be limited to a partition or message group rather than the entire queue.</p>
+            </section>
+          </div>
+          <p class="decision-rule"><strong>Decision rule:</strong> queue work when the caller does not need the final result immediately, bursts or temporary downstream failures must be buffered, and the product can expose an honest pending/completed state.</p>
+        </article>
+
+        <article class="concept-card" id="batch-explained">
+          <header class="concept-header">
+            <span class="concept-number" aria-hidden="true">6</span>
+            <div>
+              <h3>Batch processing: process many items as one scheduled unit</h3>
+              <p class="concept-summary">Batch systems collect or select a large set of records and process them together, often on a schedule or after a size threshold. They optimize total work completed, not the response time of one record.</p>
+            </div>
+          </header>
+          <div class="explanation-grid">
+            <section class="explanation-block">
+              <h4>Follow one batch</h4>
+              <p>At midnight, a job reads the day’s events, groups them, computes aggregates, and writes a report by 6:00 AM. No user request remains open while the job runs; the contract is a morning deadline.</p>
+            </section>
+            <section class="explanation-block">
+              <h4>Throughput versus latency</h4>
+              <p>Grouping records can amortize startup, scheduling, and I/O overhead, increasing total records processed per minute. But an event created at 12:01 AM may wait almost 24 hours for the next daily batch, so its individual latency is high.</p>
+            </section>
+            <section class="explanation-block">
+              <h4>Queue versus batch</h4>
+              <p>A queue is mainly a transport and buffering boundary between producers and consumers. Batch is an execution strategy that groups many items. They can be combined: queue events during the day, then consume or aggregate them in batches.</p>
+            </section>
+            <section class="explanation-block">
+              <h4>What it does not fit</h4>
+              <p>Do not put an interactive action such as payment authorization into a next-day batch when the user needs an immediate answer. Batch failures also require checkpointing, retries, and careful handling so a rerun does not duplicate outputs.</p>
+            </section>
+          </div>
+          <p class="decision-rule"><strong>Decision rule:</strong> use batch processing when the work is large and noninteractive, efficiency matters more than per-item freshness, and the business provides a completion deadline rather than a millisecond response target.</p>
+        </article>
       </div>
     </section>
 
