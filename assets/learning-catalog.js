@@ -2,18 +2,21 @@ window.LEARNING_CATALOG = {
   categories: [
     {
       id: "dsa",
+      order: 1,
       name: "DSA",
       icon: "⌁",
       description: "Algorithms, proof techniques, invariants, and problem-solving patterns."
     },
     {
       id: "system-design",
+      order: 2,
       name: "System Design",
       icon: "◎",
       description: "Architecture concepts, distributed-system trade-offs, APIs, and reliability."
     },
     {
       id: "csharp-dotnet",
+      order: 3,
       name: "C# / .NET",
       icon: "C#",
       description: "Language semantics, runtime behavior, and backend interview concepts."
@@ -24,6 +27,7 @@ window.LEARNING_CATALOG = {
     {
       id: "perfect-rectangle",
       categoryId: "dsa",
+      order: 2,
       title: "Perfect Rectangle",
       description: "Use area conservation and corner parity to detect gaps, overlaps, and malformed covers.",
       resources: [
@@ -39,6 +43,7 @@ window.LEARNING_CATALOG = {
     {
       id: "non-overlapping-intervals",
       categoryId: "dsa",
+      order: 1,
       title: "Non-overlapping Intervals",
       description: "Visualize and prove the earliest-finish-time greedy choice with an exchange argument.",
       resources: [
@@ -54,6 +59,7 @@ window.LEARNING_CATALOG = {
     {
       id: "inversions-adjacent-swaps",
       categoryId: "dsa",
+      order: 3,
       title: "Inversions and Adjacent Swaps",
       description: "Connect inversion count to the minimum adjacent swaps required to sort an array.",
       resources: [
@@ -69,6 +75,7 @@ window.LEARNING_CATALOG = {
     {
       id: "non-functional-requirements",
       categoryId: "system-design",
+      order: 4,
       title: "Non-functional Requirements",
       description: "Availability, scalability, latency, consistency, their mechanisms, and architectural trade-offs.",
       resources: [
@@ -91,6 +98,7 @@ window.LEARNING_CATALOG = {
     {
       id: "system-design-components",
       categoryId: "system-design",
+      order: 6,
       title: "System Design Components",
       description: "Load balancing, caching, partitioning, replication, queues, and batch processing—matched to the pressure each mechanism actually solves.",
       resources: [
@@ -113,6 +121,7 @@ window.LEARNING_CATALOG = {
     {
       id: "cap-theorem",
       categoryId: "system-design",
+      order: 5,
       title: "CAP Theorem",
       description: "Understand the forced consistency-versus-availability choice during a network partition.",
       resources: [
@@ -128,6 +137,7 @@ window.LEARNING_CATALOG = {
     {
       id: "api-authentication",
       categoryId: "system-design",
+      order: 1,
       title: "API Authentication",
       description: "API keys, sessions, cookies, CSRF, JWT validation, signing algorithms, and token lifecycles.",
       resources: [
@@ -143,6 +153,7 @@ window.LEARNING_CATALOG = {
     {
       id: "api-authorization",
       categoryId: "system-design",
+      order: 2,
       title: "API Authorization",
       description: "RBAC, ABAC, OAuth scopes, resource permissions, tenant isolation, and hybrid policy design.",
       resources: [
@@ -158,6 +169,7 @@ window.LEARNING_CATALOG = {
     {
       id: "api-gateway",
       categoryId: "system-design",
+      order: 3,
       title: "API Gateway",
       description: "Client-facing routing, cross-cutting concerns, reliability trade-offs, and responsibility boundaries.",
       resources: [
@@ -173,6 +185,7 @@ window.LEARNING_CATALOG = {
     {
       id: "value-semantics-boxing",
       categoryId: "csharp-dotnet",
+      order: 1,
       title: "Value Semantics and Boxing",
       description: "Copying, parameter passing, boxing, exact-type unboxing, casting, conversion, and equality.",
       resources: [
