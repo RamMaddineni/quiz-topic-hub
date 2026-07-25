@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Browse learning topics in this category.">
+  <title>Learning Category</title>
+  <link rel="stylesheet" href="assets/learning-hub.css">
+  <script src="assets/learning-catalog.js" defer></script>
+  <script src="assets/learning-hub.js" defer></script>
+</head>
+<body data-page="category">
+  <header class="topbar">
+    <div class="site-shell topbar-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-mark" aria-hidden="true">L</span>
+        <span>Learning Library</span>
+      </a>
+      <span class="tracker-note">Choose one topic at a time</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="site-shell">
+      <nav class="breadcrumbs" id="breadcrumbs" aria-label="Breadcrumb"></nav>
+
+      <header class="page-header">
+        <p class="eyebrow" id="category-eyebrow"></p>
+        <h1 id="category-title"></h1>
+        <p class="lead" id="category-description"></p>
+      </header>
+
+      <section class="content-section" aria-labelledby="topics-title">
+        <div class="section-heading">
+          <div>
+            <h2 id="topics-title">Topics</h2>
+            <p>Open a topic to see its Learn, Quiz, and Active Recall resources.</p>
+          </div>
+          <span class="section-count" id="topic-count"></span>
+        </div>
+        <div class="card-grid" id="topic-grid"></div>
+        <noscript><p class="empty-state">JavaScript is required to render this category.</p></noscript>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-shell">Google Sheets remains the source of truth for learning progress.</div>
+  </footer>
+</body>
+</html>
