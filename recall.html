@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A self-contained active-recall session for one learning topic.">
+  <title>Active Recall</title>
+  <link rel="stylesheet" href="assets/learning-hub.css">
+  <script src="assets/learning-catalog.js" defer></script>
+  <script src="assets/recall-decks.js" defer></script>
+  <script src="assets/recall-session.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="recall-shell topbar-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-mark" aria-hidden="true">L</span>
+        <span>Learning Library</span>
+      </a>
+      <span class="tracker-note">Session-only recall</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="recall-shell">
+      <nav class="breadcrumbs" id="breadcrumbs" aria-label="Breadcrumb"></nav>
+
+      <header class="recall-header">
+        <p class="eyebrow" id="recall-eyebrow"></p>
+        <h1 id="recall-title"></h1>
+        <p class="lead" id="recall-description"></p>
+        <span class="session-note">Nothing is saved after this page is closed</span>
+      </header>
+
+      <section class="recall-progress" aria-label="Current recall session">
+        <div class="progress-line">
+          <strong id="progress-label"></strong>
+          <span id="session-label"></span>
+        </div>
+        <progress id="recall-progress-value" value="0" max="1">0 of 1</progress>
+        <div class="session-summary" aria-live="polite">
+          <span class="summary-chip success" id="recalled-count"></span>
+          <span class="summary-chip review" id="review-count"></span>
+          <span class="summary-chip unrated" id="unrated-count"></span>
+        </div>
+      </section>
+
+      <article class="recall-card" aria-live="polite">
+        <div class="recall-card-topline">
+          <span class="recall-topic" id="card-topic"></span>
+          <span class="recall-number" id="card-number"></span>
+        </div>
+
+        <div class="recall-content">
+          <section class="recall-question-wrap" id="question-wrap">
+            <h2 class="recall-question" id="recall-question"></h2>
+          </section>
+
+          <section class="recall-answer" id="recall-answer" hidden>
+            <p class="recall-answer-label">Answer</p>
+            <p class="recall-answer-text" id="recall-answer-text"></p>
+            <img class="recall-visual" id="recall-visual" alt="" hidden>
+            <div class="tag-row" id="tag-row"></div>
+          </section>
+        </div>
+
+        <div>
+          <div class="recall-actions">
+            <button class="button" id="previous-button" type="button">← Previous</button>
+            <button class="button button-primary" id="reveal-button" type="button">Reveal answer</button>
+            <button class="button" id="next-button" type="button">Next →</button>
+          </div>
+          <div class="rating-actions">
+            <button class="button button-review" id="review-button" type="button" disabled>Needs another pass</button>
+            <button class="button button-success" id="recalled-button" type="button" disabled>Recalled</button>
+          </div>
+        </div>
+      </article>
+
+      <section class="session-result" id="session-result" aria-live="polite" hidden>
+        <h2>Recall session complete</h2>
+        <p id="result-copy"></p>
+        <div class="result-actions">
+          <button class="button button-primary" id="restart-button" type="button">Restart deck</button>
+          <a class="button" href="index.html">Return to library</a>
+        </div>
+      </section>
+
+      <p class="keyboard-note">
+        Keyboard: <kbd>Space</kbd> reveal · <kbd>←</kbd>/<kbd>→</kbd> navigate ·
+        <kbd>1</kbd> needs another pass · <kbd>2</kbd> recalled
+      </p>
+
+      <noscript><p class="empty-state">JavaScript is required to run this recall session.</p></noscript>
+    </div>
+  </main>
+</body>
+</html>
