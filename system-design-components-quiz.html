@@ -1,0 +1,770 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A 20-question, scenario-based pre-reading diagnostic on load balancing, caching, partitioning, replication, message queues, and batch processing.">
+  <title>System Design Components Diagnostic | Learning Library</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f3f7f7;
+      --surface: #ffffff;
+      --surface-soft: #f7faf9;
+      --text: #15262c;
+      --muted: #61737a;
+      --primary: #087f73;
+      --primary-strong: #05685f;
+      --primary-soft: rgba(8, 127, 115, 0.1);
+      --success: #087f5b;
+      --success-soft: rgba(8, 127, 91, 0.1);
+      --error: #c92a2a;
+      --error-soft: rgba(201, 42, 42, 0.09);
+      --warning: #9a4c16;
+      --warning-soft: rgba(154, 76, 22, 0.09);
+      --border: #dce7e5;
+      --shadow: 0 14px 36px rgba(21, 38, 44, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(8, 127, 115, 0.14), transparent 32rem),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .shell { width: min(920px, calc(100% - 2rem)); margin: 0 auto; }
+    nav { padding: 1.2rem 0; }
+    nav a { color: var(--primary); font-weight: 800; text-decoration: none; }
+    nav a:hover { text-decoration: underline; }
+
+    header { padding: 1.8rem 0 1.3rem; }
+
+    .eyebrow {
+      margin: 0;
+      color: var(--primary);
+      font-size: 0.78rem;
+      font-weight: 850;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 860px;
+      margin: 0.55rem 0 0.8rem;
+      font-size: clamp(2.45rem, 8vw, 4.8rem);
+      line-height: 0.98;
+      letter-spacing: -0.052em;
+    }
+
+    header > p:last-child {
+      max-width: 780px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.03rem;
+      line-height: 1.7;
+    }
+
+    .session-card,
+    .progress-card,
+    .post-quiz {
+      margin-bottom: 1.25rem;
+      padding: 1.15rem 1.25rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      box-shadow: var(--shadow);
+    }
+
+    .session-card h2 { margin: 0 0 0.45rem; font-size: 1.05rem; }
+    .session-card p { margin: 0; color: var(--muted); line-height: 1.6; }
+
+    .scope-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.48rem;
+      margin: 0.9rem 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .scope-list li {
+      padding: 0.4rem 0.65rem;
+      color: var(--primary);
+      background: var(--primary-soft);
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 780;
+    }
+
+    .rule {
+      padding-top: 0.85rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .progress-card {
+      position: sticky;
+      top: 0.55rem;
+      z-index: 10;
+      background: color-mix(in srgb, var(--surface) 94%, transparent);
+      backdrop-filter: blur(12px);
+    }
+
+    .progress-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .progress-row strong { font-size: 0.95rem; }
+    .progress-row span { color: var(--muted); font-size: 0.84rem; }
+
+    progress {
+      width: 100%;
+      height: 0.72rem;
+      margin-top: 0.7rem;
+      accent-color: var(--primary);
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 2.2rem 0 0.95rem;
+    }
+
+    .section-number {
+      display: grid;
+      width: 2.15rem;
+      height: 2.15rem;
+      place-items: center;
+      flex: 0 0 auto;
+      color: white;
+      background: var(--primary);
+      border-radius: 50%;
+      font-size: 0.86rem;
+      font-weight: 850;
+    }
+
+    .section-heading h2 { margin: 0; font-size: 1.24rem; }
+    .section-heading p { margin: 0.15rem 0 0; color: var(--muted); font-size: 0.88rem; }
+
+    .question {
+      margin: 0 0 1.15rem;
+      padding: 1.4rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      box-shadow: 0 5px 18px rgba(21, 38, 44, 0.045);
+      scroll-margin-top: 7rem;
+    }
+
+    fieldset { margin: 0; padding: 0; border: 0; }
+
+    legend {
+      width: 100%;
+      margin-bottom: 0.85rem;
+      font-size: 1.04rem;
+      font-weight: 790;
+      line-height: 1.52;
+    }
+
+    .scenario {
+      margin: 0 0 1rem;
+      padding: 0.85rem 0.95rem;
+      color: var(--muted);
+      background: var(--surface-soft);
+      border-left: 4px solid var(--primary);
+      border-radius: 0.65rem;
+      line-height: 1.58;
+    }
+
+    label {
+      display: flex;
+      gap: 0.72rem;
+      align-items: flex-start;
+      margin-top: 0.56rem;
+      padding: 0.82rem;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      line-height: 1.48;
+      transition: border-color 140ms ease, background 140ms ease;
+    }
+
+    label:hover { border-color: var(--primary); background: var(--primary-soft); }
+    label:has(input:focus-visible) { outline: 3px solid color-mix(in srgb, var(--primary) 28%, transparent); }
+    label.answer-key { border-color: var(--success); background: var(--success-soft); }
+    label.wrong-choice { border-color: var(--error); background: var(--error-soft); }
+    input { margin-top: 0.2rem; accent-color: var(--primary); }
+
+    .feedback {
+      display: none;
+      margin: 0.95rem 0 0;
+      padding: 0.9rem;
+      line-height: 1.58;
+      border-radius: 0.72rem;
+    }
+
+    .feedback.correct { color: var(--success); background: var(--success-soft); }
+    .feedback.incorrect { color: var(--error); background: var(--error-soft); }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin: 1.7rem 0;
+    }
+
+    button,
+    .button-link {
+      display: inline-flex;
+      min-height: 46px;
+      align-items: center;
+      justify-content: center;
+      padding: 0.85rem 1.15rem;
+      font: inherit;
+      font-weight: 790;
+      cursor: pointer;
+      border: 1px solid var(--primary);
+      border-radius: 0.75rem;
+      text-decoration: none;
+    }
+
+    button[type="submit"],
+    .button-link { color: white; background: var(--primary); }
+    button[type="reset"] { color: var(--primary); background: transparent; }
+    button:hover,
+    .button-link:hover { filter: brightness(0.96); }
+    button:focus-visible,
+    .button-link:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 30%, transparent); outline-offset: 2px; }
+    button:disabled { cursor: default; opacity: 0.7; }
+
+    #result {
+      display: none;
+      margin: 0 0 1.25rem;
+      padding: 1.4rem;
+      background: var(--primary-soft);
+      border: 1px solid var(--primary);
+      border-radius: 1rem;
+      line-height: 1.6;
+      scroll-margin-top: 6.5rem;
+    }
+
+    #result h2 { margin: 0 0 0.45rem; font-size: 1.35rem; }
+    #result p { margin: 0.45rem 0; }
+
+    .breakdown {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 0.65rem;
+      margin: 1rem 0;
+    }
+
+    .breakdown span {
+      padding: 0.75rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0.68rem;
+      font-size: 0.9rem;
+    }
+
+    .review-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin: 0.75rem 0;
+    }
+
+    .review-links a {
+      padding: 0.35rem 0.5rem;
+      color: var(--error);
+      background: var(--surface);
+      border: 1px solid color-mix(in srgb, var(--error) 30%, var(--border));
+      border-radius: 0.45rem;
+      font-size: 0.84rem;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .completion-code {
+      display: inline-block;
+      margin-top: 0.5rem;
+      padding: 0.42rem 0.58rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.86rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0.48rem;
+    }
+
+    .post-quiz { color: var(--muted); box-shadow: none; }
+    .post-quiz h2 { margin: 0 0 0.45rem; color: var(--text); font-size: 1.12rem; }
+    .post-quiz p { margin: 0 0 0.9rem; line-height: 1.6; }
+    .post-quiz a:not(.button-link) { color: var(--primary); }
+
+    @media (max-width: 580px) {
+      .shell { width: min(100% - 1rem, 920px); }
+      .question { padding: 1.05rem; }
+      .progress-card { top: 0.3rem; }
+      .progress-row { align-items: flex-start; flex-direction: column; gap: 0.2rem; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1719;
+        --surface: #152326;
+        --surface-soft: #101d20;
+        --text: #f1f7f6;
+        --muted: #a4b5b4;
+        --primary: #63d7ca;
+        --primary-strong: #8ce4da;
+        --primary-soft: rgba(99, 215, 202, 0.12);
+        --success: #69dbb5;
+        --success-soft: rgba(105, 219, 181, 0.11);
+        --error: #ff8787;
+        --error-soft: rgba(255, 135, 135, 0.1);
+        --warning: #ffc078;
+        --warning-soft: rgba(255, 192, 120, 0.09);
+        --border: #294044;
+        --shadow: 0 14px 36px rgba(0, 0, 0, 0.24);
+      }
+
+      button[type="submit"],
+      .button-link { color: #0d2422; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      * { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav><a href="topic.html?topic=system-design-components">← System Design Components</a></nav>
+
+    <header>
+      <p class="eyebrow">System Design · Pre-reading diagnostic</p>
+      <h1>Choose the mechanism. Name the cost.</h1>
+      <p>Twenty production scenarios on load balancing, caching, partitioning, replication, queues, and batch processing. There are no “what does CDN stand for?” questions. Answers and explanations stay hidden until you submit.</p>
+    </header>
+
+    <section class="session-card" aria-labelledby="session-title">
+      <h2 id="session-title">How to use this baseline</h2>
+      <p>Answer from your present mental model before reading the lesson. The questions test what a component can solve, what it cannot guarantee, and which failure it introduces.</p>
+      <ul class="scope-list" aria-label="Concepts covered">
+        <li>Load balancing</li>
+        <li>Caching</li>
+        <li>Partitioning</li>
+        <li>Replication</li>
+        <li>Message queues</li>
+        <li>Batch processing</li>
+      </ul>
+      <p class="rule"><strong>First-attempt rule:</strong> no notes and no visual guide. Complete it in one sitting; this page deliberately does not save progress across refreshes.</p>
+    </section>
+
+    <section class="progress-card" aria-live="polite">
+      <div class="progress-row">
+        <strong id="progress-label">Answered: 0 / 20 (0%)</strong>
+        <span>Explanations unlock on submit</span>
+      </div>
+      <progress id="answer-progress" value="0" max="20">0%</progress>
+    </section>
+
+    <form id="quiz-form">
+      <section aria-labelledby="selection-title">
+        <div class="section-heading">
+          <span class="section-number" aria-hidden="true">1</span>
+          <div>
+            <h2 id="selection-title">Select from the pressure</h2>
+            <p>Questions 1–6 · identify the mechanism that attacks the measured constraint</p>
+          </div>
+        </div>
+
+        <article class="question" id="q1-card" data-correct="b" data-section="selection">
+          <fieldset>
+            <legend>1. Six identical stateless application servers are running. One receives 70% of requests and has a long queue; the other five sit near 20% CPU. What is the most direct correction?</legend>
+            <p class="scenario">The database is healthy, request work is similar, and the slow requests correlate with the overloaded application node.</p>
+            <label><input type="radio" name="q1" value="a" required> Cache every response, even though requests rarely repeat.</label>
+            <label><input type="radio" name="q1" value="b"> Put the fleet behind a load balancer that selects healthy backends with an appropriate distribution policy.</label>
+            <label><input type="radio" name="q1" value="c"> Partition the database, because any uneven application load proves the database is too large.</label>
+            <label><input type="radio" name="q1" value="d"> Put all HTTP requests into a queue while keeping the same uneven backend routing.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="The observed pressure is uneven request distribution. A load balancer changes which backend receives each request, allowing the existing capacity to be used and preventing one node’s queue from dominating latency. It does not add capacity by itself."></p>
+        </article>
+
+        <article class="question" id="q2-card" data-correct="c" data-section="selection">
+          <fieldset>
+            <legend>2. A product-details query performs the same expensive join thousands of times per minute. Products change roughly every ten minutes, and the business accepts prices being at most 20 seconds old. What is the strongest first design?</legend>
+            <label><input type="radio" name="q2" value="a" required> Replicate every write to more databases and keep executing the join on every request.</label>
+            <label><input type="radio" name="q2" value="b"> Enqueue each read and make users wait for a worker.</label>
+            <label><input type="radio" name="q2" value="c"> Cache the computed result with an explicit invalidation or expiry policy consistent with the 20-second freshness target.</label>
+            <label><input type="radio" name="q2" value="d"> Run the product page as one nightly batch.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="The workload has reuse and a stated staleness budget—the two facts that justify caching. Reusing results reduces both latency and database work. The freshness target determines the invalidation, versioning, or TTL policy; a cache is not automatically current."></p>
+        </article>
+
+        <article class="question" id="q3-card" data-correct="a" data-section="selection">
+          <fieldset>
+            <legend>3. A single 8 TB events database is approaching both its storage and sustained write ceiling. Almost every query is scoped to one <code>account_id</code>. Which mechanism most directly raises the ceiling?</legend>
+            <label><input type="radio" name="q3" value="a" required> Partition ownership by a well-distributed account-based key so multiple database nodes store and process different subsets.</label>
+            <label><input type="radio" name="q3" value="b"> Create several full copies of all 8 TB and send every write to all of them.</label>
+            <label><input type="radio" name="q3" value="c"> Add a larger application load balancer without changing data placement.</label>
+            <label><input type="radio" name="q3" value="d"> Treat a cache as the permanent source of truth for all event writes.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Partitioning splits ownership, so storage and write work can run in parallel across nodes. The account access pattern also gives a useful locality boundary. Full replicas copy the same data and improve failover or reads, but do not split ownership of the write set."></p>
+        </article>
+
+        <article class="question" id="q4-card" data-correct="d" data-section="selection">
+          <fieldset>
+            <legend>4. A database still fits comfortably on one node and write capacity is fine, but read QPS is high and losing that one node would cause an unacceptable outage. What is the best fit?</legend>
+            <label><input type="radio" name="q4" value="a" required> Partition immediately, even though neither storage nor write ownership is the pressure.</label>
+            <label><input type="radio" name="q4" value="b"> Queue all reads so the database can process them days later.</label>
+            <label><input type="radio" name="q4" value="c"> Convert user-facing reads into one nightly batch.</label>
+            <label><input type="radio" name="q4" value="d"> Add replicas with a defined read-routing and failover strategy, and choose the required consistency behavior.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Replication creates additional copies of the same data. Those copies can serve reads and can take over after a failure. The design is incomplete until it states how lag affects reads and how a replica is promoted safely."></p>
+        </article>
+
+        <article class="question" id="q5-card" data-correct="b" data-section="selection">
+          <fieldset>
+            <legend>5. Thumbnail generation takes 4–20 seconds and upload traffic arrives in bursts. The upload API should acknowledge durable intake quickly, while users can see “processing.” Which design matches that contract?</legend>
+            <label><input type="radio" name="q5" value="a" required> Keep each upload request open until every thumbnail finishes, then retry the entire request on timeout.</label>
+            <label><input type="radio" name="q5" value="b"> Persist the upload, durably enqueue a thumbnail job, return an accepted/pending state, and let scalable workers consume it.</label>
+            <label><input type="radio" name="q5" value="c"> Wait for one nightly batch even when users expect processing to start now.</label>
+            <label><input type="radio" name="q5" value="d"> Cache thumbnails before they have been generated.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="A queue separates intake rate from processing rate and persists work while consumers are slow or temporarily down. The API must report acceptance, not pretend the thumbnail is complete. Worker capacity and queue age still determine completion time."></p>
+        </article>
+
+        <article class="question" id="q6-card" data-correct="c" data-section="selection">
+          <fieldset>
+            <legend>6. Finance needs a ranking over the previous day’s 400 million events by 6:00 AM. Nobody needs intermediate results, and compute is cheapest overnight. Which execution model is most appropriate?</legend>
+            <label><input type="radio" name="q6" value="a" required> Recompute the entire ranking synchronously inside every user request.</label>
+            <label><input type="radio" name="q6" value="b"> Force one consumer to process every event individually during peak traffic.</label>
+            <label><input type="radio" name="q6" value="c"> Run scheduled batch processing that groups work and uses the overnight resource window to meet the deadline.</label>
+            <label><input type="radio" name="q6" value="d"> Add a load balancer to the existing single ranking process and make no other change.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="The job has a deadline rather than an interactive latency target. Batch processing can amortize setup and use resources efficiently across many records, trading per-record immediacy for throughput."></p>
+        </article>
+      </section>
+
+      <section aria-labelledby="limits-title">
+        <div class="section-heading">
+          <span class="section-number" aria-hidden="true">2</span>
+          <div>
+            <h2 id="limits-title">Mechanisms and limits</h2>
+            <p>Questions 7–13 · distinguish the benefit from the guarantee people wrongly assume</p>
+          </div>
+        </div>
+
+        <article class="question" id="q7-card" data-correct="a" data-section="limits">
+          <fieldset>
+            <legend>7. A load balancer already distributes traffic evenly, but every backend remains above 95% CPU for ten minutes and queues keep growing. What conclusion is justified?</legend>
+            <label><input type="radio" name="q7" value="a" required> Distribution is working; the fleet lacks capacity or does too much work, so scale out or optimize the bottleneck.</label>
+            <label><input type="radio" name="q7" value="b"> Change from round-robin to random routing; a different algorithm will manufacture CPU capacity.</label>
+            <label><input type="radio" name="q7" value="c"> Cache the load balancer’s backend list and leave the saturated fleet unchanged.</label>
+            <label><input type="radio" name="q7" value="d"> Partition the load balancer itself by database key.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="A balancer can use available capacity more evenly, but it cannot create capacity. Once all backends are saturated, the next mechanism is capacity addition or work reduction—not a cleverer distribution policy."></p>
+        </article>
+
+        <article class="question" id="q8-card" data-correct="d" data-section="limits">
+          <fieldset>
+            <legend>8. A cache-aside service reads price ₹1,000 into cache. The database is then updated to ₹900, but no cache action occurs. What is the correct interpretation?</legend>
+            <label><input type="radio" name="q8" value="a" required> The load balancer will notify the cache about the database write.</label>
+            <label><input type="radio" name="q8" value="b"> A cache hit is definitionally the latest database value.</label>
+            <label><input type="radio" name="q8" value="c"> Replication makes every independent cache entry self-invalidating.</label>
+            <label><input type="radio" name="q8" value="d"> The cache may keep serving ₹1,000 until invalidation, refresh, version mismatch, or expiry; freshness must be designed explicitly.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="The database and cache are separate states. Faster reads come from not consulting the source every time, which is exactly why stale values are possible. Invalidation strategy and accepted staleness are part of the product contract."></p>
+        </article>
+
+        <article class="question" id="q9-card" data-correct="b" data-section="limits">
+          <fieldset>
+            <legend>9. Which statement correctly separates partitioning from replication?</legend>
+            <label><input type="radio" name="q9" value="a" required> Both terms mean storing a full copy of all data on every node.</label>
+            <label><input type="radio" name="q9" value="b"> Partitioning assigns different data subsets to owners; replication creates additional copies of a subset. A production shard can itself be replicated.</label>
+            <label><input type="radio" name="q9" value="c"> Partitioning is only for reads, while replication is only for writes.</label>
+            <label><input type="radio" name="q9" value="d"> Replication removes the need for a partition key in every possible data model.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="The mechanisms are orthogonal. Partitioning expands capacity by dividing ownership. Replication improves read scale or fault tolerance by copying an owner’s data. Distributed databases commonly do both."></p>
+        </article>
+
+        <article class="question" id="q10-card" data-correct="c" data-section="limits">
+          <fieldset>
+            <legend>10. An eight-shard database stores each shard on exactly one machine. Machine 3 fails. What availability does partitioning alone provide?</legend>
+            <label><input type="radio" name="q10" value="a" required> Every key stays available because eight shards imply eight copies.</label>
+            <label><input type="radio" name="q10" value="b"> The entire service must stop, even for keys owned by healthy shards.</label>
+            <label><input type="radio" name="q10" value="c"> Healthy shards may continue serving their keys, but shard 3’s data is unavailable until recovery; that shard needs replication/failover to remain available.</label>
+            <label><input type="radio" name="q10" value="d"> The load balancer can reconstruct shard 3’s missing data from request traffic.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Partitioning can contain the blast radius because unrelated owners still work. It does not create a second copy of the failed owner’s data. Replication is the additional mechanism that can preserve that shard’s availability."></p>
+        </article>
+
+        <article class="question" id="q11-card" data-correct="a" data-section="limits">
+          <fieldset>
+            <legend>11. A user updates their profile on the primary, immediately reads from a lagging replica, and sees the old name. Which response addresses the actual mechanism?</legend>
+            <label><input type="radio" name="q11" value="a" required> If read-your-writes is required, route that read to a sufficiently current replica/leader or wait for the write position, accepting added coordination or latency.</label>
+            <label><input type="radio" name="q11" value="b"> Add more asynchronous replicas; more lagging copies guarantee the newest read.</label>
+            <label><input type="radio" name="q11" value="c"> Put a load balancer in front of replicas and choose one randomly.</label>
+            <label><input type="radio" name="q11" value="d"> Partition the profile field into smaller strings.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Replication is not instantaneous. A guarantee such as read-your-writes, causal consistency, or strong reads requires routing or coordination that proves the chosen copy has observed the write. That can cost latency or availability during failures."></p>
+        </article>
+
+        <article class="question" id="q12-card" data-correct="d" data-section="limits">
+          <fieldset>
+            <legend>12. A worker charges a card, then crashes before acknowledging the queue message. The queue redelivers it. What must prevent a second charge?</legend>
+            <label><input type="radio" name="q12" value="a" required> A shorter queue name.</label>
+            <label><input type="radio" name="q12" value="b"> A load balancer that always sends retries to a different worker.</label>
+            <label><input type="radio" name="q12" value="c"> A larger batch size so both charges occur together.</label>
+            <label><input type="radio" name="q12" value="d"> An idempotency key or durable deduplication record checked as part of the business operation.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Durable queues commonly favor at-least-once delivery: retrying protects against lost work but can repeat work. The consumer must make the side effect idempotent or deduplicate it durably; queue acceptance alone does not provide exactly-once business effects."></p>
+        </article>
+
+        <article class="question" id="q13-card" data-correct="b" data-section="limits">
+          <fieldset>
+            <legend>13. Why can grouping 10,000 records into a batch improve throughput while making an individual record slower?</legend>
+            <label><input type="radio" name="q13" value="a" required> Batching removes all computation, so no record waits.</label>
+            <label><input type="radio" name="q13" value="b"> The system amortizes setup, I/O, or scheduling overhead across many records, but each record may wait for the batch window and earlier work.</label>
+            <label><input type="radio" name="q13" value="c"> Throughput and latency are identical metrics, so the premise is impossible.</label>
+            <label><input type="radio" name="q13" value="d"> A batch guarantees every result is immediately fresh.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Throughput measures total work per time; latency measures how long one item waits. Grouping can use resources more efficiently while intentionally delaying an item until a window, threshold, or scheduled job begins."></p>
+        </article>
+      </section>
+
+      <section aria-labelledby="production-title">
+        <div class="section-heading">
+          <span class="section-number" aria-hidden="true">3</span>
+          <div>
+            <h2 id="production-title">Production failure and synthesis</h2>
+            <p>Questions 14–20 · debug hot spots, retry behavior, and composed architectures</p>
+          </div>
+        </div>
+
+        <article class="question" id="q14-card" data-correct="c" data-section="production">
+          <fieldset>
+            <legend>14. Events are partitioned by <code>country</code>. Eighty percent of traffic belongs to India, so one shard is saturated while the rest are idle. What should the redesign optimize?</legend>
+            <label><input type="radio" name="q14" value="a" required> Keep the same key and add empty shards; ownership will rebalance automatically.</label>
+            <label><input type="radio" name="q14" value="b"> Replicate the hot shard and allow every replica to accept conflicting writes independently.</label>
+            <label><input type="radio" name="q14" value="c"> Choose a higher-cardinality, better-distributed key—possibly a hash/composite key—while preserving required locality and handling unusually large tenants explicitly.</label>
+            <label><input type="radio" name="q14" value="d"> Cache all writes and never persist them to the owning shard.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="A partition key defines the unit of load and locality. Low-cardinality or skewed keys create hot shards, so adding owners does nothing unless data can move among them. The new key must balance distribution against the queries or transactions that should stay local."></p>
+        </article>
+
+        <article class="question" id="q15-card" data-correct="a" data-section="production">
+          <fieldset>
+            <legend>15. A money transfer debits an account on shard A and credits one on shard B. The invariant requires both changes or neither. What is the honest design statement?</legend>
+            <label><input type="radio" name="q15" value="a" required> Co-locate data that frequently changes atomically when possible; otherwise use cross-shard coordination such as a distributed transaction/2PC or redesign the workflow, acknowledging latency and failure complexity.</label>
+            <label><input type="radio" name="q15" value="b"> Replication makes two independent shard owners commit atomically without a protocol.</label>
+            <label><input type="radio" name="q15" value="c"> A cache can enforce the durable invariant because it is faster.</label>
+            <label><input type="radio" name="q15" value="d"> Put both writes in a queue, report success immediately, and assume they will either both happen or both fail.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Partitioning makes local work scalable but cross-owner invariants require coordination. Collocation avoids that boundary for common operations. When it cannot, protocols such as two-phase commit—or an explicitly different business workflow—carry latency, blocking, and recovery costs."></p>
+        </article>
+
+        <article class="question" id="q16-card" data-correct="d" data-section="production">
+          <fieldset>
+            <legend>16. A very hot cache key expires at noon. Thousands of requests miss simultaneously and all recompute the same database query, overloading the source. Which mitigation targets this failure?</legend>
+            <label><input type="radio" name="q16" value="a" required> Give every hot key the same expiry second so misses synchronize predictably.</label>
+            <label><input type="radio" name="q16" value="b"> Shorten the TTL further so stampedes occur more often.</label>
+            <label><input type="radio" name="q16" value="c"> Add another cache layer with the identical synchronized expiry and no request control.</label>
+            <label><input type="radio" name="q16" value="d"> Coalesce concurrent refreshes (single-flight) and use techniques such as jittered expiry, prewarming, or stale-while-revalidate.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="This is a cache stampede: the optimization suddenly amplifies load onto the source. Request coalescing ensures one refresh, while jitter or proactive refresh prevents many hot keys from expiring together."></p>
+        </article>
+
+        <article class="question" id="q17-card" data-correct="b" data-section="production">
+          <fieldset>
+            <legend>17. Ten application replicas exist, but one load-balancer process is deployed on one machine. Its health check only proves the app process has a PID, not that it can serve traffic. What is the strongest correction?</legend>
+            <label><input type="radio" name="q17" value="a" required> Keep the single balancer; backend redundancy automatically protects the entry point.</label>
+            <label><input type="radio" name="q17" value="b"> Make the balancing layer redundant across appropriate failure domains and use readiness checks that represent the backend’s ability to handle real requests.</label>
+            <label><input type="radio" name="q17" value="c"> Replace health checks with permanent sticky sessions to unhealthy nodes.</label>
+            <label><input type="radio" name="q17" value="d"> Store the load balancer’s PID in the application cache.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Redundant backends do not help if the only entry point fails. The balancing layer needs its own availability design. Backend probes must also approximate service readiness; a process that is alive but cannot serve should not keep receiving traffic."></p>
+        </article>
+
+        <article class="question" id="q18-card" data-correct="c" data-section="production">
+          <fieldset>
+            <legend>18. The API still enqueues jobs in 30 ms, but queue age has grown from 10 seconds to two hours because producers are faster than consumers. Which status report is accurate?</legend>
+            <label><input type="radio" name="q18" value="a" required> The system is healthy because enqueue latency is low; completion time no longer matters.</label>
+            <label><input type="radio" name="q18" value="b"> Add more producers so the queue drains faster.</label>
+            <label><input type="radio" name="q18" value="c"> Intake remains available, but business completion latency is degrading; scale/fix consumers, monitor oldest-message age, and apply backpressure or admission limits if needed.</label>
+            <label><input type="radio" name="q18" value="d"> Convert every job into one infinite batch so the backlog counter disappears.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="A queue absorbs a rate mismatch temporarily; it cannot erase it. Queue depth and oldest-message age expose the growing debt. Availability of the intake endpoint is not availability of the completed business outcome."></p>
+        </article>
+
+        <article class="question" id="q19-card" data-correct="a" data-section="production">
+          <fieldset>
+            <legend>19. A marketplace has repeated catalog reads that may be 30 seconds stale, strict inventory writes, receipt emails that may lag, and analytics due the next morning. Which decomposition preserves those different contracts?</legend>
+            <label><input type="radio" name="q19" value="a" required> Cache catalog reads with a freshness policy; commit inventory to its owning, replicated data path with the required consistency; enqueue email only after durable state; run analytics as batch work.</label>
+            <label><input type="radio" name="q19" value="b"> Treat cached inventory as authoritative, then reconcile overselling in the nightly report.</label>
+            <label><input type="radio" name="q19" value="c"> Send email before the order is durable and call the order complete when the queue accepts it.</label>
+            <label><input type="radio" name="q19" value="d"> Execute the full analytics scan synchronously inside each inventory write so every component has the same latency target.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="The architecture should follow each business contract. Stale catalog reads are a cache fit; inventory correctness belongs on the durable coordinated write path; email is asynchronous after commit; and next-morning analytics is throughput-oriented batch work."></p>
+        </article>
+
+        <article class="question" id="q20-card" data-correct="d" data-section="production">
+          <fieldset>
+            <legend>20. A page takes 800 ms. Tracing shows 520 ms in one unindexed database scan, 180 ms in application work, and 100 ms in network time. Only 2% of requests repeat, app CPU is 25%, and users are near the region. What should the candidate say first?</legend>
+            <label><input type="radio" name="q20" value="a" required> Add a cache because every slow page is a cache problem, even with almost no reuse.</label>
+            <label><input type="radio" name="q20" value="b"> Add a load balancer because it reduces the duration of each database scan.</label>
+            <label><input type="radio" name="q20" value="c"> Move application logic to the edge even though most time is still spent reaching and scanning the central database.</label>
+            <label><input type="radio" name="q20" value="d"> Fix and index the measured query path first, then remeasure; introduce a component only if its mechanism attacks the remaining constraint.</label>
+          </fieldset>
+          <p class="feedback" data-explanation="Component selection follows evidence. Here the dominant cost is a database scan, reuse is too low to justify a general cache, app capacity is idle, and distance is not dominant. Fixing the query targets 520 ms directly; remeasurement tells you what remains."></p>
+        </article>
+      </section>
+
+      <div class="actions">
+        <button id="submit-button" type="submit">Submit diagnostic</button>
+        <button type="reset">Clear and restart</button>
+      </div>
+    </form>
+
+    <section id="result" aria-live="polite" tabindex="-1"></section>
+
+    <section class="post-quiz" aria-labelledby="after-title">
+      <h2 id="after-title">After your first attempt</h2>
+      <p>Use the two diagrams to repair the exact chain you missed: pressure → mechanism → gain → new cost. Then read the supplied lesson once with those failure boundaries in mind.</p>
+      <a class="button-link" href="system-design-components-visual-guide.html">Open the two-diagram visual guide →</a>
+      <p style="margin-top: 1rem;">Source scope: <a href="https://systemdesignschool.io/fundamentals/system-design-components" target="_blank" rel="noopener">System Design School — System Design Components</a>.</p>
+    </section>
+  </div>
+
+  <script>
+    const form = document.querySelector("#quiz-form");
+    const questions = [...document.querySelectorAll(".question")];
+    const result = document.querySelector("#result");
+    const progressLabel = document.querySelector("#progress-label");
+    const answerProgress = document.querySelector("#answer-progress");
+    const submitButton = document.querySelector("#submit-button");
+
+    function answeredCount() {
+      return questions.filter((question) => question.querySelector("input:checked")).length;
+    }
+
+    function updateProgress() {
+      const answered = answeredCount();
+      const percentage = Math.round((answered / questions.length) * 100);
+      progressLabel.textContent = `Answered: ${answered} / ${questions.length} (${percentage}%)`;
+      answerProgress.value = answered;
+      answerProgress.textContent = `${percentage}%`;
+    }
+
+    function clearMarking(question) {
+      question.querySelectorAll("label").forEach((label) => {
+        label.classList.remove("answer-key", "wrong-choice");
+      });
+      const feedback = question.querySelector(".feedback");
+      feedback.style.display = "none";
+      feedback.textContent = "";
+    }
+
+    form.addEventListener("change", updateProgress);
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      let score = 0;
+      const missed = [];
+      const sections = {
+        selection: { label: "Component selection", correct: 0, total: 0 },
+        limits: { label: "Mechanisms & limits", correct: 0, total: 0 },
+        production: { label: "Production synthesis", correct: 0, total: 0 }
+      };
+
+      questions.forEach((question, index) => {
+        const selected = question.querySelector("input:checked");
+        const correctValue = question.dataset.correct;
+        const section = sections[question.dataset.section];
+        const isCorrect = selected && selected.value === correctValue;
+
+        section.total += 1;
+        if (isCorrect) {
+          score += 1;
+          section.correct += 1;
+        } else {
+          missed.push(index + 1);
+        }
+
+        question.querySelectorAll("label").forEach((label) => {
+          const input = label.querySelector("input");
+          label.classList.toggle("answer-key", input.value === correctValue);
+          label.classList.toggle("wrong-choice", input.checked && input.value !== correctValue);
+          input.disabled = true;
+        });
+
+        const feedback = question.querySelector(".feedback");
+        feedback.className = `feedback ${isCorrect ? "correct" : "incorrect"}`;
+        feedback.textContent = `${isCorrect ? "Correct." : "Not quite."} ${feedback.dataset.explanation}`;
+        feedback.style.display = "block";
+      });
+
+      const percentage = Math.round((score / questions.length) * 100);
+      const rankedSections = Object.entries(sections)
+        .map(([key, section]) => ({ key, ...section, ratio: section.correct / section.total }))
+        .sort((a, b) => a.ratio - b.ratio || a.label.localeCompare(b.label));
+      const weakest = rankedSections[0];
+      const breakdown = Object.values(sections)
+        .map((section) => `<span><strong>${section.label}</strong><br>${section.correct} / ${section.total}</span>`)
+        .join("");
+      const missedLinks = missed.length
+        ? `<div class="review-links">${missed.map((number) => `<a href="#q${number}-card">Review Q${number}</a>`).join("")}</div>`
+        : "<p>No missed questions. Use the explanations to rehearse the causal chain aloud.</p>";
+      const message = score === questions.length
+        ? "Excellent baseline. Your next gain is interview narration: state the pressure, mechanism, and failure boundary without naming extra components."
+        : score >= 16
+          ? "Strong baseline. Focus your reading on the missed failure boundaries; that is where otherwise-good designs become unsafe."
+          : score >= 11
+            ? "Useful baseline. You recognize several tools, but the reading should tighten when each one applies and what it does not guarantee."
+            : "The diagnostic found the right reading target: build one mechanism-first mental model instead of memorizing six definitions.";
+      const code = `SD-COMP-PRE-${score}OF${questions.length}-${weakest.key.toUpperCase()}`;
+
+      result.innerHTML = `
+        <h2>${score} / ${questions.length} correct (${percentage}%)</h2>
+        <p>${message}</p>
+        <div class="breakdown">${breakdown}</div>
+        <p><strong>First reading focus:</strong> ${weakest.label} (${weakest.correct}/${weakest.total}). Still read the full lesson—the final section depends on composing all six mechanisms.</p>
+        <p><strong>Missed-question map:</strong></p>
+        ${missedLinks}
+        <p>Completion code:</p>
+        <span class="completion-code">${code}</span>
+      `;
+      result.style.display = "block";
+      submitButton.disabled = true;
+      submitButton.textContent = "Diagnostic submitted";
+      result.focus();
+      result.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+
+    form.addEventListener("reset", () => {
+      questions.forEach((question) => {
+        clearMarking(question);
+        question.querySelectorAll("input").forEach((input) => { input.disabled = false; });
+      });
+      result.style.display = "none";
+      result.textContent = "";
+      submitButton.disabled = false;
+      submitButton.textContent = "Submit diagnostic";
+      window.setTimeout(updateProgress, 0);
+    });
+
+    updateProgress();
+  </script>
+</body>
+</html>
