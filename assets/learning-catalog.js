@@ -89,6 +89,28 @@ window.LEARNING_CATALOG = {
       ]
     },
     {
+      id: "system-design-components",
+      categoryId: "system-design",
+      title: "System Design Components",
+      description: "Load balancing, caching, partitioning, replication, queues, and batch processing—matched to the pressure each mechanism actually solves.",
+      resources: [
+        {
+          type: "learn",
+          title: "System components visual guide",
+          description: "Two diagrams: a component decision map and a composed request, data, and asynchronous-work flow.",
+          href: "system-design-components-visual-guide.html",
+          meta: "2 visual diagrams"
+        },
+        {
+          type: "quiz",
+          title: "System components pre-reading diagnostic",
+          description: "Production scenarios that test component choice, hidden trade-offs, and failure behavior—not definition recall.",
+          href: "system-design-components-quiz.html",
+          meta: "20 questions"
+        }
+      ]
+    },
+    {
       id: "cap-theorem",
       categoryId: "system-design",
       title: "CAP Theorem",
