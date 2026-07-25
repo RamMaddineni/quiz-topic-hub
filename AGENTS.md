@@ -26,3 +26,19 @@ node scripts/validate-catalog-order.js
 ```
 
 The category page must display each topic number, and each topic page must retain working previous/next navigation in the same sequence.
+
+## Beginner learning-page depth
+
+Assume the learner is new to System Design unless the user explicitly asks for revision-only material.
+
+- A diagram is a compact map for revision, not a complete lesson.
+- Define every abbreviation and piece of system-design shorthand near its first use. Do not leave phrases such as “needs redundancy,” “hot shard,” “replication lag,” or “queue backlog” unexplained.
+- Every new component explanation must include:
+  1. the concrete problem before the component exists
+  2. the mechanism step by step through one request, write, or job
+  3. why that mechanism improves the measured pressure
+  4. what it does not guarantee
+  5. one realistic failure mode or trade-off
+  6. a decision rule for when to use it
+- Use structured cards, flows, examples, and visuals so depth does not become a wall of text.
+- Keep quiz explanations mechanism-focused, but keep learning sections sufficiently detailed for first-time understanding.
