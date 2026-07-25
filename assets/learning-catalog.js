@@ -105,9 +105,9 @@ window.LEARNING_CATALOG = {
         {
           type: "learn",
           title: "System components visual guide",
-          description: "Two diagrams: a component decision map and a composed request, data, and asynchronous-work flow.",
+          description: "Two diagrams plus six beginner walkthroughs explaining each mechanism, a concrete request flow, and the failure it introduces.",
           href: "system-design-components-visual-guide.html",
-          meta: "2 visual diagrams"
+          meta: "2 diagrams + 6 walkthroughs"
         },
         {
           type: "quiz",
