@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="930" viewBox="0 0 1200 930" role="img" aria-labelledby="title desc">
+  <title id="title">How system design components compose across request, data, and asynchronous paths</title>
+  <desc id="desc">Users reach a stateless application fleet through a load balancer. Reads use a cache and route misses to partitioned and replicated data. Committed work can enter a durable queue for workers, while scheduled batch processing produces reports. Annotations identify what each boundary does not guarantee.</desc>
+  <defs>
+    <filter id="shadow" x="-12%" y="-12%" width="124%" height="135%">
+      <feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#0f172a" flood-opacity=".09"/>
+    </filter>
+    <marker id="blueArrow" markerWidth="12" markerHeight="12" refX="11" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#2563eb"/>
+    </marker>
+    <marker id="greenArrow" markerWidth="12" markerHeight="12" refX="11" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#059669"/>
+    </marker>
+    <marker id="orangeArrow" markerWidth="12" markerHeight="12" refX="11" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#d97706"/>
+    </marker>
+    <marker id="purpleArrow" markerWidth="12" markerHeight="12" refX="11" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#7c3aed"/>
+    </marker>
+    <style>
+      .bg { fill: #f7fafc; }
+      .title { fill: #14252b; font: 800 41px Inter, system-ui, sans-serif; letter-spacing: -1.1px; }
+      .subtitle { fill: #607178; font: 500 20px Inter, system-ui, sans-serif; }
+      .lane { fill: #fff; stroke: #dce5e8; stroke-width: 2; }
+      .node { fill: #fff; stroke-width: 2.5; filter: url(#shadow); }
+      .nodeTitle { fill: #17252b; font: 800 20px Inter, system-ui, sans-serif; }
+      .nodeBody { fill: #617178; font: 600 14px Inter, system-ui, sans-serif; }
+      .laneTitle { font: 800 16px Inter, system-ui, sans-serif; letter-spacing: 1.3px; }
+      .label { font: 750 14px Inter, system-ui, sans-serif; }
+      .noteTitle { fill: #7c2d12; font: 800 16px Inter, system-ui, sans-serif; }
+      .noteBody { fill: #7c2d12; font: 600 14px Inter, system-ui, sans-serif; }
+      .blue { stroke: #2563eb; fill: none; stroke-width: 3.5; }
+      .green { stroke: #059669; fill: none; stroke-width: 3.5; }
+      .orange { stroke: #d97706; fill: none; stroke-width: 3.5; }
+      .purple { stroke: #7c3aed; fill: none; stroke-width: 3.5; }
+      .dash { stroke-dasharray: 8 8; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1200" height="930" rx="28"/>
+  <text class="title" x="62" y="67">How the components compose</text>
+  <text class="subtitle" x="62" y="103">Follow each path separately: request routing, data ownership, background work, and batch work.</text>
+
+  <!-- Lane backgrounds -->
+  <rect class="lane" x="42" y="140" width="1116" height="190" rx="24"/>
+  <rect class="lane" x="42" y="354" width="1116" height="250" rx="24"/>
+  <rect class="lane" x="42" y="628" width="1116" height="216" rx="24"/>
+
+  <text class="laneTitle" x="68" y="172" fill="#2563eb">1 · SYNCHRONOUS REQUEST PATH</text>
+  <text class="laneTitle" x="68" y="386" fill="#059669">2 · DATA PATH</text>
+  <text class="laneTitle" x="68" y="660" fill="#d97706">3 · ASYNCHRONOUS + BATCH PATHS</text>
+
+  <!-- Request lane -->
+  <g>
+    <rect class="node" x="80" y="202" width="150" height="84" rx="17" stroke="#2563eb"/>
+    <text class="nodeTitle" x="155" y="236" text-anchor="middle">Users</text>
+    <text class="nodeBody" x="155" y="260" text-anchor="middle">incoming requests</text>
+
+    <rect class="node" x="300" y="202" width="190" height="84" rx="17" stroke="#2563eb"/>
+    <text class="nodeTitle" x="395" y="236" text-anchor="middle">Load balancer</text>
+    <text class="nodeBody" x="395" y="260" text-anchor="middle">healthy backend choice</text>
+
+    <rect class="node" x="560" y="190" width="260" height="108" rx="17" stroke="#2563eb"/>
+    <text class="nodeTitle" x="690" y="226" text-anchor="middle">Stateless app fleet</text>
+    <rect x="595" y="247" width="48" height="25" rx="7" fill="#e9f0ff" stroke="#2563eb"/>
+    <rect x="666" y="247" width="48" height="25" rx="7" fill="#e9f0ff" stroke="#2563eb"/>
+    <rect x="737" y="247" width="48" height="25" rx="7" fill="#e9f0ff" stroke="#2563eb"/>
+
+    <path class="blue" marker-end="url(#blueArrow)" d="M230 244h62"/>
+    <path class="blue" marker-end="url(#blueArrow)" d="M490 244h62"/>
+
+    <rect x="875" y="196" width="240" height="96" rx="16" fill="#fff7ed" stroke="#fdba74" stroke-width="2"/>
+    <text class="noteTitle" x="895" y="226">Boundary</text>
+    <text class="noteBody" x="895" y="251">The balancer distributes load.</text>
+    <text class="noteBody" x="895" y="272">It does not create capacity.</text>
+  </g>
+
+  <!-- Data lane -->
+  <g>
+    <rect class="node" x="82" y="424" width="190" height="96" rx="17" stroke="#7c3aed"/>
+    <text class="nodeTitle" x="177" y="460" text-anchor="middle">Cache</text>
+    <text class="nodeBody" x="177" y="485" text-anchor="middle">reuse hot read results</text>
+    <text class="label" x="177" y="510" text-anchor="middle" fill="#7c3aed">HIT → respond</text>
+
+    <rect class="node" x="350" y="424" width="190" height="96" rx="17" stroke="#059669"/>
+    <text class="nodeTitle" x="445" y="460" text-anchor="middle">Shard router</text>
+    <text class="nodeBody" x="445" y="485" text-anchor="middle">key → data owner</text>
+
+    <rect class="node" x="620" y="410" width="210" height="120" rx="17" stroke="#059669"/>
+    <text class="nodeTitle" x="725" y="444" text-anchor="middle">Partition A</text>
+    <rect x="645" y="465" width="70" height="38" rx="8" fill="#e4f7ef" stroke="#059669"/>
+    <rect x="735" y="465" width="70" height="38" rx="8" fill="#e4f7ef" stroke="#059669"/>
+    <text class="nodeBody" x="680" y="489" text-anchor="middle">primary</text>
+    <text class="nodeBody" x="770" y="489" text-anchor="middle">replica</text>
+
+    <rect class="node" x="892" y="410" width="210" height="120" rx="17" stroke="#059669"/>
+    <text class="nodeTitle" x="997" y="444" text-anchor="middle">Partition B</text>
+    <rect x="917" y="465" width="70" height="38" rx="8" fill="#e4f7ef" stroke="#059669"/>
+    <rect x="1007" y="465" width="70" height="38" rx="8" fill="#e4f7ef" stroke="#059669"/>
+    <text class="nodeBody" x="952" y="489" text-anchor="middle">primary</text>
+    <text class="nodeBody" x="1042" y="489" text-anchor="middle">replica</text>
+
+    <path class="green" marker-end="url(#greenArrow)" d="M272 472h70"/>
+    <text class="label" x="307" y="455" text-anchor="middle" fill="#059669">MISS</text>
+    <path class="green" marker-end="url(#greenArrow)" d="M540 472h72"/>
+    <path class="green" marker-end="url(#greenArrow)" d="M540 489C650 575 852 575 892 519"/>
+    <path class="green" marker-end="url(#greenArrow)" d="M715 484h13"/>
+    <path class="green" marker-end="url(#greenArrow)" d="M987 484h13"/>
+
+    <text class="label" x="786" y="565" text-anchor="middle" fill="#059669">Partition = different subsets · Replica = another copy of one subset</text>
+    <text class="noteBody" x="82" y="565">Cache boundary: faster does not mean latest; writes need an invalidation/freshness policy.</text>
+  </g>
+
+  <!-- Async lane -->
+  <g>
+    <rect class="node" x="82" y="702" width="210" height="94" rx="17" stroke="#d97706"/>
+    <text class="nodeTitle" x="187" y="737" text-anchor="middle">Committed work</text>
+    <text class="nodeBody" x="187" y="762" text-anchor="middle">durable business state</text>
+
+    <rect class="node" x="365" y="702" width="190" height="94" rx="17" stroke="#d97706"/>
+    <text class="nodeTitle" x="460" y="737" text-anchor="middle">Message queue</text>
+    <text class="nodeBody" x="460" y="762" text-anchor="middle">persist + buffer</text>
+
+    <rect class="node" x="628" y="702" width="190" height="94" rx="17" stroke="#d97706"/>
+    <text class="nodeTitle" x="723" y="737" text-anchor="middle">Worker pool</text>
+    <text class="nodeBody" x="723" y="762" text-anchor="middle">retryable consumers</text>
+
+    <rect class="node" x="895" y="682" width="220" height="70" rx="17" stroke="#7c3aed"/>
+    <text class="nodeTitle" x="1005" y="713" text-anchor="middle">Scheduled batch</text>
+    <text class="nodeBody" x="1005" y="737" text-anchor="middle">group many items</text>
+
+    <rect class="node" x="895" y="773" width="220" height="50" rx="15" stroke="#7c3aed"/>
+    <text class="nodeTitle" x="1005" y="805" text-anchor="middle">Report / aggregate</text>
+
+    <path class="orange" marker-end="url(#orangeArrow)" d="M292 749h65"/>
+    <path class="orange" marker-end="url(#orangeArrow)" d="M555 749h65"/>
+    <path class="purple dash" marker-end="url(#purpleArrow)" d="M818 733h69"/>
+    <path class="purple" marker-end="url(#purpleArrow)" d="M1005 752v13"/>
+
+    <text class="label" x="325" y="731" text-anchor="middle" fill="#d97706">event</text>
+    <text class="label" x="586" y="731" text-anchor="middle" fill="#d97706">deliver</text>
+  </g>
+
+  <!-- Footer cautions -->
+  <rect x="64" y="866" width="1072" height="44" rx="14" fill="#fff7ed" stroke="#fdba74"/>
+  <text x="600" y="894" text-anchor="middle" fill="#7c2d12" font-family="Inter, system-ui, sans-serif" font-size="16" font-weight="750">
+    Queue acceptance ≠ task completion · retries can duplicate work · batch throughput increases per-item waiting time
+  </text>
+</svg>
