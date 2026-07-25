@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Two visual diagrams explaining when to use load balancing, caching, partitioning, replication, message queues, and batch processing—and what each component costs.">
+  <title>System Design Components Visual Guide | Learning Library</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f4f8f7;
+      --surface: #ffffff;
+      --surface-soft: #f7faf9;
+      --text: #15262c;
+      --muted: #62747a;
+      --primary: #087f73;
+      --primary-strong: #05685f;
+      --primary-soft: rgba(8, 127, 115, 0.11);
+      --border: #dce7e4;
+      --warning: #9a4c16;
+      --warning-soft: rgba(154, 76, 22, 0.09);
+      --shadow: 0 18px 46px rgba(21, 38, 44, 0.09);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(8, 127, 115, 0.14), transparent 34rem),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    a { color: inherit; }
+
+    .shell {
+      width: min(1120px, calc(100% - 2rem));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      border-bottom: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+      background: color-mix(in srgb, var(--bg) 92%, transparent);
+      backdrop-filter: blur(14px);
+    }
+
+    .topbar-inner {
+      display: flex;
+      min-height: 64px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .brand,
+    .back-link {
+      color: var(--primary);
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .brand:hover,
+    .back-link:hover { text-decoration: underline; }
+    .topbar-note { color: var(--muted); font-size: 0.84rem; }
+
+    header.hero { padding: clamp(3.5rem, 8vw, 6.5rem) 0 2rem; }
+
+    .eyebrow {
+      margin: 0 0 0.75rem;
+      color: var(--primary);
+      font-size: 0.78rem;
+      font-weight: 850;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 900px;
+      margin: 0;
+      font-size: clamp(2.7rem, 8vw, 5.4rem);
+      line-height: 0.96;
+      letter-spacing: -0.055em;
+    }
+
+    .lead {
+      max-width: 780px;
+      margin: 1.4rem 0 0;
+      color: var(--muted);
+      font-size: 1.08rem;
+      line-height: 1.75;
+    }
+
+    .lens {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.85rem;
+      margin: 1.8rem 0 3.4rem;
+    }
+
+    .lens article {
+      padding: 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      box-shadow: 0 8px 25px rgba(21, 38, 44, 0.05);
+    }
+
+    .lens strong {
+      display: block;
+      margin-bottom: 0.3rem;
+      color: var(--primary);
+    }
+
+    .lens p { margin: 0; color: var(--muted); font-size: 0.91rem; line-height: 1.55; }
+
+    .diagram-section { margin-bottom: 3.8rem; }
+
+    .section-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .section-heading h2 { margin: 0; font-size: clamp(1.55rem, 4vw, 2.2rem); }
+    .section-heading p { max-width: 680px; margin: 0.5rem 0 0; color: var(--muted); line-height: 1.65; }
+    .diagram-number { color: var(--primary); font-size: 0.85rem; font-weight: 850; white-space: nowrap; }
+
+    figure {
+      margin: 0;
+      padding: clamp(0.55rem, 2vw, 1rem);
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1.2rem;
+      box-shadow: var(--shadow);
+    }
+
+    figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #f7fafc;
+      border-radius: 0.85rem;
+    }
+
+    figcaption {
+      padding: 1rem 0.45rem 0.35rem;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    figcaption strong { color: var(--text); }
+
+    .takeaway {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.85rem;
+      align-items: start;
+      margin-top: 1rem;
+      padding: 1rem 1.1rem;
+      color: var(--warning);
+      background: var(--warning-soft);
+      border: 1px solid color-mix(in srgb, var(--warning) 25%, transparent);
+      border-radius: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .takeaway span:first-child {
+      display: grid;
+      width: 1.8rem;
+      height: 1.8rem;
+      place-items: center;
+      color: white;
+      background: var(--warning);
+      border-radius: 50%;
+      font-weight: 900;
+    }
+
+    .cta {
+      margin: 0 0 4rem;
+      padding: clamp(1.3rem, 4vw, 2rem);
+      text-align: center;
+      background: var(--primary-soft);
+      border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+      border-radius: 1.2rem;
+    }
+
+    .cta h2 { margin: 0; font-size: 1.45rem; }
+    .cta p { margin: 0.6rem auto 1rem; max-width: 680px; color: var(--muted); line-height: 1.6; }
+
+    .button {
+      display: inline-flex;
+      min-height: 46px;
+      align-items: center;
+      justify-content: center;
+      padding: 0.8rem 1rem;
+      color: white;
+      background: var(--primary);
+      border-radius: 0.75rem;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .button:hover { background: var(--primary-strong); }
+    footer { padding: 1.5rem 0 2.5rem; color: var(--muted); border-top: 1px solid var(--border); font-size: 0.88rem; }
+
+    @media (max-width: 760px) {
+      .lens { grid-template-columns: 1fr; }
+      .section-heading { align-items: flex-start; flex-direction: column-reverse; }
+      .topbar-note { display: none; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1719;
+        --surface: #152326;
+        --surface-soft: #101d20;
+        --text: #f1f7f6;
+        --muted: #a4b5b4;
+        --primary: #63d7ca;
+        --primary-strong: #8ce4da;
+        --primary-soft: rgba(99, 215, 202, 0.12);
+        --border: #294044;
+        --warning: #ffc078;
+        --warning-soft: rgba(255, 192, 120, 0.09);
+        --shadow: 0 18px 46px rgba(0, 0, 0, 0.25);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="index.html">Learning Library</a>
+      <span class="topbar-note">System Design · Learn</span>
+    </div>
+  </div>
+
+  <main class="shell">
+    <header class="hero">
+      <a class="back-link" href="topic.html?topic=system-design-components">← System Design Components</a>
+      <p class="eyebrow">Two-diagram mental model</p>
+      <h1>Components are mechanisms, not decorations.</h1>
+      <p class="lead">A load balancer, cache, shard, replica, queue, and batch job solve different pressures. The interview skill is to connect <strong>observed pressure → mechanism → benefit → new failure mode</strong>.</p>
+    </header>
+
+    <section class="lens" aria-label="How to read the diagrams">
+      <article>
+        <strong>1 · Start with evidence</strong>
+        <p>What is actually saturated, slow, unavailable, or too large?</p>
+      </article>
+      <article>
+        <strong>2 · Name the mechanism</strong>
+        <p>Distribution, reuse, split ownership, copying, buffering, or grouping?</p>
+      </article>
+      <article>
+        <strong>3 · Name the bill</strong>
+        <p>Staleness, coordination, hot spots, retries, backlog, or waiting time?</p>
+      </article>
+    </section>
+
+    <section class="diagram-section" aria-labelledby="decision-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="decision-title">Choose the component from the pressure</h2>
+          <p>Read each card from top to bottom. Components that share a benefit are not interchangeable because their mechanisms—and therefore their limits—are different.</p>
+        </div>
+        <span class="diagram-number">DIAGRAM 1 OF 2</span>
+      </div>
+      <figure>
+        <img src="assets/system-components-decision-map.svg" width="1200" height="980" alt="Six cards map system pressures to the mechanisms, gains, and costs of load balancing, caching, partitioning, replication, message queues, and batch processing.">
+        <figcaption><strong>The decision rule:</strong> choose a component only when you can point to the pressure its mechanism removes. “We may need scale” is weaker than “one database node has reached its write ceiling, so split ownership by account ID.”</figcaption>
+      </figure>
+      <div class="takeaway">
+        <span aria-hidden="true">!</span>
+        <div><strong>Most-confused pair:</strong> partitioning stores <em>different subsets</em> on different owners; replication stores <em>another copy of the same subset</em>. Partition for capacity. Replicate that partition for failover or read scale.</div>
+      </div>
+    </section>
+
+    <section class="diagram-section" aria-labelledby="flow-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="flow-title">Compose paths without mixing guarantees</h2>
+          <p>One product may use several components, but each affects only its own boundary. Trace a synchronous request, a data operation, and background work independently.</p>
+        </div>
+        <span class="diagram-number">DIAGRAM 2 OF 2</span>
+      </div>
+      <figure>
+        <img src="assets/system-components-composed-flow.svg" width="1200" height="930" alt="A three-lane architecture: users reach a stateless application fleet through a load balancer; cache misses route to partitioned data with replicas; committed work enters a queue for workers and scheduled batch processing.">
+        <figcaption><strong>Do not inherit imaginary guarantees:</strong> a load balancer cannot create backend capacity; a cache can return stale data; a shard is not available unless its own data is replicated; and accepting a message into a queue does not mean the business task finished.</figcaption>
+      </figure>
+      <div class="takeaway">
+        <span aria-hidden="true">!</span>
+        <div><strong>Interview narration:</strong> “The write becomes durable first. Then I publish asynchronous work. Consumers are idempotent because delivery may repeat. Analytics can run in a batch because its deadline is morning, not per-request.”</div>
+      </div>
+    </section>
+
+    <section class="cta">
+      <h2>Can you select the mechanism under pressure?</h2>
+      <p>The diagnostic uses production situations, not component-name trivia. Explanations stay hidden until submission.</p>
+      <a class="button" href="system-design-components-quiz.html">Start the 20-question diagnostic →</a>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell">Based on the supplied introductory System Design Components lesson. No learning progress is persisted by this page.</div>
+  </footer>
+</body>
+</html>
