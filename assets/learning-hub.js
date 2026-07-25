@@ -31,8 +31,22 @@
     return catalog.topics.find((topic) => topic.id === id);
   }
 
+  function byOrder(left, right) {
+    return left.order - right.order || left.name?.localeCompare(right.name) || left.title?.localeCompare(right.title) || 0;
+  }
+
+  function categoriesInOrder() {
+    return [...catalog.categories].sort(byOrder);
+  }
+
   function topicsForCategory(categoryId) {
-    return catalog.topics.filter((topic) => topic.categoryId === categoryId);
+    return catalog.topics
+      .filter((topic) => topic.categoryId === categoryId)
+      .sort(byOrder);
+  }
+
+  function formatOrder(order) {
+    return String(order).padStart(2, "0");
   }
 
   function resourceCount(topics) {
@@ -66,7 +80,9 @@
     const title = element("h2", "", category.name);
     const description = element("p", "", category.description);
     const preview = element("div", "topic-preview");
-    topics.slice(0, 3).forEach((topic) => preview.append(element("span", "", topic.title)));
+    topics.slice(0, 3).forEach((topic) => {
+      preview.append(element("span", "", `${formatOrder(topic.order)} · ${topic.title}`));
+    });
 
     card.append(topline, title, description, preview);
     appendCardFooter(card, plural(resources, "resource", "resources"), `Open ${category.name}`);
@@ -99,7 +115,13 @@
 
     const topline = element("div", "card-topline");
     topline.append(element("span", "category-icon", category.icon));
-    topline.append(element("span", "card-count", plural(topic.resources.length, "resource", "resources")));
+    topline.append(
+      element(
+        "span",
+        "card-count topic-order",
+        `Topic ${formatOrder(topic.order)} · ${plural(topic.resources.length, "resource", "resources")}`
+      )
+    );
 
     card.append(topline);
     card.append(element("h2", "", topic.title));
@@ -157,7 +179,7 @@
     const categoryCount = document.querySelector("#category-count");
     const toolCount = document.querySelector("#tool-count");
 
-    catalog.categories.forEach((category) => categoryGrid.append(renderCategoryCard(category)));
+    categoriesInOrder().forEach((category) => categoryGrid.append(renderCategoryCard(category)));
     catalog.tools.forEach((tool) => toolGrid.append(renderToolCard(tool)));
 
     categoryCount.textContent = `${catalog.categories.length} categories · ${catalog.topics.length} topics`;
@@ -207,6 +229,40 @@
     resources.forEach((resource) => container.append(renderResourceCard(resource, category)));
   }
 
+  function renderTopicNavigation(topic, category) {
+    const container = document.querySelector("#topic-navigation");
+    if (!container) return;
+
+    const topics = topicsForCategory(category.id);
+    const index = topics.findIndex((candidate) => candidate.id === topic.id);
+    const previous = topics[index - 1];
+    const next = topics[index + 1];
+
+    function sequenceLink(target, direction) {
+      const link = element("a", `sequence-link sequence-${direction}`);
+      link.href = `topic.html?topic=${encodeURIComponent(target.id)}`;
+      link.append(
+        element("span", "sequence-direction", direction === "previous" ? "← Previous" : "Next →"),
+        element("strong", "", target.title)
+      );
+      return link;
+    }
+
+    const previousControl = previous
+      ? sequenceLink(previous, "previous")
+      : element("span", "sequence-boundary", "Start of category");
+    const position = element(
+      "span",
+      "sequence-position",
+      `Topic ${formatOrder(topic.order)} of ${topics.length}`
+    );
+    const nextControl = next
+      ? sequenceLink(next, "next")
+      : element("span", "sequence-boundary sequence-boundary-end", "End of category");
+
+    container.append(previousControl, position, nextControl);
+  }
+
   function renderTopic() {
     const id = new URLSearchParams(window.location.search).get("topic");
     const topic = topicById(id);
@@ -224,10 +280,13 @@
     appendBreadcrumb(breadcrumbs, category.name, `category.html?category=${encodeURIComponent(category.id)}`);
     appendBreadcrumb(breadcrumbs, topic.title);
 
-    document.querySelector("#topic-eyebrow").textContent = category.name;
+    const categoryTopics = topicsForCategory(category.id);
+    document.querySelector("#topic-eyebrow").textContent =
+      `${category.name} · Topic ${formatOrder(topic.order)} of ${categoryTopics.length}`;
     document.querySelector("#topic-title").textContent = topic.title;
     document.querySelector("#topic-description").textContent = topic.description;
 
+    renderTopicNavigation(topic, category);
     ["learn", "quiz", "recall"].forEach((type) => renderResourceSection(type, topic, category));
   }
 
