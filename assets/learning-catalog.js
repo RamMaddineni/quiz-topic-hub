@@ -204,6 +204,22 @@ window.LEARNING_CATALOG = {
           meta: "12 questions"
         }
       ]
+    },
+    {
+      id: "mutex-binary-semaphore",
+      categoryId: "csharp-dotnet",
+      order: 2,
+      title: "Mutex vs Binary Semaphore",
+      description: "Ownership versus permits, locking versus signaling, initial count, wrong-thread release, async gates, and failure flows.",
+      resources: [
+        {
+          type: "learn",
+          title: "Mutex vs binary semaphore visual guide",
+          description: "A five-year-old-friendly analogy mapped to exact state machines, an interactive flow lab, eight end-to-end cases, C# patterns, and interview answers.",
+          href: "csharp-mutex-vs-binary-semaphore.html",
+          meta: "Interactive lab + 8 cases"
+        }
+      ]
     }
   ],
 

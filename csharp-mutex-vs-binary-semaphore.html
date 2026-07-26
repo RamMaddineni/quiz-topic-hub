@@ -1,0 +1,2159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A beginner-friendly, interview-focused visual guide to mutexes and binary semaphores: ownership, locking, signaling, state transitions, C# examples, and failure cases.">
+  <title>Mutex vs Binary Semaphore | Learning Library</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f5f6fb;
+      --surface: #ffffff;
+      --surface-soft: #f8f8fc;
+      --text: #1e2433;
+      --muted: #60697a;
+      --border: #dfe3ed;
+      --mutex: #635bce;
+      --mutex-strong: #4d46ad;
+      --mutex-soft: rgba(99, 91, 206, 0.11);
+      --semaphore: #087f73;
+      --semaphore-strong: #05685f;
+      --semaphore-soft: rgba(8, 127, 115, 0.11);
+      --warning: #a44b16;
+      --warning-soft: rgba(164, 75, 22, 0.1);
+      --danger: #b42318;
+      --danger-soft: rgba(180, 35, 24, 0.09);
+      --success: #087f5b;
+      --success-soft: rgba(8, 127, 91, 0.1);
+      --shadow: 0 18px 50px rgba(30, 36, 51, 0.09);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 0%, var(--mutex-soft), transparent 30rem),
+        radial-gradient(circle at 88% 10%, var(--semaphore-soft), transparent 30rem),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    a { color: inherit; }
+    button, code, pre { font: inherit; }
+    button { color: inherit; }
+
+    .shell {
+      width: min(1120px, calc(100% - 2rem));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      border-bottom: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+      background: color-mix(in srgb, var(--bg) 92%, transparent);
+      backdrop-filter: blur(14px);
+    }
+
+    .topbar-inner {
+      display: flex;
+      min-height: 64px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .brand,
+    .back-link {
+      color: var(--mutex);
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .brand:hover,
+    .back-link:hover { text-decoration: underline; }
+    .topbar-note { color: var(--muted); font-size: 0.86rem; }
+
+    .hero {
+      padding: clamp(3.2rem, 8vw, 6rem) 0 2.2rem;
+    }
+
+    .eyebrow {
+      margin: 1.4rem 0 0.7rem;
+      color: var(--mutex);
+      font-size: 0.78rem;
+      font-weight: 850;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 950px;
+      margin: 0;
+      font-size: clamp(2.6rem, 7.5vw, 5.4rem);
+      line-height: 0.98;
+      letter-spacing: -0.055em;
+    }
+
+    .lead {
+      max-width: 850px;
+      margin: 1.35rem 0 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 2vw, 1.13rem);
+      line-height: 1.75;
+    }
+
+    .hero-answer {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+      margin: 2rem 0 0;
+    }
+
+    .answer-card,
+    .card,
+    .case-card,
+    .code-card,
+    .capsule {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1.1rem;
+      box-shadow: 0 10px 30px rgba(30, 36, 51, 0.06);
+    }
+
+    .answer-card {
+      padding: 1.2rem;
+      border-top: 4px solid;
+    }
+
+    .answer-card.mutex { border-top-color: var(--mutex); }
+    .answer-card.semaphore { border-top-color: var(--semaphore); }
+
+    .answer-card strong {
+      display: block;
+      margin-bottom: 0.35rem;
+      font-size: 1.08rem;
+    }
+
+    .answer-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .core-line {
+      margin: 1rem 0 0;
+      padding: 1rem 1.1rem;
+      color: var(--text);
+      background: linear-gradient(90deg, var(--mutex-soft), var(--semaphore-soft));
+      border: 1px solid var(--border);
+      border-radius: 0.9rem;
+      line-height: 1.65;
+    }
+
+    .toc {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      margin: 0 0 3.5rem;
+    }
+
+    .toc a,
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 38px;
+      padding: 0.55rem 0.75rem;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 0.84rem;
+      font-weight: 750;
+      text-decoration: none;
+    }
+
+    .toc a:hover {
+      color: var(--text);
+      border-color: var(--mutex);
+    }
+
+    .section {
+      margin: 0 0 clamp(3.6rem, 8vw, 5.5rem);
+      scroll-margin-top: 1.5rem;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.15rem;
+    }
+
+    .section-heading h2 {
+      margin: 0;
+      font-size: clamp(1.65rem, 4vw, 2.35rem);
+      letter-spacing: -0.025em;
+    }
+
+    .section-heading p {
+      max-width: 780px;
+      margin: 0.55rem 0 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .section-label {
+      color: var(--mutex);
+      font-size: 0.8rem;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .card { padding: clamp(1.1rem, 3vw, 1.55rem); }
+
+    .plain-language {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .toy-card {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(1.2rem, 3vw, 1.6rem);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1.15rem;
+      box-shadow: var(--shadow);
+    }
+
+    .toy-card::after {
+      position: absolute;
+      inset: auto -3rem -3rem auto;
+      width: 9rem;
+      height: 9rem;
+      background: var(--toy-soft);
+      border-radius: 50%;
+      content: "";
+    }
+
+    .toy-card.mutex {
+      --toy-color: var(--mutex);
+      --toy-soft: var(--mutex-soft);
+    }
+
+    .toy-card.semaphore {
+      --toy-color: var(--semaphore);
+      --toy-soft: var(--semaphore-soft);
+    }
+
+    .toy-card h3 {
+      margin: 0;
+      color: var(--toy-color);
+      font-size: 1.35rem;
+    }
+
+    .toy-card > p {
+      margin: 0.55rem 0 1rem;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .toy-stage {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 0.7rem;
+      align-items: center;
+      min-height: 150px;
+      padding: 1rem;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 0.9rem;
+    }
+
+    .person {
+      display: grid;
+      gap: 0.35rem;
+      justify-items: center;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 750;
+      text-align: center;
+    }
+
+    .person-icon {
+      display: grid;
+      width: 3.4rem;
+      height: 3.4rem;
+      place-items: center;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      font-size: 1.5rem;
+    }
+
+    .big-token {
+      display: grid;
+      min-width: 7rem;
+      min-height: 7rem;
+      place-items: center;
+      padding: 0.75rem;
+      color: var(--toy-color);
+      background: var(--toy-soft);
+      border: 2px solid color-mix(in srgb, var(--toy-color) 50%, var(--border));
+      border-radius: 1.25rem;
+      font-weight: 900;
+      line-height: 1.3;
+      text-align: center;
+    }
+
+    .analogy-map {
+      display: grid;
+      gap: 0.65rem;
+      margin-top: 1rem;
+    }
+
+    .map-row {
+      display: grid;
+      grid-template-columns: minmax(120px, 0.7fr) minmax(0, 1.3fr);
+      gap: 0.8rem;
+      padding-top: 0.65rem;
+      border-top: 1px solid var(--border);
+      line-height: 1.55;
+    }
+
+    .map-row strong { color: var(--toy-color); }
+    .map-row span { color: var(--muted); }
+
+    .boundary-note,
+    .note,
+    .warning,
+    .success {
+      margin-top: 1rem;
+      padding: 1rem 1.05rem;
+      border: 1px solid;
+      border-radius: 0.9rem;
+      line-height: 1.65;
+    }
+
+    .boundary-note,
+    .note {
+      background: var(--mutex-soft);
+      border-color: color-mix(in srgb, var(--mutex) 28%, var(--border));
+    }
+
+    .warning {
+      background: var(--warning-soft);
+      border-color: color-mix(in srgb, var(--warning) 30%, var(--border));
+    }
+
+    .success {
+      background: var(--success-soft);
+      border-color: color-mix(in srgb, var(--success) 30%, var(--border));
+    }
+
+    .state-pair {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .state-machine {
+      padding: 1.2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1.1rem;
+      box-shadow: var(--shadow);
+    }
+
+    .state-machine.mutex { --machine: var(--mutex); --machine-soft: var(--mutex-soft); }
+    .state-machine.semaphore { --machine: var(--semaphore); --machine-soft: var(--semaphore-soft); }
+
+    .state-machine h3 {
+      margin: 0;
+      color: var(--machine);
+    }
+
+    .state-machine > p {
+      margin: 0.45rem 0 1.1rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .state-flow {
+      display: grid;
+      grid-template-columns: minmax(115px, 1fr) auto minmax(145px, 1.15fr);
+      gap: 0.55rem;
+      align-items: center;
+    }
+
+    .state-node {
+      display: grid;
+      min-height: 92px;
+      place-items: center;
+      padding: 0.8rem;
+      background: var(--machine-soft);
+      border: 2px solid color-mix(in srgb, var(--machine) 45%, var(--border));
+      border-radius: 0.9rem;
+      font-weight: 850;
+      line-height: 1.45;
+      text-align: center;
+    }
+
+    .state-arrow {
+      color: var(--machine);
+      font-size: 1.55rem;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .transition-list {
+      display: grid;
+      gap: 0.6rem;
+      margin: 1rem 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .transition-list li {
+      padding: 0.75rem 0.8rem;
+      background: var(--surface-soft);
+      border-left: 4px solid var(--machine);
+      border-radius: 0.55rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .transition-list strong { color: var(--text); }
+
+    .table-wrap {
+      overflow-x: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      box-shadow: var(--shadow);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+
+    th,
+    td {
+      padding: 0.9rem 1rem;
+      border-bottom: 1px solid var(--border);
+      line-height: 1.55;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--surface-soft);
+      font-size: 0.82rem;
+      letter-spacing: 0.035em;
+      text-transform: uppercase;
+    }
+
+    th:nth-child(2) { color: var(--mutex); }
+    th:nth-child(3) { color: var(--semaphore); }
+    tr:last-child td { border-bottom: 0; }
+    td:first-child { font-weight: 800; }
+    td:not(:first-child) { color: var(--muted); }
+
+    .lab {
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1.2rem;
+      box-shadow: var(--shadow);
+    }
+
+    .lab-header {
+      padding: 1.2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .scenario-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .scenario-tab,
+    .lab-button {
+      min-height: 42px;
+      padding: 0.65rem 0.8rem;
+      color: var(--muted);
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 0.7rem;
+      cursor: pointer;
+      font-weight: 780;
+    }
+
+    .scenario-tab:hover,
+    .lab-button:hover:not(:disabled) {
+      color: var(--text);
+      border-color: var(--mutex);
+    }
+
+    .scenario-tab[aria-pressed="true"] {
+      color: #ffffff;
+      background: var(--mutex);
+      border-color: var(--mutex);
+    }
+
+    .scenario-tab[data-kind="semaphore"][aria-pressed="true"] {
+      background: var(--semaphore);
+      border-color: var(--semaphore);
+    }
+
+    button:focus-visible,
+    a:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--mutex) 45%, transparent);
+      outline-offset: 3px;
+    }
+
+    .lab-main {
+      display: grid;
+      grid-template-columns: minmax(250px, 0.8fr) minmax(0, 1.2fr);
+      gap: 0;
+    }
+
+    .lab-state {
+      padding: 1.2rem;
+      background: var(--surface-soft);
+      border-right: 1px solid var(--border);
+    }
+
+    .lab-title {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    .lab-subtitle {
+      margin: 0.4rem 0 1rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .state-meter {
+      display: grid;
+      gap: 0.65rem;
+      margin: 0;
+    }
+
+    .meter-row {
+      display: grid;
+      grid-template-columns: 95px 1fr;
+      gap: 0.75rem;
+      align-items: start;
+      padding: 0.7rem 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .meter-row dt {
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .meter-row dd {
+      margin: 0;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .lab-step {
+      display: grid;
+      align-content: center;
+      min-height: 330px;
+      padding: clamp(1.3rem, 4vw, 2.2rem);
+    }
+
+    .step-number {
+      margin: 0 0 0.55rem;
+      color: var(--mutex);
+      font-size: 0.8rem;
+      font-weight: 850;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .lab[data-kind="semaphore"] .step-number { color: var(--semaphore); }
+
+    .step-label {
+      margin: 0;
+      font-size: clamp(1.45rem, 4vw, 2.1rem);
+      letter-spacing: -0.025em;
+    }
+
+    .step-message {
+      margin: 0.8rem 0 1.15rem;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+
+    .actor-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .actor-chip {
+      padding: 0.5rem 0.65rem;
+      color: var(--muted);
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 750;
+    }
+
+    .actor-chip.active {
+      color: var(--text);
+      background: var(--success-soft);
+      border-color: color-mix(in srgb, var(--success) 30%, var(--border));
+    }
+
+    .actor-chip.blocked {
+      color: var(--warning);
+      background: var(--warning-soft);
+      border-color: color-mix(in srgb, var(--warning) 30%, var(--border));
+    }
+
+    .actor-chip.error {
+      color: var(--danger);
+      background: var(--danger-soft);
+      border-color: color-mix(in srgb, var(--danger) 30%, var(--border));
+    }
+
+    .lab-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.8rem;
+      padding: 1rem 1.2rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .lab-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .lab-button.primary {
+      color: #ffffff;
+      background: var(--mutex);
+      border-color: var(--mutex);
+    }
+
+    .lab[data-kind="semaphore"] .lab-button.primary {
+      background: var(--semaphore);
+      border-color: var(--semaphore);
+    }
+
+    .lab-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
+    .lab-progress {
+      color: var(--muted);
+      font-size: 0.84rem;
+      font-weight: 750;
+    }
+
+    .case-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .case-card {
+      padding: 1.2rem;
+    }
+
+    .case-card h3 {
+      margin: 0;
+      font-size: 1.22rem;
+    }
+
+    .case-card > p {
+      margin: 0.5rem 0 0.9rem;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .case-tag {
+      display: inline-flex;
+      margin-bottom: 0.65rem;
+      padding: 0.35rem 0.55rem;
+      color: var(--tag-color);
+      background: var(--tag-soft);
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 850;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .case-card.mutex { --tag-color: var(--mutex); --tag-soft: var(--mutex-soft); }
+    .case-card.semaphore { --tag-color: var(--semaphore); --tag-soft: var(--semaphore-soft); }
+    .case-card.failure { --tag-color: var(--danger); --tag-soft: var(--danger-soft); }
+    .case-card.async { --tag-color: var(--success); --tag-soft: var(--success-soft); }
+
+    .trace {
+      display: grid;
+      gap: 0.55rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: trace;
+    }
+
+    .trace li {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.65rem;
+      color: var(--muted);
+      line-height: 1.55;
+      counter-increment: trace;
+    }
+
+    .trace li::before {
+      display: grid;
+      width: 1.65rem;
+      height: 1.65rem;
+      place-items: center;
+      color: var(--tag-color);
+      background: var(--tag-soft);
+      border-radius: 50%;
+      content: counter(trace);
+      font-size: 0.75rem;
+      font-weight: 900;
+    }
+
+    .trace strong { color: var(--text); }
+
+    .code-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .code-card {
+      overflow: hidden;
+    }
+
+    .code-card header {
+      padding: 1rem 1.1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .code-card h3 { margin: 0; font-size: 1.1rem; }
+    .code-card header p { margin: 0.35rem 0 0; color: var(--muted); line-height: 1.5; }
+
+    pre {
+      margin: 0;
+      padding: 1.1rem;
+      overflow-x: auto;
+      color: var(--text);
+      background: var(--surface-soft);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.86rem;
+      line-height: 1.65;
+      tab-size: 2;
+    }
+
+    :not(pre) > code {
+      padding: 0.12rem 0.3rem;
+      background: var(--mutex-soft);
+      border-radius: 0.3rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.9em;
+    }
+
+    .code-notes {
+      padding: 0.9rem 1.1rem 1.05rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .decision-tree {
+      display: grid;
+      gap: 0.8rem;
+    }
+
+    .decision-row {
+      display: grid;
+      grid-template-columns: minmax(180px, 0.8fr) auto minmax(260px, 1.2fr);
+      gap: 0.75rem;
+      align-items: center;
+      padding: 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0.9rem;
+    }
+
+    .decision-question { font-weight: 820; line-height: 1.5; }
+    .decision-arrow { color: var(--muted); font-weight: 900; }
+    .decision-answer { color: var(--muted); line-height: 1.55; }
+    .decision-answer strong { color: var(--text); }
+
+    .interview-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+      gap: 1rem;
+    }
+
+    .quote-card {
+      padding: 1.2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 5px solid var(--mutex);
+      border-radius: 1rem;
+      box-shadow: var(--shadow);
+    }
+
+    .quote-card h3 { margin: 0 0 0.65rem; }
+    .quote-card p { margin: 0; color: var(--muted); line-height: 1.75; }
+
+    .followups {
+      display: grid;
+      gap: 0.7rem;
+      padding: 1.2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      box-shadow: var(--shadow);
+    }
+
+    .followups h3 { margin: 0; }
+    .followup {
+      padding-top: 0.7rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .followup strong { display: block; }
+    .followup span { display: block; margin-top: 0.25rem; color: var(--muted); line-height: 1.5; }
+
+    .capsule {
+      padding: clamp(1.2rem, 3vw, 1.7rem);
+      border-top: 5px solid var(--semaphore);
+    }
+
+    .capsule-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .capsule-block h3 {
+      margin: 0 0 0.45rem;
+      color: var(--semaphore);
+      font-size: 0.93rem;
+      letter-spacing: 0.045em;
+      text-transform: uppercase;
+    }
+
+    .capsule-block p,
+    .capsule-block ul {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .capsule-block ul { padding-left: 1.2rem; }
+
+    .recall-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.7rem;
+      margin-top: 1rem;
+    }
+
+    details {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0.8rem;
+    }
+
+    summary {
+      padding: 0.9rem 1rem;
+      cursor: pointer;
+      font-weight: 780;
+      line-height: 1.45;
+    }
+
+    details p {
+      margin: 0;
+      padding: 0 1rem 1rem;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .sources {
+      padding: 1.2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+    }
+
+    .sources ul {
+      margin: 0;
+      padding-left: 1.2rem;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .sources a {
+      color: var(--mutex);
+      font-weight: 720;
+    }
+
+    footer {
+      padding: 1.5rem 0 2.5rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      font-size: 0.88rem;
+    }
+
+    @media (max-width: 820px) {
+      .hero-answer,
+      .plain-language,
+      .state-pair,
+      .case-grid,
+      .code-grid,
+      .interview-grid,
+      .capsule-grid,
+      .recall-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .lab-main { grid-template-columns: 1fr; }
+      .lab-state { border-right: 0; border-bottom: 1px solid var(--border); }
+      .lab-step { min-height: 290px; }
+    }
+
+    @media (max-width: 620px) {
+      .section-heading {
+        align-items: flex-start;
+        flex-direction: column-reverse;
+      }
+
+      .topbar-note { display: none; }
+      .toy-stage { grid-template-columns: 1fr; }
+      .big-token { min-width: 0; min-height: 5.5rem; }
+      .state-flow { grid-template-columns: 1fr; }
+      .state-arrow { transform: rotate(90deg); }
+      .map-row { grid-template-columns: 1fr; gap: 0.25rem; }
+      .decision-row { grid-template-columns: 1fr; }
+      .decision-arrow { transform: rotate(90deg); justify-self: start; }
+      .lab-footer { align-items: flex-start; flex-direction: column; }
+      .lab-actions { width: 100%; }
+      .lab-button { flex: 1; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #10131c;
+        --surface: #191e2a;
+        --surface-soft: #141923;
+        --text: #f2f4f8;
+        --muted: #adb5c5;
+        --border: #303848;
+        --mutex: #a9a3ff;
+        --mutex-strong: #c2beff;
+        --mutex-soft: rgba(169, 163, 255, 0.12);
+        --semaphore: #65dbce;
+        --semaphore-strong: #8ee8de;
+        --semaphore-soft: rgba(101, 219, 206, 0.12);
+        --warning: #ffc078;
+        --warning-soft: rgba(255, 192, 120, 0.1);
+        --danger: #ff8787;
+        --danger-soft: rgba(255, 135, 135, 0.09);
+        --success: #69dbb5;
+        --success-soft: rgba(105, 219, 181, 0.1);
+        --shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="index.html">Learning Library</a>
+      <span class="topbar-note">C# / .NET · Concurrency foundations</span>
+    </div>
+  </div>
+
+  <main class="shell">
+    <header class="hero">
+      <a class="back-link" href="topic.html?topic=mutex-binary-semaphore">← Mutex vs Binary Semaphore</a>
+      <p class="eyebrow">Explain it simply · Then make it precise</p>
+      <h1>Mutex vs binary semaphore: owner versus signal.</h1>
+      <p class="lead">Both can make “only one worker proceeds” appear on a timeline. That visible result is why they are confused. The real difference is the contract underneath: a mutex records an owner and protects a critical section; a binary semaphore stores at most one permit and can hand that permit between unrelated workers.</p>
+
+      <div class="hero-answer" role="group" aria-label="The shortest correct comparison">
+        <article class="answer-card mutex">
+          <strong>Mutex = one owned key</strong>
+          <p>The worker that locks it becomes the owner. That same owner must unlock it. Its natural job is protecting shared state while the owner is inside.</p>
+        </article>
+        <article class="answer-card semaphore">
+          <strong>Binary semaphore = one transferable permit</strong>
+          <p>Its count is only 0 or 1. One worker may wait; a different worker may signal or release. Its natural job can be gating or handoff—there is no owner.</p>
+        </article>
+      </div>
+
+      <p class="core-line"><strong>The sentence to remember:</strong> a mutex answers <em>“Who owns the lock?”</em>; a binary semaphore answers <em>“Is one permit available?”</em> Same capacity, different rules.</p>
+    </header>
+
+    <nav class="toc" aria-label="Lesson sections">
+      <a href="#like-five">Like I am five</a>
+      <a href="#exact-model">Exact state model</a>
+      <a href="#comparison">Side-by-side</a>
+      <a href="#flow-lab">Interactive flows</a>
+      <a href="#cases">End-to-end cases</a>
+      <a href="#dotnet">Practical C#</a>
+      <a href="#decision">Decision rule</a>
+      <a href="#interview">Interview answer</a>
+      <a href="#capsule">Notebook capsule</a>
+    </nav>
+
+    <section class="section" id="like-five" aria-labelledby="like-five-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="like-five-title">First, like you are five</h2>
+          <p>Imagine two different rules for a one-child toy room. The room capacity looks identical, but the rule for granting access is not.</p>
+        </div>
+        <span class="section-label">MENTAL MODEL</span>
+      </div>
+
+      <div class="plain-language">
+        <article class="toy-card mutex">
+          <h3>Mutex: the named bathroom key</h3>
+          <p>There is one key. When Asha takes it, the teacher writes “Asha owns the key.” Ravi must wait. Only Asha is allowed to return it.</p>
+          <div class="toy-stage" role="img" aria-label="Asha owns the mutex key while Ravi waits">
+            <span class="person">
+              <span class="person-icon" aria-hidden="true">🧒</span>
+              Asha<br>owner
+            </span>
+            <span class="big-token">KEY<br>Owner: Asha</span>
+            <span class="person">
+              <span class="person-icon" aria-hidden="true">🧒</span>
+              Ravi<br>waiting
+            </span>
+          </div>
+          <div class="analogy-map">
+            <div class="map-row"><strong>Key</strong><span>The mutex object.</span></div>
+            <div class="map-row"><strong>Name on key</strong><span>The thread that currently owns the mutex.</span></div>
+            <div class="map-row"><strong>Bathroom</strong><span>The protected critical section or shared data.</span></div>
+            <div class="map-row"><strong>Return your own key</strong><span>Only the owner may unlock.</span></div>
+          </div>
+        </article>
+
+        <article class="toy-card semaphore">
+          <h3>Binary semaphore: the green permission coin</h3>
+          <p>There is a bowl that can hold one green coin. If a coin is present, any child may take it and proceed. If the bowl is empty, the child waits. Any helper may put a coin into the bowl.</p>
+          <div class="toy-stage" role="img" aria-label="A helper places a permit that a waiting child can consume">
+            <span class="person">
+              <span class="person-icon" aria-hidden="true">🧑</span>
+              Helper<br>signals
+            </span>
+            <span class="big-token">PERMIT<br>Count: 0 or 1</span>
+            <span class="person">
+              <span class="person-icon" aria-hidden="true">🧒</span>
+              Child<br>waits
+            </span>
+          </div>
+          <div class="analogy-map">
+            <div class="map-row"><strong>Coin</strong><span>One available permit: count = 1.</span></div>
+            <div class="map-row"><strong>Empty bowl</strong><span>No permit: count = 0, so waiters block.</span></div>
+            <div class="map-row"><strong>Take coin</strong><span><code>Wait</code> consumes the permit: 1 → 0.</span></div>
+            <div class="map-row"><strong>Put coin</strong><span><code>Signal/Release</code> supplies a permit: 0 → 1, or wakes one waiter.</span></div>
+          </div>
+        </article>
+      </div>
+
+      <div class="boundary-note">
+        <strong>Where the story stops:</strong> real runtimes schedule waiting threads, apply memory-ordering rules, handle timeouts, and may implement recursion or operating-system integration. The analogy is only for the core contract: <strong>mutex remembers an owner; semaphore remembers a count.</strong>
+      </div>
+    </section>
+
+    <section class="section" id="exact-model" aria-labelledby="exact-model-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="exact-model-title">Now replace the story with exact state</h2>
+          <p>A primitive is easier to reason about when you can write down every legal state and transition. “Binary” describes the semaphore’s count range; it does not add ownership.</p>
+        </div>
+        <span class="section-label">PRECISE MODEL</span>
+      </div>
+
+      <div class="state-pair">
+        <article class="state-machine mutex">
+          <h3>Conceptual mutex</h3>
+          <p>For the simplest, non-recursive model, the state contains both availability and identity.</p>
+          <div class="state-flow" role="img" aria-label="Mutex transitions between unlocked and locked by an owner">
+            <span class="state-node">UNLOCKED<br>owner = none</span>
+            <span class="state-arrow" aria-hidden="true">⇄</span>
+            <span class="state-node">LOCKED<br>owner = Thread A</span>
+          </div>
+          <ul class="transition-list">
+            <li><strong>A calls Lock:</strong> unlocked → locked(owner=A); A proceeds.</li>
+            <li><strong>B calls Lock:</strong> owner is A, so B waits.</li>
+            <li><strong>A calls Unlock:</strong> legal; ownership ends and one waiter may compete.</li>
+            <li><strong>B calls Unlock while A owns it:</strong> illegal. The state must not become unlocked.</li>
+          </ul>
+        </article>
+
+        <article class="state-machine semaphore">
+          <h3>Binary semaphore</h3>
+          <p>The primitive stores a count in {0, 1} plus waiting operations. It does not store “who owns it.”</p>
+          <div class="state-flow" role="img" aria-label="Binary semaphore transitions between count zero and count one">
+            <span class="state-node">COUNT = 0<br>no permit</span>
+            <span class="state-arrow" aria-hidden="true">⇄</span>
+            <span class="state-node">COUNT = 1<br>one permit</span>
+          </div>
+          <ul class="transition-list">
+            <li><strong>Wait at 1:</strong> consume permit, 1 → 0, caller proceeds.</li>
+            <li><strong>Wait at 0:</strong> caller blocks until a permit is supplied.</li>
+            <li><strong>Release at 0:</strong> supply one permit or hand it directly to one waiter.</li>
+            <li><strong>Release at 1:</strong> there is no room for a second permit; an API may reject over-release.</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="note">
+        <strong>Two important qualifications:</strong> .NET’s <code>Mutex</code> and C# <code>lock</code> are reentrant for the owning thread, so the implementation also tracks an acquisition depth. It must be released the same number of times. A <code>SemaphoreSlim(0, 1)</code> created with maximum count 1 throws <code>SemaphoreFullException</code> if code tries to release beyond 1; a textbook binary semaphore is often drawn as simply staying at 1. Neither interpretation stores two signals.
+      </div>
+    </section>
+
+    <section class="section" id="comparison" aria-labelledby="comparison-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="comparison-title">Mutex and binary semaphore side by side</h2>
+          <p>Do not compare only the number “one.” Compare purpose, state, legal caller behavior, and failure detection.</p>
+        </div>
+        <span class="section-label">CONTRAST</span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Question</th>
+              <th>Mutex</th>
+              <th>Binary semaphore</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Natural purpose</td>
+              <td>Locking: protect one critical section or invariant.</td>
+              <td>One-permit gating or signaling/handoff.</td>
+            </tr>
+            <tr>
+              <td>Core state</td>
+              <td>Unlocked, or locked with an owner (and possibly recursion depth).</td>
+              <td>Count 0 or 1, plus waiters; no owner identity.</td>
+            </tr>
+            <tr>
+              <td>Who may release?</td>
+              <td>Only the thread that acquired/owns it.</td>
+              <td>Any thread or task with access to the semaphore.</td>
+            </tr>
+            <tr>
+              <td>Typical initial state</td>
+              <td>Unlocked.</td>
+              <td>1 for a gate; 0 for a signal/handoff.</td>
+            </tr>
+            <tr>
+              <td>Can A wait and B signal?</td>
+              <td>No. B cannot unlock A’s mutex.</td>
+              <td>Yes. This producer/consumer handoff is normal.</td>
+            </tr>
+            <tr>
+              <td>Can it give mutual exclusion?</td>
+              <td>Yes—this is its primary contract.</td>
+              <td>Yes, if initialized to 1 and every successful wait is paired correctly—but ownership is not enforced.</td>
+            </tr>
+            <tr>
+              <td>Wrong release</td>
+              <td>Detected/rejected by owner-aware implementations such as .NET <code>Mutex</code>.</td>
+              <td>May succeed, wake a waiter early, and silently break exclusion; max-count checks catch only some over-releases.</td>
+            </tr>
+            <tr>
+              <td>Owner dies</td>
+              <td>.NET can report an abandoned mutex to the next acquirer; protected data may be inconsistent.</td>
+              <td>No owner exists to abandon. A missing release can simply leak the permit and block forever.</td>
+            </tr>
+            <tr>
+              <td>Wake order</td>
+              <td>Do not assume fairness unless the specific implementation promises it.</td>
+              <td>.NET does not guarantee FIFO or LIFO order among waiters.</td>
+            </tr>
+            <tr>
+              <td>C# async use</td>
+              <td>Do not hold a thread-affine mutex or <code>lock</code> across <code>await</code>.</td>
+              <td><code>SemaphoreSlim.WaitAsync</code> is a common async gate; logical pairing remains your responsibility.</td>
+            </tr>
+            <tr>
+              <td>Cross-process use in .NET</td>
+              <td>A named <code>System.Threading.Mutex</code> can coordinate processes.</td>
+              <td><code>SemaphoreSlim</code> is in-process only; <code>Semaphore</code> provides system semaphore features where supported.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="warning">
+        <strong>Vocabulary trap:</strong> .NET calls a <code>WaitHandle</code> “signaled” when a wait can proceed. An unowned mutex is therefore in a signaled state. That low-level term does <em>not</em> mean a mutex is suitable for “Thread B notifies Thread A”; ownership still means only the owning thread may call <code>ReleaseMutex</code>.
+      </div>
+    </section>
+
+    <section class="section" id="flow-lab" aria-labelledby="flow-lab-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="flow-lab-title">Step through the flows</h2>
+          <p>Choose a case and advance one event at a time. Watch the difference between <strong>owner</strong>, <strong>count</strong>, <strong>inside</strong>, and <strong>waiting</strong>.</p>
+        </div>
+        <span class="section-label">INTERACTIVE VISUAL</span>
+      </div>
+
+      <div class="lab" id="concurrency-lab" data-kind="mutex">
+        <div class="lab-header">
+          <div class="scenario-tabs" role="group" aria-label="Flow scenario">
+            <button class="scenario-tab" type="button" data-scenario="mutex-lock" data-kind="mutex" aria-pressed="true">Mutex lock</button>
+            <button class="scenario-tab" type="button" data-scenario="mutex-wrong-owner" data-kind="mutex" aria-pressed="false">Wrong owner</button>
+            <button class="scenario-tab" type="button" data-scenario="semaphore-signal" data-kind="semaphore" aria-pressed="false">Semaphore signal</button>
+            <button class="scenario-tab" type="button" data-scenario="semaphore-fake-lock" data-kind="semaphore" aria-pressed="false">Fake lock breaks</button>
+            <button class="scenario-tab" type="button" data-scenario="double-signal" data-kind="semaphore" aria-pressed="false">Double signal</button>
+            <button class="scenario-tab" type="button" data-scenario="async-gate" data-kind="semaphore" aria-pressed="false">Async gate</button>
+          </div>
+        </div>
+
+        <div class="lab-main">
+          <aside class="lab-state" aria-label="Current synchronization state">
+            <h3 class="lab-title" id="lab-title">Correct mutex locking</h3>
+            <p class="lab-subtitle" id="lab-subtitle"></p>
+            <dl class="state-meter">
+              <div class="meter-row">
+                <dt>Primitive</dt>
+                <dd id="lab-primitive"></dd>
+              </div>
+              <div class="meter-row">
+                <dt>Owner</dt>
+                <dd id="lab-owner"></dd>
+              </div>
+              <div class="meter-row">
+                <dt>Count</dt>
+                <dd id="lab-count"></dd>
+              </div>
+              <div class="meter-row">
+                <dt>Inside</dt>
+                <dd id="lab-inside"></dd>
+              </div>
+              <div class="meter-row">
+                <dt>Waiting</dt>
+                <dd id="lab-waiting"></dd>
+              </div>
+            </dl>
+          </aside>
+
+          <div class="lab-step" aria-live="polite" aria-atomic="true">
+            <p class="step-number" id="lab-step-number"></p>
+            <h3 class="step-label" id="lab-step-label">The critical section is free</h3>
+            <p class="step-message" id="lab-step-message"></p>
+            <ul class="actor-strip" id="lab-actors"></ul>
+          </div>
+        </div>
+
+        <div class="lab-footer">
+          <span class="lab-progress" id="lab-progress"></span>
+          <div class="lab-actions">
+            <button class="lab-button" type="button" id="lab-reset">Reset</button>
+            <button class="lab-button" type="button" id="lab-previous">← Previous</button>
+            <button class="lab-button primary" type="button" id="lab-next">Next →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="cases" aria-labelledby="cases-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="cases-title">End-to-end practical flow cases</h2>
+          <p>Each trace follows condition → mechanism → consequence. These are the cases that expose whether someone understands the contract or has only memorized definitions.</p>
+        </div>
+        <span class="section-label">8 CASES</span>
+      </div>
+
+      <div class="case-grid">
+        <article class="case-card mutex">
+          <span class="case-tag">Case 1 · Correct locking</span>
+          <h3>Two withdrawals, one bank balance</h3>
+          <p>The shared rule is “balance must never go below zero.” The read-check-write sequence must be one indivisible critical section.</p>
+          <ol class="trace">
+            <li><span><strong>Thread A locks</strong>; mutex owner becomes A.</span></li>
+            <li><span>A reads ₹1,000 and validates a ₹700 withdrawal.</span></li>
+            <li><span><strong>Thread B tries to lock</strong>; B blocks because A owns it.</span></li>
+            <li><span>A writes ₹300 and unlocks; owner becomes none.</span></li>
+            <li><span>B acquires, reads ₹300, rejects its ₹500 withdrawal, then unlocks.</span></li>
+            <li><span><strong>Result:</strong> the invariant is preserved because no other thread observed the half-finished read-check-write operation.</span></li>
+          </ol>
+        </article>
+
+        <article class="case-card failure">
+          <span class="case-tag">Case 2 · Ownership violation</span>
+          <h3>B tries to unlock A’s mutex</h3>
+          <p>This is not a valid “signal.” Unlock means “I, the owner, finished the protected work.” B cannot truthfully make that statement for A.</p>
+          <ol class="trace">
+            <li><span>A acquires the mutex; owner = A.</span></li>
+            <li><span>B wants A to continue, so B calls <code>ReleaseMutex</code>.</span></li>
+            <li><span><strong>.NET rejects B’s call</strong> because B does not own the mutex.</span></li>
+            <li><span>The mutex remains owned by A; waiting threads must not enter.</span></li>
+            <li><span>A eventually completes and releases its own mutex.</span></li>
+            <li><span><strong>Lesson:</strong> use a signaling primitive for notification; do not misuse unlock as a message.</span></li>
+          </ol>
+        </article>
+
+        <article class="case-card semaphore">
+          <span class="case-tag">Case 3 · Correct signaling</span>
+          <h3>Producer says “the result is ready”</h3>
+          <p>The semaphore starts at 0 because the condition is initially false: no ready-result permit exists.</p>
+          <ol class="trace">
+            <li><span>Consumer calls <code>WaitAsync</code> at count 0 and becomes blocked.</span></li>
+            <li><span>Producer downloads and publishes the result.</span></li>
+            <li><span><strong>Producer calls Release</strong>; it did not previously wait, and that is legal.</span></li>
+            <li><span>One waiting consumer receives the permit; its wait completes.</span></li>
+            <li><span>The consumer proceeds and the permit is consumed, so count is effectively 0 again.</span></li>
+            <li><span><strong>Result:</strong> work performed by one actor enables a different actor.</span></li>
+          </ol>
+        </article>
+
+        <article class="case-card semaphore">
+          <span class="case-tag">Case 4 · Semaphore as a gate</span>
+          <h3>A binary semaphore imitates a lock</h3>
+          <p>Initialize count = 1. A successful wait takes the only permit; release puts it back. This gives one-at-a-time access when code is disciplined.</p>
+          <ol class="trace">
+            <li><span>Count starts at 1; no worker is inside.</span></li>
+            <li><span>A waits: 1 → 0, then enters the critical section.</span></li>
+            <li><span>B waits at 0 and blocks.</span></li>
+            <li><span>A exits in <code>finally</code> and releases.</span></li>
+            <li><span>The released permit is handed to B; B’s wait completes and B enters.</span></li>
+            <li><span><strong>Result:</strong> mutual exclusion happened, but only because callers obeyed a pairing convention that the semaphore does not own.</span></li>
+          </ol>
+        </article>
+
+        <article class="case-card failure">
+          <span class="case-tag">Case 5 · Silent safety break</span>
+          <h3>C releases a gate it never acquired</h3>
+          <p>This is the dangerous difference. A semaphore does not know who “should” release it.</p>
+          <ol class="trace">
+            <li><span>A has consumed the permit and is editing shared state; count = 0.</span></li>
+            <li><span>B is waiting for the permit.</span></li>
+            <li><span>C mistakenly calls <code>Release</code> without a successful wait.</span></li>
+            <li><span>The semaphore accepts the call and hands the permit to B.</span></li>
+            <li><span><strong>A and B are now inside together</strong>; the safety invariant is broken.</span></li>
+            <li><span>A later releases, creating another permit while B is still inside. The corruption can spread before a later over-release is detected.</span></li>
+          </ol>
+        </article>
+
+        <article class="case-card failure">
+          <span class="case-tag">Case 6 · Extra signals</span>
+          <h3>Two events arrive before one wait</h3>
+          <p>A binary semaphore can remember only one outstanding permit. It is not a queue of event records.</p>
+          <ol class="trace">
+            <li><span>Count starts at 0.</span></li>
+            <li><span>Producer signals event 1: count becomes 1.</span></li>
+            <li><span>Producer signals event 2 before a consumer waits.</span></li>
+            <li><span><strong>There is no second slot.</strong> A strict <code>SemaphoreSlim(0, 1)</code> throws on that extra release; a textbook binary model may coalesce at 1.</span></li>
+            <li><span>One consumer wait changes 1 → 0.</span></li>
+            <li><span><strong>Result:</strong> if every event matters, use a queue/channel or a counting semaphore paired with actual queued items.</span></li>
+          </ol>
+        </article>
+
+        <article class="case-card failure">
+          <span class="case-tag">Case 7 · Failure cleanup</span>
+          <h3>An exception happens inside</h3>
+          <p>Both primitives can block everyone forever when release is skipped, but their diagnostics differ.</p>
+          <ol class="trace">
+            <li><span>A acquires the primitive and begins changing state.</span></li>
+            <li><span>An exception interrupts A before the normal release line.</span></li>
+            <li><span>With C# <code>lock</code>, compiler-generated <code>finally</code> releases automatically.</span></li>
+            <li><span>With manual semaphore code, missing <code>finally</code> leaks the permit; count stays 0.</span></li>
+            <li><span>If a thread dies owning a .NET <code>Mutex</code>, the next acquirer gets <code>AbandonedMutexException</code>.</span></li>
+            <li><span><strong>Important:</strong> release restores access; it does not repair partially modified data. Validate or roll back the protected state.</span></li>
+          </ol>
+        </article>
+
+        <article class="case-card async">
+          <span class="case-tag">Case 8 · Timeout / cancellation</span>
+          <h3>Do not release what you never acquired</h3>
+          <p>A timed or cancellable wait has two outcomes. Cleanup must know which one occurred.</p>
+          <ol class="trace">
+            <li><span>B calls a timed wait or <code>WaitAsync(cancellationToken)</code>.</span></li>
+            <li><span>The timeout expires, or cancellation occurs, before B receives a permit.</span></li>
+            <li><span>B never entered the protected region.</span></li>
+            <li><span>If B still calls release, it manufactures a permit and may let an extra worker enter.</span></li>
+            <li><span>Place the <code>try/finally</code> <strong>after</strong> a successful wait, or track an explicit <code>acquired</code> flag for APIs that return a Boolean.</span></li>
+            <li><span><strong>Invariant:</strong> number of successful acquisitions by this operation = number of releases by this operation.</span></li>
+          </ol>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="dotnet" aria-labelledby="dotnet-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="dotnet-title">Practical C# / .NET choices</h2>
+          <p>“Mutex” can mean the general mutual-exclusion idea or the specific <code>System.Threading.Mutex</code> class. In ordinary in-process synchronous C#, start with <code>lock</code>; use the heavier class when its operating-system features are actually needed.</p>
+        </div>
+        <span class="section-label">PRODUCTION LENS</span>
+      </div>
+
+      <div class="code-grid">
+        <article class="code-card">
+          <header>
+            <h3>1 · Synchronous shared state: <code>lock</code></h3>
+            <p>Owner-aware mutual exclusion with automatic release on exceptions.</p>
+          </header>
+          <pre><code>private readonly object _balanceLock = new();
+private decimal _balance = 1_000m;
+
+public bool TryWithdraw(decimal amount)
+{
+    lock (_balanceLock)
+    {
+        if (_balance &lt; amount)
+            return false;
+
+        _balance -= amount;
+        return true;
+    } // released even if the body throws
+}</code></pre>
+          <div class="code-notes"><strong>Why:</strong> the read-check-write sequence protects one invariant. Keep the locked region short. On .NET 9 / C# 13 or later, a dedicated <code>System.Threading.Lock</code> is the modern option; a private <code>object</code> works on older versions.</div>
+        </article>
+
+        <article class="code-card">
+          <header>
+            <h3>2 · Async one-at-a-time gate: <code>SemaphoreSlim(1, 1)</code></h3>
+            <p>Useful when the protected workflow must await, but ownership is logical rather than thread-enforced.</p>
+          </header>
+          <pre><code>private readonly SemaphoreSlim _gate = new(1, 1);
+
+public async Task RefreshAsync(
+    CancellationToken cancellationToken)
+{
+    await _gate.WaitAsync(cancellationToken);
+    try
+    {
+        await ReloadFromDatabaseAsync(cancellationToken);
+    }
+    finally
+    {
+        _gate.Release();
+    }
+}</code></pre>
+          <div class="code-notes"><strong>Why the order matters:</strong> if <code>WaitAsync</code> is cancelled, execution never enters the <code>try</code>, so it does not release an unacquired permit. The continuation may run on a different thread; <code>SemaphoreSlim</code> does not require the releasing thread to match.</div>
+        </article>
+
+        <article class="code-card">
+          <header>
+            <h3>3 · One outstanding handoff: <code>SemaphoreSlim(0, 1)</code></h3>
+            <p>The consumer waits first; the producer supplies the permit after publishing data.</p>
+          </header>
+          <pre><code>private readonly SemaphoreSlim _ready = new(0, 1);
+private Report? _report;
+
+public async Task ProduceAsync()
+{
+    _report = await BuildReportAsync();
+    _ready.Release(); // producer never called Wait
+}
+
+public async Task&lt;Report&gt; ConsumeAsync(
+    CancellationToken cancellationToken)
+{
+    await _ready.WaitAsync(cancellationToken);
+    return _report!;
+}</code></pre>
+          <div class="code-notes"><strong>Boundary:</strong> this sample allows only one outstanding signal. For a one-time completion, <code>TaskCompletionSource&lt;T&gt;</code> often expresses intent better. For many reports/events, use <code>Channel&lt;T&gt;</code> or another real queue so data and notification cannot drift apart.</div>
+        </article>
+
+        <article class="code-card">
+          <header>
+            <h3>4 · Cross-process ownership: named <code>Mutex</code></h3>
+            <p>Use when separate processes must agree that only one owner performs the operation.</p>
+          </header>
+          <pre><code>using var mutex =
+    new Mutex(false, "MyCompany.ReportWriter");
+
+bool acquired = false;
+try
+{
+    acquired = mutex.WaitOne(TimeSpan.FromSeconds(5));
+    if (!acquired)
+        return;
+
+    WriteSharedReport();
+}
+catch (AbandonedMutexException)
+{
+    acquired = true;       // this thread now owns it
+    ValidateSharedState(); // previous owner may have died mid-write
+}
+finally
+{
+    if (acquired)
+        mutex.ReleaseMutex();
+}</code></pre>
+          <div class="code-notes"><strong>Why:</strong> <code>Mutex</code> is thread-affine and can be named for operating-system visibility. Treat naming, platform scope, permissions, and abandoned-state recovery as design concerns—not details to ignore.</div>
+        </article>
+      </div>
+
+      <div class="warning">
+        <strong>Do not write <code>await</code> inside a C# <code>lock</code> body.</strong> The language disallows it. Also avoid manually acquiring a thread-affine <code>Mutex</code>, awaiting arbitrary asynchronous work, and then assuming the continuation will release on the same thread. Use an async-aware design such as <code>SemaphoreSlim.WaitAsync</code>, and keep the logical critical section as short as possible.
+      </div>
+    </section>
+
+    <section class="section" id="decision" aria-labelledby="decision-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="decision-title">Choose from the coordination rule</h2>
+          <p>Start with the behavior you require, not the primitive name you remember.</p>
+        </div>
+        <span class="section-label">DECISION RULE</span>
+      </div>
+
+      <div class="decision-tree">
+        <div class="decision-row">
+          <span class="decision-question">Protecting shared in-process state with synchronous code?</span>
+          <span class="decision-arrow" aria-hidden="true">→</span>
+          <span class="decision-answer"><strong>Use C# <code>lock</code></strong> (or another owner-aware mutual-exclusion primitive). It directly represents a critical section.</span>
+        </div>
+        <div class="decision-row">
+          <span class="decision-question">Need one-at-a-time access across <code>await</code>?</span>
+          <span class="decision-arrow" aria-hidden="true">→</span>
+          <span class="decision-answer"><strong>Use <code>SemaphoreSlim(1, 1)</code> carefully</strong>; release in <code>finally</code>, only after successful acquisition. Remember that it does not enforce owner identity.</span>
+        </div>
+        <div class="decision-row">
+          <span class="decision-question">One actor must wake a different actor, and one pending signal is enough?</span>
+          <span class="decision-arrow" aria-hidden="true">→</span>
+          <span class="decision-answer"><strong>A binary semaphore starting at 0 can model the handoff.</strong> For one-time completion or queued data, a task-completion or channel abstraction may communicate intent better.</span>
+        </div>
+        <div class="decision-row">
+          <span class="decision-question">Allow up to N operations at once?</span>
+          <span class="decision-arrow" aria-hidden="true">→</span>
+          <span class="decision-answer"><strong>Use a counting semaphore with maximum N.</strong> A mutex and binary semaphore both cap effective entry at one.</span>
+        </div>
+        <div class="decision-row">
+          <span class="decision-question">Coordinate exclusive ownership between processes?</span>
+          <span class="decision-arrow" aria-hidden="true">→</span>
+          <span class="decision-answer"><strong>Consider a named <code>Mutex</code></strong>, then design timeout, abandoned-owner recovery, naming, platform, and security behavior.</span>
+        </div>
+        <div class="decision-row">
+          <span class="decision-question">Must every produced item/event be retained?</span>
+          <span class="decision-arrow" aria-hidden="true">→</span>
+          <span class="decision-answer"><strong>Use a queue/channel.</strong> A binary semaphore holds at most one permit, so it cannot represent an arbitrary backlog by itself.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="interview" aria-labelledby="interview-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="interview-title">Say it clearly in an interview</h2>
+          <p>Lead with the contract, then explain why identical one-at-a-time behavior does not make the primitives equivalent.</p>
+        </div>
+        <span class="section-label">ARTICULATION</span>
+      </div>
+
+      <div class="interview-grid">
+        <article class="quote-card">
+          <h3>30-second answer</h3>
+          <p>“A mutex is an ownership-based mutual-exclusion lock: the thread that acquires it becomes the owner and must release it. A binary semaphore is a semaphore whose count is limited to zero or one: wait consumes the permit, and release supplies it, but there is no owner, so one thread can wait while another signals. A binary semaphore initialized to one can imitate a lock, but it does not enforce the same release discipline. I use a mutex or C# lock for synchronous critical sections, and a binary semaphore when I need a one-permit gate or cross-actor handoff.”</p>
+        </article>
+
+        <div class="followups">
+          <h3>Likely follow-ups and what they test</h3>
+          <div class="followup">
+            <strong>“Can a binary semaphore provide mutual exclusion?”</strong>
+            <span>Yes, with initial count 1 and correct wait/release pairing. Then add that lack of ownership makes wrong-release bugs possible.</span>
+          </div>
+          <div class="followup">
+            <strong>“Why can’t a mutex be used for signaling?”</strong>
+            <span>The notifier usually did not acquire the mutex, so it has no right to unlock it. A semaphore intentionally allows different waiters and releasers.</span>
+          </div>
+          <div class="followup">
+            <strong>“What does initial count 0 versus 1 mean?”</strong>
+            <span>0 means closed until somebody signals; 1 means one caller can pass immediately, which creates a gate.</span>
+          </div>
+          <div class="followup">
+            <strong>“What would you use around await in C#?”</strong>
+            <span>An async-aware primitive such as <code>SemaphoreSlim.WaitAsync</code>, with release in <code>finally</code>. Explain that this is logical gating, not owner-enforced thread locking.</span>
+          </div>
+          <div class="followup">
+            <strong>“Are waiters served FIFO?”</strong>
+            <span>Do not assume it. .NET explicitly gives no FIFO/LIFO guarantee for semaphore waiters.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="success">
+        <strong>Strong-answer signal:</strong> say “same maximum concurrency, different ownership contract.” A weak answer only says “both allow one thread” and misses the reason they behave differently under signaling, wrong release, cancellation, and owner failure.
+      </div>
+    </section>
+
+    <section class="section" id="capsule" aria-labelledby="capsule-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="capsule-title">Notebook capsule</h2>
+          <p>A compact version to copy into your iPad notes after you can reconstruct the flows without looking.</p>
+        </div>
+        <span class="section-label">REVISION</span>
+      </div>
+
+      <div class="capsule">
+        <div class="capsule-grid">
+          <div class="capsule-block">
+            <h3>One-sentence definition</h3>
+            <p>A mutex is a lock with an owner; a binary semaphore is a no-owner permit counter restricted to 0 or 1.</p>
+          </div>
+          <div class="capsule-block">
+            <h3>Mechanism</h3>
+            <p>Mutex: unlocked → acquire by T → locked(owner=T) → release by T. Semaphore: count 1 → wait → 0; count 0 → release/signal → one permit or one awakened waiter.</p>
+          </div>
+          <div class="capsule-block">
+            <h3>Invariants</h3>
+            <ul>
+              <li>Only the mutex owner may unlock.</li>
+              <li>Binary semaphore count never represents more than one available permit.</li>
+              <li>Release only after this operation successfully acquired—except intentional producer/consumer signaling.</li>
+            </ul>
+          </div>
+          <div class="capsule-block">
+            <h3>Decision</h3>
+            <p>Protect synchronous shared state → lock/mutex. Awaitable one-at-a-time gate → carefully paired <code>SemaphoreSlim(1,1)</code>. Cross-actor handoff → signal primitive. Every event matters → queue/channel.</p>
+          </div>
+          <div class="capsule-block">
+            <h3>Traps</h3>
+            <ul>
+              <li>“Binary semaphore equals mutex.”</li>
+              <li>Wrong initial count.</li>
+              <li>Release after timeout/cancellation.</li>
+              <li>Missing <code>finally</code>.</li>
+              <li>Assuming FIFO fairness.</li>
+              <li>Using one-bit signaling for a backlog.</li>
+            </ul>
+          </div>
+          <div class="capsule-block">
+            <h3>Interview phrase</h3>
+            <p>“A binary semaphore can reproduce one-at-a-time entry, but it cannot reproduce mutex ownership enforcement.”</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="recall-grid" role="group" aria-label="Active recall prompts">
+        <details>
+          <summary>1 · What single field exists in a mutex but not a binary semaphore?</summary>
+          <p>The current owner identity (and, in reentrant implementations, acquisition depth).</p>
+        </details>
+        <details>
+          <summary>2 · Why does semaphore initial count 0 suit signaling?</summary>
+          <p>Because nobody may pass before the producer establishes the condition and supplies the first permit.</p>
+        </details>
+        <details>
+          <summary>3 · How can a binary semaphore imitate a lock?</summary>
+          <p>Start at 1; wait before entry and release after exit. Only one permit exists, so at most one disciplined caller enters.</p>
+        </details>
+        <details>
+          <summary>4 · What bug can a mutex detect that a semaphore may accept?</summary>
+          <p>A different thread trying to release an acquisition it does not own.</p>
+        </details>
+        <details>
+          <summary>5 · Why can two early signals become only one later wake?</summary>
+          <p>A binary semaphore has room for only one outstanding permit; the second signal is coalesced or rejected by the API.</p>
+        </details>
+        <details>
+          <summary>6 · When must a timed-out waiter call Release?</summary>
+          <p>Never. It did not acquire a permit or ownership, so releasing would manufacture access.</p>
+        </details>
+        <details>
+          <summary>7 · Why is SemaphoreSlim useful around await?</summary>
+          <p>It offers <code>WaitAsync</code> and does not bind release to a physical thread, so an async continuation can logically return the permit.</p>
+        </details>
+        <details>
+          <summary>8 · What should you use when every produced item matters?</summary>
+          <p>A queue or channel that stores the items; use semaphore counts only as coordination that stays consistent with that stored work.</p>
+        </details>
+      </div>
+
+      <div class="note">
+        <strong>Application exercise:</strong> imagine an ASP.NET Core service that refreshes one cache entry. First, design it so only one refresh runs at a time while callers await. Then change the requirement so every refresh request must be processed. Explain why the first can use <code>SemaphoreSlim(1,1)</code>, while the second needs a queue/channel rather than a binary permit.
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="sources-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="sources-title">Primary references</h2>
+          <p>The .NET-specific claims in this guide are grounded in Microsoft’s current documentation.</p>
+        </div>
+        <span class="section-label">VERIFICATION</span>
+      </div>
+      <div class="sources">
+        <ul>
+          <li><a href="https://learn.microsoft.com/en-us/dotnet/api/system.threading.semaphoreslim" target="_blank" rel="noopener noreferrer">Microsoft Learn — SemaphoreSlim class</a>: count behavior, <code>WaitAsync</code>, and lack of thread/task identity enforcement.</li>
+          <li><a href="https://learn.microsoft.com/en-us/dotnet/standard/threading/semaphore-and-semaphoreslim" target="_blank" rel="noopener noreferrer">Microsoft Learn — Semaphore and SemaphoreSlim</a>: producer/consumer use, no guaranteed waiter order, and over-release behavior.</li>
+          <li><a href="https://learn.microsoft.com/en-us/dotnet/standard/threading/mutexes" target="_blank" rel="noopener noreferrer">Microsoft Learn — Mutexes</a>: thread affinity, recursion, abandoned mutexes, and named system mutexes.</li>
+          <li><a href="https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/lock" target="_blank" rel="noopener noreferrer">Microsoft Learn — C# lock statement</a>: mutual exclusion, compiler-generated cleanup, and the prohibition on <code>await</code> inside <code>lock</code>.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell">Learning Library · C# / .NET · Mutex vs Binary Semaphore</div>
+  </footer>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const scenarios = {
+        "mutex-lock": {
+          kind: "mutex",
+          title: "Correct mutex locking",
+          subtitle: "Only the owner releases; the next worker waits.",
+          primitive: "Mutex",
+          actors: ["Thread A", "Thread B"],
+          steps: [
+            {
+              label: "The critical section is free",
+              message: "No thread owns the mutex. Both threads are outside, so the protected balance can be entered by one contender.",
+              owner: "none",
+              count: "not applicable",
+              inside: "nobody",
+              waiting: "nobody",
+              states: {}
+            },
+            {
+              label: "Thread A acquires",
+              message: "A calls Lock. The mutex records owner = A, and A enters the read-check-write sequence.",
+              owner: "Thread A",
+              count: "not applicable",
+              inside: "Thread A",
+              waiting: "nobody",
+              states: { "Thread A": "active" }
+            },
+            {
+              label: "Thread B must wait",
+              message: "B calls Lock while A owns the mutex. B cannot enter and cannot change the owner; it blocks.",
+              owner: "Thread A",
+              count: "not applicable",
+              inside: "Thread A",
+              waiting: "Thread B",
+              states: { "Thread A": "active", "Thread B": "blocked" }
+            },
+            {
+              label: "The owner releases",
+              message: "A finishes the protected update and unlocks. Because A is the owner, the transition is legal.",
+              owner: "none",
+              count: "not applicable",
+              inside: "nobody",
+              waiting: "Thread B is eligible",
+              states: { "Thread B": "blocked" }
+            },
+            {
+              label: "Thread B becomes the new owner",
+              message: "B's acquire completes. Ownership transfers through a new acquire—not because B unlocked A's mutex.",
+              owner: "Thread B",
+              count: "not applicable",
+              inside: "Thread B",
+              waiting: "nobody",
+              states: { "Thread B": "active" }
+            }
+          ]
+        },
+        "mutex-wrong-owner": {
+          kind: "mutex",
+          title: "Wrong-owner unlock",
+          subtitle: "Ownership turns a mistaken release into a detectable error.",
+          primitive: "Mutex",
+          actors: ["Thread A", "Thread B"],
+          steps: [
+            {
+              label: "Thread A acquires",
+              message: "The mutex records A as owner, and A begins changing protected state.",
+              owner: "Thread A",
+              count: "not applicable",
+              inside: "Thread A",
+              waiting: "nobody",
+              states: { "Thread A": "active" }
+            },
+            {
+              label: "Thread B tries to release",
+              message: "B never acquired this mutex. B's call is not a valid signal; .NET rejects ReleaseMutex from a non-owner.",
+              owner: "Thread A",
+              count: "not applicable",
+              inside: "Thread A",
+              waiting: "nobody",
+              states: { "Thread A": "active", "Thread B": "error" }
+            },
+            {
+              label: "The protected state stays closed",
+              message: "The failed release must not unlock the critical section. A remains the owner until A completes.",
+              owner: "Thread A",
+              count: "not applicable",
+              inside: "Thread A",
+              waiting: "nobody",
+              states: { "Thread A": "active" }
+            },
+            {
+              label: "Thread A releases correctly",
+              message: "The owner finishes and releases. Only now does the mutex return to the unlocked state.",
+              owner: "none",
+              count: "not applicable",
+              inside: "nobody",
+              waiting: "nobody",
+              states: {}
+            }
+          ]
+        },
+        "semaphore-signal": {
+          kind: "semaphore",
+          title: "Producer-to-consumer signal",
+          subtitle: "The waiter and releaser are intentionally different actors.",
+          primitive: "Binary semaphore",
+          actors: ["Consumer", "Producer"],
+          steps: [
+            {
+              label: "No result exists yet",
+              message: "The semaphore starts at 0. This encodes “the consumer has no permission to continue yet.”",
+              owner: "none — semaphores have no owner",
+              count: "0",
+              inside: "nobody",
+              waiting: "nobody",
+              states: {}
+            },
+            {
+              label: "Consumer waits",
+              message: "The consumer calls WaitAsync at count 0, so it blocks without changing the count.",
+              owner: "none",
+              count: "0",
+              inside: "nobody",
+              waiting: "Consumer",
+              states: { "Consumer": "blocked" }
+            },
+            {
+              label: "Producer builds and publishes",
+              message: "The producer does the work first. Signaling before publishing the result would create a race.",
+              owner: "none",
+              count: "0",
+              inside: "Producer is working",
+              waiting: "Consumer",
+              states: { "Producer": "active", "Consumer": "blocked" }
+            },
+            {
+              label: "Producer releases",
+              message: "The producer never waited, but Release is legal because the semaphore tracks permits, not ownership. One waiting consumer is enabled.",
+              owner: "none",
+              count: "0 (permit handed to Consumer)",
+              inside: "Producer finished",
+              waiting: "Consumer is waking",
+              states: { "Consumer": "active" }
+            },
+            {
+              label: "Consumer continues",
+              message: "The consumer's wait completes and consumes the supplied permit. Count is 0 again, ready for a future handoff.",
+              owner: "none",
+              count: "0",
+              inside: "Consumer",
+              waiting: "nobody",
+              states: { "Consumer": "active" }
+            }
+          ]
+        },
+        "semaphore-fake-lock": {
+          kind: "semaphore",
+          title: "A fake lock breaks",
+          subtitle: "One mistaken release can allow two workers inside.",
+          primitive: "Binary semaphore used as gate",
+          actors: ["Thread A", "Thread B", "Thread C"],
+          steps: [
+            {
+              label: "One permit is available",
+              message: "The semaphore starts at 1, so it can act like a one-at-a-time gate.",
+              owner: "none",
+              count: "1",
+              inside: "nobody",
+              waiting: "nobody",
+              states: {}
+            },
+            {
+              label: "Thread A consumes the permit",
+              message: "A waits successfully: count changes 1 → 0. A enters, but the semaphore does not record A as owner.",
+              owner: "none",
+              count: "0",
+              inside: "Thread A",
+              waiting: "nobody",
+              states: { "Thread A": "active" }
+            },
+            {
+              label: "Thread B waits",
+              message: "B sees count 0 and blocks. So far, the timeline looks exactly like a mutex.",
+              owner: "none",
+              count: "0",
+              inside: "Thread A",
+              waiting: "Thread B",
+              states: { "Thread A": "active", "Thread B": "blocked" }
+            },
+            {
+              label: "Thread C releases by mistake",
+              message: "C never acquired, but the semaphore has no owner check. Its Release supplies a permit to B.",
+              owner: "none",
+              count: "0 (permit handed to B)",
+              inside: "Thread A",
+              waiting: "Thread B is waking",
+              states: { "Thread A": "active", "Thread B": "active", "Thread C": "error" }
+            },
+            {
+              label: "Mutual exclusion is gone",
+              message: "B enters while A is still inside. The primitive followed its contract; the program violated its own pairing convention.",
+              owner: "none",
+              count: "0",
+              inside: "Thread A + Thread B",
+              waiting: "nobody",
+              states: { "Thread A": "active", "Thread B": "active", "Thread C": "error" }
+            }
+          ]
+        },
+        "double-signal": {
+          kind: "semaphore",
+          title: "Two signals, one slot",
+          subtitle: "A binary semaphore is not an event backlog.",
+          primitive: "Binary semaphore",
+          actors: ["Producer", "Consumer"],
+          steps: [
+            {
+              label: "The signal slot is empty",
+              message: "Count starts at 0. No signal is pending.",
+              owner: "none",
+              count: "0",
+              inside: "nobody",
+              waiting: "nobody",
+              states: {}
+            },
+            {
+              label: "Event 1 supplies a permit",
+              message: "Producer calls Release. With no waiter, count changes 0 → 1.",
+              owner: "none",
+              count: "1",
+              inside: "Producer",
+              waiting: "nobody",
+              states: { "Producer": "active" }
+            },
+            {
+              label: "Event 2 has nowhere to go",
+              message: "The maximum count is already 1. SemaphoreSlim(0, 1) throws SemaphoreFullException; a textbook binary semaphore may simply remain at 1.",
+              owner: "none",
+              count: "1 (still only one permit)",
+              inside: "Producer",
+              waiting: "nobody",
+              states: { "Producer": "error" }
+            },
+            {
+              label: "One wait consumes one permit",
+              message: "The consumer calls Wait and changes count 1 → 0. Nothing in the semaphore remembers a second event.",
+              owner: "none",
+              count: "0",
+              inside: "Consumer",
+              waiting: "nobody",
+              states: { "Consumer": "active" }
+            },
+            {
+              label: "Use storage for a backlog",
+              message: "When both events matter, store both in a queue or channel. Coordination cannot replace the data structure that owns the work.",
+              owner: "none",
+              count: "0",
+              inside: "Consumer",
+              waiting: "nobody",
+              states: { "Consumer": "active" }
+            }
+          ]
+        },
+        "async-gate": {
+          kind: "semaphore",
+          title: "Async one-at-a-time gate",
+          subtitle: "Logical ownership can continue on a different physical thread.",
+          primitive: "SemaphoreSlim(1, 1)",
+          actors: ["Task A", "Task B", "Thread 4", "Thread 9"],
+          steps: [
+            {
+              label: "The async gate is open",
+              message: "Count starts at 1. One operation may enter the logical critical section.",
+              owner: "none",
+              count: "1",
+              inside: "nobody",
+              waiting: "nobody",
+              states: {}
+            },
+            {
+              label: "Task A waits successfully",
+              message: "Task A calls WaitAsync on Thread 4 and consumes the permit: 1 → 0.",
+              owner: "none",
+              count: "0",
+              inside: "Task A",
+              waiting: "nobody",
+              states: { "Task A": "active", "Thread 4": "active" }
+            },
+            {
+              label: "Task A awaits I/O",
+              message: "The physical thread can return to the pool while Task A still logically holds the one permit. Task B waits at count 0.",
+              owner: "none",
+              count: "0",
+              inside: "Task A (logically)",
+              waiting: "Task B",
+              states: { "Task A": "active", "Task B": "blocked" }
+            },
+            {
+              label: "Continuation resumes elsewhere",
+              message: "Task A may resume on Thread 9. That is fine for SemaphoreSlim because Release does not require the same physical thread.",
+              owner: "none",
+              count: "0",
+              inside: "Task A on Thread 9",
+              waiting: "Task B",
+              states: { "Task A": "active", "Thread 9": "active", "Task B": "blocked" }
+            },
+            {
+              label: "Finally returns the permit",
+              message: "Task A releases in finally. The permit is handed to Task B, whose WaitAsync can now complete.",
+              owner: "none",
+              count: "0 (permit handed to Task B)",
+              inside: "Task B may enter next",
+              waiting: "Task B is waking",
+              states: { "Task B": "active" }
+            }
+          ]
+        }
+      };
+
+      const lab = document.getElementById("concurrency-lab");
+      const tabs = Array.from(lab.querySelectorAll("[data-scenario]"));
+      const title = document.getElementById("lab-title");
+      const subtitle = document.getElementById("lab-subtitle");
+      const primitive = document.getElementById("lab-primitive");
+      const owner = document.getElementById("lab-owner");
+      const count = document.getElementById("lab-count");
+      const inside = document.getElementById("lab-inside");
+      const waiting = document.getElementById("lab-waiting");
+      const stepNumber = document.getElementById("lab-step-number");
+      const stepLabel = document.getElementById("lab-step-label");
+      const stepMessage = document.getElementById("lab-step-message");
+      const actors = document.getElementById("lab-actors");
+      const progress = document.getElementById("lab-progress");
+      const resetButton = document.getElementById("lab-reset");
+      const previousButton = document.getElementById("lab-previous");
+      const nextButton = document.getElementById("lab-next");
+
+      let scenarioId = "mutex-lock";
+      let stepIndex = 0;
+
+      function renderActors(scenario, step) {
+        actors.replaceChildren();
+        scenario.actors.forEach((actor) => {
+          const chip = document.createElement("li");
+          chip.className = "actor-chip";
+          const state = step.states[actor];
+          if (state) chip.classList.add(state);
+          chip.textContent = state ? `${actor} · ${state}` : `${actor} · outside`;
+          actors.append(chip);
+        });
+      }
+
+      function render() {
+        const scenario = scenarios[scenarioId];
+        const step = scenario.steps[stepIndex];
+
+        lab.dataset.kind = scenario.kind;
+        title.textContent = scenario.title;
+        subtitle.textContent = scenario.subtitle;
+        primitive.textContent = scenario.primitive;
+        owner.textContent = step.owner;
+        count.textContent = step.count;
+        inside.textContent = step.inside;
+        waiting.textContent = step.waiting;
+        stepNumber.textContent = `Step ${stepIndex + 1} of ${scenario.steps.length}`;
+        stepLabel.textContent = step.label;
+        stepMessage.textContent = step.message;
+        progress.textContent = `${scenario.title} · ${stepIndex + 1}/${scenario.steps.length}`;
+
+        tabs.forEach((tab) => {
+          tab.setAttribute("aria-pressed", String(tab.dataset.scenario === scenarioId));
+        });
+
+        previousButton.disabled = stepIndex === 0;
+        nextButton.disabled = stepIndex === scenario.steps.length - 1;
+        nextButton.textContent = nextButton.disabled ? "Flow complete ✓" : "Next →";
+        renderActors(scenario, step);
+      }
+
+      tabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          scenarioId = tab.dataset.scenario;
+          stepIndex = 0;
+          render();
+        });
+      });
+
+      resetButton.addEventListener("click", () => {
+        stepIndex = 0;
+        render();
+      });
+
+      previousButton.addEventListener("click", () => {
+        stepIndex = Math.max(0, stepIndex - 1);
+        render();
+      });
+
+      nextButton.addEventListener("click", () => {
+        const lastIndex = scenarios[scenarioId].steps.length - 1;
+        stepIndex = Math.min(lastIndex, stepIndex + 1);
+        render();
+      });
+
+      lab.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowLeft" && !previousButton.disabled) {
+          stepIndex -= 1;
+          render();
+        }
+        if (event.key === "ArrowRight" && !nextButton.disabled) {
+          stepIndex += 1;
+          render();
+        }
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
