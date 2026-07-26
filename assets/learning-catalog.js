@@ -20,6 +20,13 @@ window.LEARNING_CATALOG = {
       name: "C# / .NET",
       icon: "C#",
       description: "Language semantics, runtime behavior, and backend interview concepts."
+    },
+    {
+      id: "c-posix",
+      order: 4,
+      name: "C / POSIX",
+      icon: "C",
+      description: "C systems programming, POSIX threads, synchronization contracts, and failure behavior."
     }
   ],
 
@@ -207,17 +214,17 @@ window.LEARNING_CATALOG = {
     },
     {
       id: "mutex-binary-semaphore",
-      categoryId: "csharp-dotnet",
-      order: 2,
+      categoryId: "c-posix",
+      order: 1,
       title: "Mutex vs Binary Semaphore",
-      description: "Ownership versus permits, locking versus signaling, initial count, wrong-thread release, async gates, and failure flows.",
+      description: "pthread mutex ownership versus POSIX semaphore permits, locking versus signaling, initial count, over-posting, EINTR, and failure flows.",
       resources: [
         {
           type: "learn",
-          title: "Mutex vs binary semaphore visual guide",
-          description: "A five-year-old-friendly analogy mapped to exact state machines, an interactive flow lab, eight end-to-end cases, C# patterns, and interview answers.",
-          href: "csharp-mutex-vs-binary-semaphore.html",
-          meta: "Interactive lab + 8 cases"
+          title: "Mutex vs binary semaphore in C",
+          description: "A five-year-old-friendly analogy mapped to exact POSIX state models, an interactive flow lab, ten end-to-end cases, tested C patterns, and interview answers.",
+          href: "c-mutex-vs-binary-semaphore.html",
+          meta: "Interactive lab + 10 cases + C demo"
         }
       ]
     }
