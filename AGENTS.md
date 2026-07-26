@@ -18,6 +18,7 @@ Current published sequence:
 - DSA: Non-overlapping Intervals → Perfect Rectangle → Inversions and Adjacent Swaps
 - System Design: API Authentication → API Authorization → API Gateway → Non-functional Requirements → CAP Theorem → System Design Components
 - C# / .NET: Value Semantics and Boxing
+- C / POSIX: Mutex vs Binary Semaphore
 
 Before publishing catalogue changes, run:
 
