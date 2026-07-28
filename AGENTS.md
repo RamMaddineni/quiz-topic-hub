@@ -18,7 +18,6 @@ Current published sequence:
 - DSA: Non-overlapping Intervals → Perfect Rectangle → Inversions and Adjacent Swaps
 - System Design: API Authentication → API Authorization → API Gateway → Non-functional Requirements → CAP Theorem → System Design Components
 - C# / .NET: Value Semantics and Boxing
-- C / POSIX: Mutex vs Binary Semaphore
 
 Before publishing catalogue changes, run:
 
@@ -43,3 +42,31 @@ Assume the learner is new to System Design unless the user explicitly asks for r
   6. a decision rule for when to use it
 - Use structured cards, flows, examples, and visuals so depth does not become a wall of text.
 - Keep quiz explanations mechanism-focused, but keep learning sections sufficiently detailed for first-time understanding.
+
+## Quiz questions must be self-contained
+
+Treat every quiz card as an independent problem. A learner must be able to answer it without importing architecture, requirements, or assumptions from the lesson, an earlier question, or the author’s intended answer.
+
+- For a scenario question, state all five parts on the card:
+  1. the current system and relevant request, write, or job flow
+  2. observed evidence such as timings, rates, utilization, failure behavior, or access patterns
+  3. the required business or non-functional behavior
+  4. the constraints and explicitly accepted trade-offs
+  5. the exact decision the learner must make
+- Define abbreviations and specialized terms before they are needed. An undefined term in an answer choice must not be the price of understanding the question.
+- Use “best,” “strongest,” or “most appropriate” only when the card states every decision criterion needed to make one option uniquely defensible.
+- A distractor must be wrong because it conflicts with a written fact or because its mechanism cannot satisfy the written requirement—not because it is absurd, vaguely worded, or less sophisticated in tone.
+- Do not make a question depend on facts established by another question. Repeated context is intentional when it is necessary for independent reasoning.
+- Post-submit feedback must contain:
+  - **Given facts:** the exact facts from the card that control the answer
+  - **Reasoning:** the causal chain from those facts to the mechanism
+  - **Boundary:** what the correct choice still does not guarantee or what cost it introduces
+- Feedback must not add a missing assumption that was required to choose the answer. If the explanation needs a fact, move that fact into the question.
+- When section scores tie, report the tie. Do not manufacture a single “weakest” section through alphabetical or array-order tie-breaking.
+- A perfect score must not be labeled with a weakest section.
+
+Before publishing a quiz that uses the standalone scenario-card format, run:
+
+```sh
+node scripts/validate-quiz-questions.js path/to/quiz.html
+```
