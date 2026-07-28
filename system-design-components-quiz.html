@@ -175,14 +175,54 @@
       line-height: 1.52;
     }
 
-    .scenario {
-      margin: 0 0 1rem;
-      padding: 0.85rem 0.95rem;
-      color: var(--muted);
+    .question-context {
+      display: grid;
+      gap: 0;
+      margin: 0 0 0.9rem;
+      overflow: hidden;
       background: var(--surface-soft);
+      border: 1px solid var(--border);
       border-left: 4px solid var(--primary);
-      border-radius: 0.65rem;
-      line-height: 1.58;
+      border-radius: 0.72rem;
+    }
+
+    .question-context > div {
+      display: grid;
+      grid-template-columns: 9.2rem 1fr;
+      gap: 0.8rem;
+      padding: 0.68rem 0.85rem;
+    }
+
+    .question-context > div + div { border-top: 1px solid var(--border); }
+
+    .question-context dt {
+      color: var(--primary);
+      font-size: 0.75rem;
+      font-weight: 850;
+      letter-spacing: 0.055em;
+      text-transform: uppercase;
+    }
+
+    .question-context dd {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .question-ask {
+      margin: 0 0 0.85rem;
+      padding: 0.78rem 0.9rem;
+      color: var(--text);
+      background: var(--primary-soft);
+      border-radius: 0.68rem;
+      line-height: 1.55;
+    }
+
+    .term {
+      text-decoration: underline;
+      text-decoration-color: color-mix(in srgb, var(--primary) 45%, transparent);
+      text-decoration-style: dotted;
+      text-underline-offset: 0.18em;
     }
 
     label {
@@ -214,6 +254,9 @@
 
     .feedback.correct { color: var(--success); background: var(--success-soft); }
     .feedback.incorrect { color: var(--error); background: var(--error-soft); }
+    .feedback p { margin: 0.42rem 0 0; }
+    .feedback p:first-child { margin-top: 0; font-weight: 850; }
+    .feedback strong { color: currentColor; }
 
     .actions {
       display: flex;
@@ -314,6 +357,7 @@
       .question { padding: 1.05rem; }
       .progress-card { top: 0.3rem; }
       .progress-row { align-items: flex-start; flex-direction: column; gap: 0.2rem; }
+      .question-context > div { grid-template-columns: 1fr; gap: 0.22rem; }
     }
 
     @media (prefers-color-scheme: dark) {
@@ -353,12 +397,12 @@
     <header>
       <p class="eyebrow">System Design · Pre-reading diagnostic</p>
       <h1>Choose the mechanism. Name the cost.</h1>
-      <p>Twenty production scenarios on load balancing, caching, partitioning, replication, queues, and batch processing. There are no “what does CDN stand for?” questions. Answers and explanations stay hidden until you submit.</p>
+      <p>Twenty self-contained production scenarios on load balancing, caching, partitioning, replication, queues, and batch processing. Every card states the system, evidence, requirement, and constraints needed to answer it. Answers and explanations stay hidden until you submit.</p>
     </header>
 
     <section class="session-card" aria-labelledby="session-title">
       <h2 id="session-title">How to use this baseline</h2>
-      <p>Answer from your present mental model before reading the lesson. The questions test what a component can solve, what it cannot guarantee, and which failure it introduces.</p>
+      <p>Answer from your present mental model before reading the lesson. Each question stands alone: use only the facts written on that card. You never need to assume an unstated architecture, freshness target, failure policy, or fact from an earlier question.</p>
       <ul class="scope-list" aria-label="Concepts covered">
         <li>Load balancing</li>
         <li>Caching</li>
@@ -367,7 +411,7 @@
         <li>Message queues</li>
         <li>Batch processing</li>
       </ul>
-      <p class="rule"><strong>First-attempt rule:</strong> no notes and no visual guide. Complete it in one sitting; this page deliberately does not save progress across refreshes.</p>
+      <p class="rule"><strong>First-attempt rule:</strong> no notes and no visual guide. Complete it in one sitting; this page deliberately does not save progress across refreshes. When a term is necessary, the question defines it before asking you to reason with it.</p>
     </section>
 
     <section class="progress-card" aria-live="polite">
@@ -384,75 +428,146 @@
           <span class="section-number" aria-hidden="true">1</span>
           <div>
             <h2 id="selection-title">Select from the pressure</h2>
-            <p>Questions 1–6 · identify the mechanism that attacks the measured constraint</p>
+            <p>Questions 1–6 · choose a component only after the measured problem is explicit</p>
           </div>
         </div>
 
         <article class="question" id="q1-card" data-correct="b" data-section="selection">
           <fieldset>
-            <legend>1. Six identical stateless application servers are running. One receives 70% of requests and has a long queue; the other five sit near 20% CPU. What is the most direct correction?</legend>
-            <p class="scenario">The database is healthy, request work is similar, and the slow requests correlate with the overloaded application node.</p>
-            <label><input type="radio" name="q1" value="a" required> Cache every response, even though requests rarely repeat.</label>
-            <label><input type="radio" name="q1" value="b"> Put the fleet behind a load balancer that selects healthy backends with an appropriate distribution policy.</label>
-            <label><input type="radio" name="q1" value="c"> Partition the database, because any uneven application load proves the database is too large.</label>
-            <label><input type="radio" name="q1" value="d"> Put all HTTP requests into a queue while keeping the same uneven backend routing.</label>
+            <legend>1. Uneven traffic across application servers</legend>
+            <dl class="question-context">
+              <div><dt>Current system</dt><dd>Six identical, stateless application servers can each handle any request. Static network routing currently sends every request to server A.</dd></div>
+              <div><dt>Observed evidence</dt><dd>Server A stays above 95% CPU and 95% of its requests take 1.8 seconds. Servers B–F stay near 20% CPU and answer in about 120 milliseconds. The database is below 35% utilization.</dd></div>
+              <div><dt>Required behavior</dt><dd>Use the existing six servers to keep 95% of requests below 300 milliseconds and stop routing to an application server when it fails.</dd></div>
+              <div><dt>Known constraints</dt><dd>Requests perform similar work and responses are user-specific, so there is no reusable response to cache.</dd></div>
+            </dl>
+            <p class="question-ask"><strong>Decision:</strong> Which change directly addresses both the uneven routing and failed-server handling described above?</p>
+            <label><input type="radio" name="q1" value="a" required> Add a database read replica while leaving all application requests routed to server A.</label>
+            <label><input type="radio" name="q1" value="b"> Put a load balancer in front of all six servers; have it check which servers can serve requests and distribute new requests only among healthy servers.</label>
+            <label><input type="radio" name="q1" value="c"> Put every page request into a message queue and return “accepted” instead of the requested page.</label>
+            <label><input type="radio" name="q1" value="d"> Partition the database by user ID while leaving application routing unchanged.</label>
           </fieldset>
-          <p class="feedback" data-explanation="The observed pressure is uneven request distribution. A load balancer changes which backend receives each request, allowing the existing capacity to be used and preventing one node’s queue from dominating latency. It does not add capacity by itself."></p>
+          <div class="feedback" hidden>
+            <p class="feedback-verdict"></p>
+            <p class="feedback-facts"><strong>Given facts:</strong> Five application servers have spare capacity, one server is overloaded, any server can handle any request, and the database is not the bottleneck.</p>
+            <p class="feedback-reasoning"><strong>Reasoning:</strong> A load balancer changes the exact decision that is wrong: which application server receives each request. Health checks also let it stop choosing a failed server.</p>
+            <p class="feedback-boundary"><strong>Boundary:</strong> The balancer uses existing capacity more evenly; it does not create additional server capacity when all six servers are busy.</p>
+          </div>
         </article>
 
         <article class="question" id="q2-card" data-correct="c" data-section="selection">
           <fieldset>
-            <legend>2. A product-details query performs the same expensive join thousands of times per minute. Products change roughly every ten minutes, and the business accepts prices being at most 20 seconds old. What is the strongest first design?</legend>
-            <label><input type="radio" name="q2" value="a" required> Replicate every write to more databases and keep executing the join on every request.</label>
-            <label><input type="radio" name="q2" value="b"> Enqueue each read and make users wait for a worker.</label>
-            <label><input type="radio" name="q2" value="c"> Cache the computed result with an explicit invalidation or expiry policy consistent with the 20-second freshness target.</label>
-            <label><input type="radio" name="q2" value="d"> Run the product page as one nightly batch.</label>
+            <legend>2. Repeating the same expensive product read</legend>
+            <dl class="question-context">
+              <div><dt>Current system</dt><dd>Every product-page request runs the same read-only database join. For a given product, the computed result is identical for every visitor.</dd></div>
+              <div><dt>Observed evidence</dt><dd>The join takes 650 milliseconds and accounts for most database load. Ninety-two percent of traffic is for the same 100 products; application CPU is only 25%.</dd></div>
+              <div><dt>Required behavior</dt><dd>Return the page within 250 milliseconds. Product data may be stale for at most 30 seconds.</dd></div>
+              <div><dt>Known constraints</dt><dd>Products change at most once per hour. The write path can delete or replace a stored result when a product changes.</dd></div>
+            </dl>
+            <p class="question-ask"><strong>Decision:</strong> Which first change uses the repeated work and the written freshness allowance?</p>
+            <label><input type="radio" name="q2" value="a" required> Add more application servers; each one will still wait 650 milliseconds for the same database join.</label>
+            <label><input type="radio" name="q2" value="b"> Add a database read replica but continue running the 650-millisecond join for every request.</label>
+            <label><input type="radio" name="q2" value="c"> Cache the computed result by product ID, invalidate it when that product changes, and set an expiry no longer than 30 seconds as a safety bound.</label>
+            <label><input type="radio" name="q2" value="d"> Enqueue each page read for a worker and ask the visitor to return later for the result.</label>
           </fieldset>
-          <p class="feedback" data-explanation="The workload has reuse and a stated staleness budget—the two facts that justify caching. Reusing results reduces both latency and database work. The freshness target determines the invalidation, versioning, or TTL policy; a cache is not automatically current."></p>
+          <div class="feedback" hidden>
+            <p class="feedback-verdict"></p>
+            <p class="feedback-facts"><strong>Given facts:</strong> Many requests need an identical result, the repeated database work dominates latency, and the business explicitly permits up to 30 seconds of staleness.</p>
+            <p class="feedback-reasoning"><strong>Reasoning:</strong> A cache reuses one computed result instead of paying for the same 650-millisecond join on every request. The invalidation and expiry rules connect cache behavior to the 30-second requirement.</p>
+            <p class="feedback-boundary"><strong>Boundary:</strong> Caching does not make data automatically fresh. Without invalidation or a bounded expiry, the stored product result could outlive the allowed staleness.</p>
+          </div>
         </article>
 
         <article class="question" id="q3-card" data-correct="a" data-section="selection">
           <fieldset>
-            <legend>3. A single 8 TB events database is approaching both its storage and sustained write ceiling. Almost every query is scoped to one <code>account_id</code>. Which mechanism most directly raises the ceiling?</legend>
-            <label><input type="radio" name="q3" value="a" required> Partition ownership by a well-distributed account-based key so multiple database nodes store and process different subsets.</label>
-            <label><input type="radio" name="q3" value="b"> Create several full copies of all 8 TB and send every write to all of them.</label>
-            <label><input type="radio" name="q3" value="c"> Add a larger application load balancer without changing data placement.</label>
-            <label><input type="radio" name="q3" value="d"> Treat a cache as the permanent source of truth for all event writes.</label>
+            <legend>3. One database has reached its storage and write ceiling</legend>
+            <dl class="question-context">
+              <div><dt>Current system</dt><dd>One database machine stores 8 terabytes of append-only events for 40,000 customer accounts.</dd></div>
+              <div><dt>Observed evidence</dt><dd>Disk capacity is 92% full and sustained write input/output is at its safe limit. Application servers and network links have spare capacity.</dd></div>
+              <div><dt>Required behavior</dt><dd>Support four times the current stored data and write rate. Interactive reads must remain fast for one account at a time.</dd></div>
+              <div><dt>Known constraints</dt><dd>More than 99% of reads and writes concern one <code>account_id</code>; account IDs are well distributed, and interactive cross-account transactions are not required.</dd></div>
+            </dl>
+            <p class="question-ask"><strong>Decision:</strong> Which data-placement change directly raises both the storage and write ceilings?</p>
+            <label><input type="radio" name="q3" value="a" required> Partition by a hash of <code>account_id</code>, so different database machines own different accounts and process their writes in parallel.</label>
+            <label><input type="radio" name="q3" value="b"> Store a full 8-terabyte copy on every new database machine and send the complete write stream to each copy.</label>
+            <label><input type="radio" name="q3" value="c"> Cache recent reads while continuing to store every event and handle every write on the one full database.</label>
+            <label><input type="radio" name="q3" value="d"> Add an application load balancer without changing which database machine owns the event data.</label>
           </fieldset>
-          <p class="feedback" data-explanation="Partitioning splits ownership, so storage and write work can run in parallel across nodes. The account access pattern also gives a useful locality boundary. Full replicas copy the same data and improve failover or reads, but do not split ownership of the write set."></p>
+          <div class="feedback" hidden>
+            <p class="feedback-verdict"></p>
+            <p class="feedback-facts"><strong>Given facts:</strong> One machine is limited by both stored bytes and write input/output, while account-scoped access gives a well-distributed routing key.</p>
+            <p class="feedback-reasoning"><strong>Reasoning:</strong> Partitioning splits data ownership. Each machine stores only some accounts and accepts only those accounts’ writes, so storage and write work scale across machines.</p>
+            <p class="feedback-boundary"><strong>Boundary:</strong> Partitioning alone does not create backup copies. Each partition still needs replication if its data must remain available after its owner fails.</p>
+          </div>
         </article>
 
         <article class="question" id="q4-card" data-correct="d" data-section="selection">
           <fieldset>
-            <legend>4. A database still fits comfortably on one node and write capacity is fine, but read QPS is high and losing that one node would cause an unacceptable outage. What is the best fit?</legend>
-            <label><input type="radio" name="q4" value="a" required> Partition immediately, even though neither storage nor write ownership is the pressure.</label>
-            <label><input type="radio" name="q4" value="b"> Queue all reads so the database can process them days later.</label>
-            <label><input type="radio" name="q4" value="c"> Convert user-facing reads into one nightly batch.</label>
-            <label><input type="radio" name="q4" value="d"> Add replicas with a defined read-routing and failover strategy, and choose the required consistency behavior.</label>
+            <legend>4. Read pressure and a single database failure point</legend>
+            <dl class="question-context">
+              <div><dt>Current system</dt><dd>One database contains the complete 600-gigabyte dataset and is the only copy serving the application.</dd></div>
+              <div><dt>Observed evidence</dt><dd>Read capacity is above 90% during peak hours, write capacity is below 20%, and the dataset still fits comfortably on one machine.</dd></div>
+              <div><dt>Required behavior</dt><dd>Double read capacity and restore database service within 60 seconds if the current machine fails.</dd></div>
+              <div><dt>Known constraints</dt><dd>Ordinary reads may be up to two seconds behind the newest write. A monitored failover process is allowed to promote a copy after confirming the old writer is unavailable.</dd></div>
+            </dl>
+            <p class="question-ask"><strong>Decision:</strong> Which design addresses the measured read pressure and the loss of the only data copy?</p>
+            <label><input type="radio" name="q4" value="a" required> Cache some popular reads but keep the database as the only durable copy and the only recovery path.</label>
+            <label><input type="radio" name="q4" value="b"> Split the database into partitions with exactly one copy of each partition.</label>
+            <label><input type="radio" name="q4" value="c"> Put read requests in a queue even though callers need an immediate response.</label>
+            <label><input type="radio" name="q4" value="d"> Replicate the full dataset to additional database nodes, route allowed stale reads to them, and define monitored promotion of a replica when the writer fails.</label>
           </fieldset>
-          <p class="feedback" data-explanation="Replication creates additional copies of the same data. Those copies can serve reads and can take over after a failure. The design is incomplete until it states how lag affects reads and how a replica is promoted safely."></p>
+          <div class="feedback" hidden>
+            <p class="feedback-verdict"></p>
+            <p class="feedback-facts"><strong>Given facts:</strong> The dataset fits on one node, writes have headroom, reads are the capacity problem, two seconds of read lag is accepted, and the only current copy is a failure risk.</p>
+            <p class="feedback-reasoning"><strong>Reasoning:</strong> Replication creates additional copies. Those copies can serve the permitted slightly stale reads, and a controlled promotion can restore writes after the original writer fails.</p>
+            <p class="feedback-boundary"><strong>Boundary:</strong> Replicas are not instantaneously current, and safe failover is not automatic merely because copies exist; routing, lag handling, and promotion rules must be designed.</p>
+          </div>
         </article>
 
         <article class="question" id="q5-card" data-correct="b" data-section="selection">
           <fieldset>
-            <legend>5. Thumbnail generation takes 4–20 seconds and upload traffic arrives in bursts. The upload API should acknowledge durable intake quickly, while users can see “processing.” Which design matches that contract?</legend>
-            <label><input type="radio" name="q5" value="a" required> Keep each upload request open until every thumbnail finishes, then retry the entire request on timeout.</label>
-            <label><input type="radio" name="q5" value="b"> Persist the upload, durably enqueue a thumbnail job, return an accepted/pending state, and let scalable workers consume it.</label>
-            <label><input type="radio" name="q5" value="c"> Wait for one nightly batch even when users expect processing to start now.</label>
-            <label><input type="radio" name="q5" value="d"> Cache thumbnails before they have been generated.</label>
+            <legend>5. Slow thumbnail work blocks a fast upload response</legend>
+            <dl class="question-context">
+              <div><dt>Current system</dt><dd>The upload API stores an original image and then generates three thumbnails before returning to the client. Thumbnail generation takes 4–20 seconds.</dd></div>
+              <div><dt>Observed evidence</dt><dd>Traffic bursts cause request timeouts. Clients retry timed-out uploads, creating more work while the service is already busy.</dd></div>
+              <div><dt>Required behavior</dt><dd>Return within 300 milliseconds only after the original image and the thumbnail job are durably accepted. Show “processing,” and finish 95% of thumbnails within two minutes.</dd></div>
+              <div><dt>Known constraints</dt><dd>The thumbnail is not needed in the upload response. More worker instances can be added when pending work grows.</dd></div>
+            </dl>
+            <p class="question-ask"><strong>Decision:</strong> Which request flow matches all four written facts?</p>
+            <label><input type="radio" name="q5" value="a" required> Return success before storing either the image or the job, then rely on the client to retry anything lost.</label>
+            <label><input type="radio" name="q5" value="b"> Store the original, durably enqueue a thumbnail job, return “accepted/processing,” and have independently scalable workers consume the job.</label>
+            <label><input type="radio" name="q5" value="c"> Add more API servers but keep every request open for at least the 4–20 seconds of thumbnail work.</label>
+            <label><input type="radio" name="q5" value="d"> Collect uploads for one nightly batch even though 95% must finish within two minutes.</label>
           </fieldset>
-          <p class="feedback" data-explanation="A queue separates intake rate from processing rate and persists work while consumers are slow or temporarily down. The API must report acceptance, not pretend the thumbnail is complete. Worker capacity and queue age still determine completion time."></p>
+          <div class="feedback" hidden>
+            <p class="feedback-verdict"></p>
+            <p class="feedback-facts"><strong>Given facts:</strong> Thumbnail work is slow, the result is not needed immediately, bursts cause timeouts, and the client accepts a processing state after durable intake.</p>
+            <p class="feedback-reasoning"><strong>Reasoning:</strong> A durable message queue separates the fast acceptance path from slower thumbnail workers. It can hold burst work and lets worker capacity scale independently.</p>
+            <p class="feedback-boundary"><strong>Boundary:</strong> The queue does not guarantee the two-minute completion target by itself. Worker throughput and oldest-job age still have to be measured and controlled.</p>
+          </div>
         </article>
 
         <article class="question" id="q6-card" data-correct="c" data-section="selection">
           <fieldset>
-            <legend>6. Finance needs a ranking over the previous day’s 400 million events by 6:00 AM. Nobody needs intermediate results, and compute is cheapest overnight. Which execution model is most appropriate?</legend>
-            <label><input type="radio" name="q6" value="a" required> Recompute the entire ranking synchronously inside every user request.</label>
-            <label><input type="radio" name="q6" value="b"> Force one consumer to process every event individually during peak traffic.</label>
-            <label><input type="radio" name="q6" value="c"> Run scheduled batch processing that groups work and uses the overnight resource window to meet the deadline.</label>
-            <label><input type="radio" name="q6" value="d"> Add a load balancer to the existing single ranking process and make no other change.</label>
+            <legend>6. A large report has a deadline, not an interactive user</legend>
+            <dl class="question-context">
+              <div><dt>Current system</dt><dd>Finance calculates a ranking from the previous day’s 400 million events. The day’s input closes at midnight.</dd></div>
+              <div><dt>Observed evidence</dt><dd>Starting and committing work separately for every event wastes significant setup and input/output time.</dd></div>
+              <div><dt>Required behavior</dt><dd>Publish the complete ranking by 6:00 AM. No consumer needs partial or intermediate rankings.</dd></div>
+              <div><dt>Known constraints</dt><dd>Compute costs less from midnight to 5:00 AM, and delaying any individual event until that window is acceptable.</dd></div>
+            </dl>
+            <p class="question-ask"><strong>Decision:</strong> Which execution model meets the deadline while taking advantage of grouped work and the cheaper window?</p>
+            <label><input type="radio" name="q6" value="a" required> Recompute the complete 400-million-event ranking inside each finance page request.</label>
+            <label><input type="radio" name="q6" value="b"> Process every event immediately during the day even though no result is consumed before 6:00 AM.</label>
+            <label><input type="radio" name="q6" value="c"> Run a scheduled overnight batch that groups input/output and parallelizes the closed day’s data to finish before 6:00 AM.</label>
+            <label><input type="radio" name="q6" value="d"> Add a load balancer in front of the unchanged single ranking process without dividing or grouping its work.</label>
           </fieldset>
-          <p class="feedback" data-explanation="The job has a deadline rather than an interactive latency target. Batch processing can amortize setup and use resources efficiently across many records, trading per-record immediacy for throughput."></p>
+          <div class="feedback" hidden>
+            <p class="feedback-verdict"></p>
+            <p class="feedback-facts"><strong>Given facts:</strong> The input closes at midnight, only the final result matters, completion is due at 6:00 AM, and grouped overnight work is cheaper.</p>
+            <p class="feedback-reasoning"><strong>Reasoning:</strong> Batch processing optimizes total work completed per unit of time by sharing setup and input/output across many records and using the allowed processing window.</p>
+            <p class="feedback-boundary"><strong>Boundary:</strong> Batch improves throughput here by accepting delay for each individual event. It is a poor fit when every event needs an immediate result.</p>
+          </div>
         </article>
       </section>
 
@@ -461,85 +576,169 @@
           <span class="section-number" aria-hidden="true">2</span>
           <div>
             <h2 id="limits-title">Mechanisms and limits</h2>
-            <p>Questions 7–13 · distinguish the benefit from the guarantee people wrongly assume</p>
+            <p>Questions 7–13 · separate what a component changes from what it cannot guarantee</p>
           </div>
         </div>
 
         <article class="question" id="q7-card" data-correct="a" data-section="limits">
           <fieldset>
-            <legend>7. A load balancer already distributes traffic evenly, but every backend remains above 95% CPU for ten minutes and queues keep growing. What conclusion is justified?</legend>
-            <label><input type="radio" name="q7" value="a" required> Distribution is working; the fleet lacks capacity or does too much work, so scale out or optimize the bottleneck.</label>
-            <label><input type="radio" name="q7" value="b"> Change from round-robin to random routing; a different algorithm will manufacture CPU capacity.</label>
-            <label><input type="radio" name="q7" value="c"> Cache the load balancer’s backend list and leave the saturated fleet unchanged.</label>
-            <label><input type="radio" name="q7" value="d"> Partition the load balancer itself by database key.</label>
+            <legend>7. A load balancer cannot manufacture backend capacity</legend>
+            <dl class="question-context">
+              <div><dt>Current system</dt><dd>A load balancer already distributes equal-cost requests evenly across ten identical application servers.</dd></div>
+              <div><dt>Observed evidence</dt><dd>Every server remains above 95% CPU for ten minutes, each server’s request queue grows, and traffic is within 3% of an even split. The database is below 35% utilization.</dd></div>
+              <div><dt>Required behavior</dt><dd>Handle the current arrival rate without a growing queue and keep 95% of responses below 400 milliseconds.</dd></div>
+              <div><dt>Known constraints</dt><dd>Responses are personalized and rarely repeat. There is no idle application server to which the balancer could redirect more work.</dd></div>
+            </dl>
+            <p class="question-ask"><strong>Decision:</strong> Which next action directly addresses the remaining bottleneck?</p>
+            <label><input type="radio" name="q7" value="a" required> Add application capacity or reduce the CPU work per request, then confirm that total service capacity exceeds the arrival rate.</label>
+            <label><input type="radio" name="q7" value="b"> Change from round-robin to random routing while keeping the same ten saturated servers and the same work.</label>
+            <label><input type="radio" name="q7" value="c"> Add a second load-balancer instance but make no change to the saturated application fleet.</label>
+            <label><input type="radio" name="q7" value="d"> Partition the lightly used database even though application CPU and queues contain the measured delay.</label>
           </fieldset>
-          <p class="feedback" data-explanation="A balancer can use available capacity more evenly, but it cannot create capacity. Once all backends are saturated, the next mechanism is capacity addition or work reduction—not a cleverer distribution policy."></p>
+          <div class="feedback" hidden>
+            <p class="feedback-verdict"></p>
+            <p class="feedback-facts"><strong>Given facts:</strong> Routing is already even, every backend is saturated, queues are growing, and no unused backend capacity exists.</p>
+            <p class="feedback-reasoning"><strong>Reasoning:</strong> The balancer has completed its job: it spread work. The system must now process more work per second by adding backend capacity or making each request cheaper.</p>
+            <p class="feedback-boundary"><strong>Boundary:</strong> Load balancing improves use of available capacity and routes around failed nodes. It cannot make a saturated fleet perform more computation.</p>
+          </div>
         </article>
 
         <article class="question" id="q8-card" data-correct="d" data-section="limits">
           <fieldset>
-            <legend>8. A cache-aside service reads price ₹1,000 into cache. The database is then updated to ₹900, but no cache action occurs. What is the correct interpretation?</legend>
-            <label><input type="radio" name="q8" value="a" required> The load balancer will notify the cache about the database write.</label>
-            <label><input type="radio" name="q8" value="b"> A cache hit is definitionally the latest database value.</label>
-            <label><input type="radio" name="q8" value="c"> Replication makes every independent cache entry self-invalidating.</label>
-            <label><input type="radio" name="q8" value="d"> The cache may keep serving ₹1,000 until invalidation, refresh, version mismatch, or expiry; freshness must be designed explicitly.</label>
+            <legend>8. A cache and database hold separate versions of a price</legend>
+            <dl class="question-context">
+              <div><dt>Current system</dt><dd>Reads check a cache first. On a miss, the service reads the database and stores that value in the cache with a ten-minute <span class="term" title="The time after which a cached entry expires">time-to-live (TTL)</span>. Database writes do not update or delete the cached entry.</dd></div>
+              <div><dt>Observed evidence</dt><dd>At 12:00 the cache stores a ₹1,000 price. At 12:01 the database changes to ₹900. Requests continue hitting the existing cache entry.</dd></div>
+              <div><dt>Required behavior</dt><dd>No customer may see a price more than 30 seconds behind the database.</dd></div>
+              <div><dt>Known constraints</dt><dd>The service must retain caching because the uncached database read cannot handle peak traffic.</dd></div>
+            </dl>
+            <p class="question-ask"><strong>Decision:</strong> Which statement accurately describes the current behavior and a change that can satisfy the 30-second limit?</p>
+            <label><input type="radio" name="q8" value="a" required> The cache automatically observes every unrelated database write, so requests switch to ₹900 immediately without a cache policy.</label>
+            <label><input type="radio" name="q8" value="b"> Ten-minute expiry meets the requirement because the database, rather than the cache, contains ₹900.</label>
+            <label><input type="radio" name="q8" value="c"> Adding database replicas will automatically delete the independent ₹1,000 cache entry.</label>
+            <label><input type="radio" name="q8" value="d"> The cache can serve ₹1,000 for nearly ten minutes; delete or update the entry on the price write and keep expiry at 30 seconds or less as a safety bound.</label>
           </fieldset>
-          <p class="feedback" data-explanation="The database and cache are separate states. Faster reads come from not consulting the source every time, which is exactly why stale values are possible. Invalidation strategy and accepted staleness are part of the product contract."></p>
+          <div class="feedback" hidden>
+            <p class="feedback-verdict"></p>
+            <p class="feedback-facts"><strong>Given facts:</strong> Reads stop at the cache, the write path does not touch it, and its ten-minute lifetime exceeds the allowed 30 seconds.</p>
+            <p class="feedback-reasoning"><strong>Reasoning:</strong> The old entry remains a valid cache hit even after the database changes. Explicit invalidation or update connects writes to cached state; bounded expiry limits damage if that action fails.</p>
+            <p class="feedback-boundary"><strong>Boundary:</strong> A shorter TTL lowers the maximum stale period but increases cache misses. The chosen policy must balance freshness against source load.</p>
+          </div>
         </article>
 
         <article class="question" id="q9-card" data-correct="b" data-section="limits">
           <fieldset>
-            <legend>9. Which statement correctly separates partitioning from replication?</legend>
-            <label><input type="radio" name="q9" value="a" required> Both terms mean storing a full copy of all data on every node.</label>
-            <label><input type="radio" name="q9" value="b"> Partitioning assigns different data subsets to owners; replication creates additional copies of a subset. A production shard can itself be replicated.</label>
-            <label><input type="radio" name="q9" value="c"> Partitioning is only for reads, while replication is only for writes.</label>
-            <label><input type="radio" name="q9" value="d"> Replication removes the need for a partition key in every possible data model.</label>
+            <legend>9. Partitioning and replication change different things</legend>
+            <dl class="question-context">
+              <div><dt>Current system</dt><dd>Design X has four nodes: each node is the only owner of a different quarter of the customer records. Design Y also has four nodes: every node stores the complete customer dataset, and writes are copied from one writer to the others.</dd></div>
+              <div><dt>Observed evidence</dt><dd>In X, adding nodes can divide storage and write ownership. In Y, another full copy can serve reads or take over after failure, subject to copy lag and failover rules.</dd></div>
+              <div><dt>Required behavior</dt><dd>Correctly name the mechanisms so a later design can decide whether it needs scale, copies, or both.</dd></div>
+              <div><dt>Known constraints</dt><dd>No other data-placement behavior should be assumed beyond the two designs described.</dd></div>
+            </dl>
+            <p class="question-ask"><strong>Decision:</strong> Which description matches Design X and Design Y?</p>
+            <label><input type="radio" name="q9" value="a" required> X is replication and Y is partitioning because both designs use four machines.</label>
+            <label><input type="radio" name="q9" value="b"> X is partitioning because it splits ownership; Y is replication because it makes copies. A partitioned dataset can also replicate each partition.</label>
+            <label><input type="radio" name="q9" value="c"> Both are replication because every design with more than one database machine stores full copies.</label>
+            <label><input type="radio" name="q9" value="d"> Both are partitioning because replication never stores the complete dataset on more than one node.</label>
           </fieldset>
-          <p class="feedback" data-explanation="The mechanisms are orthogonal. Partitioning expands capacity by dividing ownership. Replication improves read scale or fault tolerance by copying an owner’s data. Distributed databases commonly do both."></p>
+          <div class="feedback" hidden>
+            <p class="feedback-verdict"></p>
+            <p class="feedback-facts"><strong>Given facts:</strong> X assigns different records to different owners; Y stores the same records on multiple nodes.</p>
+            <p class="feedback-reasoning"><strong>Reasoning:</strong> Partitioning answers “which node owns this subset?” Replication answers “which additional nodes hold a copy of that owned data?” These choices are independent and are often combined.</p>
+            <p class="feedback-boundary"><strong>Boundary:</strong> More nodes alone do not reveal the mechanism. You must inspect whether the nodes divide data or copy it.</p>
+          </div>
         </article>
 
         <article class="question" id="q10-card" data-correct="c" data-section="limits">
           <fieldset>
-            <legend>10. An eight-shard database stores each shard on exactly one machine. Machine 3 fails. What availability does partitioning alone provide?</legend>
-            <label><input type="radio" name="q10" value="a" required> Every key stays available because eight shards imply eight copies.</label>
-            <label><input type="radio" name="q10" value="b"> The entire service must stop, even for keys owned by healthy shards.</label>
-            <label><input type="radio" name="q10" value="c"> Healthy shards may continue serving their keys, but shard 3’s data is unavailable until recovery; that shard needs replication/failover to remain available.</label>
-            <label><input type="radio" name="q10" value="d"> The load balancer can reconstruct shard 3’s missing data from request traffic.</label>
+            <legend>10. Partitioning without copies during a node failure</legend>
+            <dl class="question-context">
+              <div><dt>Current system</dt><dd>Customer records are split into eight partitions. Each partition exists on exactly one machine; there are no live replicas or other copies that can serve requests.</dd></div>
+              <div><dt>Observed evidence</dt><dd>Machine 3 has failed. It was the sole owner of partition 3. Machines 1, 2, and 4–8 remain healthy.</dd></div>
+              <div><dt>Required behavior</dt><dd>Continue serving every record that is still reachable, and report unavailable records honestly.</dd></div>
+              <div><dt>Known constraints</dt><dd>The request router knows which partition owns each customer ID and does not require a query to contact every partition.</dd></div>
+            </dl>
+            <p class="question-ask"><strong>Decision:</strong> What can this system serve before machine 3 is recovered?</p>
+            <label><input type="radio" name="q10" value="a" required> Every customer, because eight partitions mean eight copies of every record.</label>
+            <label><input type="radio" name="q10" value="b"> No customer, because one failed partition always forces all independent partitions to stop.</label>
+            <label><input type="radio" name="q10" value="c"> Customers owned by the seven healthy partitions remain reachable; partition 3’s customers are unavailable because partitioning did not create another copy.</label>
+            <label><input type="radio" name="q10" value="d"> Partition 3’s customers remain reachable because the application load balancer can reconstruct missing records from incoming requests.</label>
           </fieldset>
-          <p class="feedback" data-explanation="Partitioning can contain the blast radius because unrelated owners still work. It does not create a second copy of the failed owner’s data. Replication is the additional mechanism that can preserve that shard’s availability."></p>
+          <div class="feedback" hidden>
+            <p class="feedback-verdict"></p>
+            <p class="feedback-facts"><strong>Given facts:</strong> Seven owners are healthy, partition 3 has one failed owner, no copy exists, and requests can be routed to one partition.</p>
+            <p class="feedback-reasoning"><strong>Reasoning:</strong> Partitioning can contain the failure to the affected ownership range, so unrelated partitions continue. It cannot serve data for which the only copy is unreachable.</p>
+            <p class="feedback-boundary"><strong>Boundary:</strong> Replicating each partition and defining failover is the separate mechanism needed to keep that partition available after its owner fails.</p>
+          </div>
         </article>
 
         <article class="question" id="q11-card" data-correct="a" data-section="limits">
           <fieldset>
-            <legend>11. A user updates their profile on the primary, immediately reads from a lagging replica, and sees the old name. Which response addresses the actual mechanism?</legend>
-            <label><input type="radio" name="q11" value="a" required> If read-your-writes is required, route that read to a sufficiently current replica/leader or wait for the write position, accepting added coordination or latency.</label>
-            <label><input type="radio" name="q11" value="b"> Add more asynchronous replicas; more lagging copies guarantee the newest read.</label>
-            <label><input type="radio" name="q11" value="c"> Put a load balancer in front of replicas and choose one randomly.</label>
-            <label><input type="radio" name="q11" value="d"> Partition the profile field into smaller strings.</label>
+            <legend>11. An immediate read can reach a replica that has not copied the write</legend>
+            <dl class="question-context">
+              <div><dt>Current system</dt><dd>Profile writes go to one primary database. The primary acknowledges a write before asynchronously copying it to read replicas; “asynchronously” means the copying finishes later. The read router chooses a replica at random.</dd></div>
+              <div><dt>Observed evidence</dt><dd>Replica lag is normally zero to two seconds. A user changes “Ram” to “Rama” and immediately reads from a replica that still contains “Ram.”</dd></div>
+              <div><dt>Required behavior</dt><dd>The user who made a change must see that change on their next read. Other users may see profile data up to two seconds late.</dd></div>
+              <div><dt>Known constraints</dt><dd>Routing every read from every user to the primary would overload it; only the writer’s immediate follow-up reads need the stronger rule.</dd></div>
+            </dl>
+            <p class="question-ask"><strong>Decision:</strong> Which routing rule provides the stated “see my own write” behavior without strengthening every read?</p>
+            <label><input type="radio" name="q11" value="a" required> After a user writes, route that user’s follow-up reads to the primary—or to a replica confirmed to have copied that write—until the replicas catch up.</label>
+            <label><input type="radio" name="q11" value="b"> Add more asynchronous replicas and keep choosing one randomly; a larger set guarantees the selected copy is current.</label>
+            <label><input type="radio" name="q11" value="c"> Keep random replica routing and rename the stale value so the client cannot recognize it.</label>
+            <label><input type="radio" name="q11" value="d"> Cache the old profile for ten minutes so every follow-up read consistently returns the same stale name.</label>
           </fieldset>
-          <p class="feedback" data-explanation="Replication is not instantaneous. A guarantee such as read-your-writes, causal consistency, or strong reads requires routing or coordination that proves the chosen copy has observed the write. That can cost latency or availability during failures."></p>
+          <div class="feedback" hidden>
+            <p class="feedback-verdict"></p>
+            <p class="feedback-facts"><strong>Given facts:</strong> The primary acknowledges before replicas finish copying, random routing can choose a lagging copy, and only the writer’s next read needs to observe the write.</p>
+            <p class="feedback-reasoning"><strong>Reasoning:</strong> The read must go to a copy known to contain that write. Temporarily routing the writer to the primary, or checking a replication position, establishes that fact.</p>
+            <p class="feedback-boundary"><strong>Boundary:</strong> Replication adds read capacity, but asynchronous copies do not by themselves guarantee the newest value. Stronger read rules add routing, waiting, or coordination.</p>
+          </div>
         </article>
 
         <article class="question" id="q12-card" data-correct="d" data-section="limits">
           <fieldset>
-            <legend>12. A worker charges a card, then crashes before acknowledging the queue message. The queue redelivers it. What must prevent a second charge?</legend>
-            <label><input type="radio" name="q12" value="a" required> A shorter queue name.</label>
-            <label><input type="radio" name="q12" value="b"> A load balancer that always sends retries to a different worker.</label>
-            <label><input type="radio" name="q12" value="c"> A larger batch size so both charges occur together.</label>
-            <label><input type="radio" name="q12" value="d"> An idempotency key or durable deduplication record checked as part of the business operation.</label>
+            <legend>12. Durable queue retry can repeat a completed side effect</legend>
+            <dl class="question-context">
+              <div><dt>Current system</dt><dd>The payment queue uses <span class="term" title="A message is retried until a worker acknowledges it, so it may be delivered more than once">at-least-once delivery</span>: an unacknowledged message is delivered again. The payment provider supports an idempotency key, meaning repeated calls with the same key return the first result without charging again.</dd></div>
+              <div><dt>Observed evidence</dt><dd>A worker charges order 817, then crashes before acknowledging the queue message. The queue delivers order 817 to another worker.</dd></div>
+              <div><dt>Required behavior</dt><dd>Every accepted order must be attempted, but the customer must receive at most one successful charge for one order.</dd></div>
+              <div><dt>Known constraints</dt><dd>A worker can crash between any two instructions. Changing which worker receives the retry does not change what the first worker already did.</dd></div>
+            </dl>
+            <p class="question-ask"><strong>Decision:</strong> How should the consumer process the redelivered message?</p>
+            <label><input type="radio" name="q12" value="a" required> Acknowledge the queue message before charging; if the worker then crashes, silently discard the unattempted payment.</label>
+            <label><input type="radio" name="q12" value="b"> Call the payment provider with a new random key on every delivery so every attempt looks unrelated.</label>
+            <label><input type="radio" name="q12" value="c"> Send the retry to a different worker and assume a different machine cannot repeat the first machine’s charge.</label>
+            <label><input type="radio" name="q12" value="d"> Use order 817’s stable identifier as the idempotency key and durably record the result, so a retry recovers the first outcome instead of creating a second charge.</label>
           </fieldset>
-          <p class="feedback" data-explanation="Durable queues commonly favor at-least-once delivery: retrying protects against lost work but can repeat work. The consumer must make the side effect idempotent or deduplicate it durably; queue acceptance alone does not provide exactly-once business effects."></p>
+          <div class="feedback" hidden>
+            <p class="feedback-verdict"></p>
+            <p class="feedback-facts"><strong>Given facts:</strong> The queue intentionally retries unacknowledged work, the first charge may already have succeeded, and the provider deduplicates calls that reuse one key.</p>
+            <p class="feedback-reasoning"><strong>Reasoning:</strong> A stable order key makes repeated deliveries represent the same business operation. The second worker can safely ask for the outcome without causing a new charge.</p>
+            <p class="feedback-boundary"><strong>Boundary:</strong> A durable queue protects against lost work; it does not automatically provide exactly-once business effects. The consumer and side-effecting service must participate in deduplication.</p>
+          </div>
         </article>
 
         <article class="question" id="q13-card" data-correct="b" data-section="limits">
           <fieldset>
-            <legend>13. Why can grouping 10,000 records into a batch improve throughput while making an individual record slower?</legend>
-            <label><input type="radio" name="q13" value="a" required> Batching removes all computation, so no record waits.</label>
-            <label><input type="radio" name="q13" value="b"> The system amortizes setup, I/O, or scheduling overhead across many records, but each record may wait for the batch window and earlier work.</label>
-            <label><input type="radio" name="q13" value="c"> Throughput and latency are identical metrics, so the premise is impossible.</label>
-            <label><input type="radio" name="q13" value="d"> A batch guarantees every result is immediately fresh.</label>
+            <legend>13. Batch throughput can improve while one record waits longer</legend>
+            <dl class="question-context">
+              <div><dt>Current system</dt><dd>Importing one record opens a database transaction, pays two seconds of setup, performs one millisecond of record work, and commits. The importer repeats that sequence for every record.</dd></div>
+              <div><dt>Observed evidence</dt><dd>For 1,000 records, setup dominates useful work. One batch can pay the two-second setup once and then perform roughly one second of record work.</dd></div>
+              <div><dt>Required behavior</dt><dd>Maximize records imported per minute. It is acceptable for a newly arrived record to wait up to one minute before processing begins.</dd></div>
+              <div><dt>Known constraints</dt><dd>No user is waiting interactively for an individual record, and all 1,000 records use the same operation.</dd></div>
+            </dl>
+            <p class="question-ask"><strong>Decision:</strong> Why does grouping records improve the stated goal even though an individual record may finish later?</p>
+            <label><input type="radio" name="q13" value="a" required> Batching removes the one millisecond of useful work from every record, so no record ever waits.</label>
+            <label><input type="radio" name="q13" value="b"> One group shares the two-second setup cost, increasing total records per minute; an individual record may wait for the group’s start time and earlier records.</label>
+            <label><input type="radio" name="q13" value="c"> Throughput and individual response time are the same measurement, so improving one always improves the other equally.</label>
+            <label><input type="radio" name="q13" value="d"> A batch makes each record immediately visible before the transaction begins.</label>
           </fieldset>
-          <p class="feedback" data-explanation="Throughput measures total work per time; latency measures how long one item waits. Grouping can use resources more efficiently while intentionally delaying an item until a window, threshold, or scheduled job begins."></p>
+          <div class="feedback" hidden>
+            <p class="feedback-verdict"></p>
+            <p class="feedback-facts"><strong>Given facts:</strong> Per-operation setup is 2,000 times larger than per-record work, total records per minute is the goal, and one minute of waiting is accepted.</p>
+            <p class="feedback-reasoning"><strong>Reasoning:</strong> Sharing setup across 1,000 records removes repeated overhead from the total workload, so many more records finish per minute.</p>
+            <p class="feedback-boundary"><strong>Boundary:</strong> The gain is throughput, not instant completion. A record can wait for the collection window, the batch to start, and work ahead of it.</p>
+          </div>
         </article>
       </section>
 
@@ -548,85 +747,169 @@
           <span class="section-number" aria-hidden="true">3</span>
           <div>
             <h2 id="production-title">Production failure and synthesis</h2>
-            <p>Questions 14–20 · debug hot spots, retry behavior, and composed architectures</p>
+            <p>Questions 14–20 · reason through skew, retries, failure points, and composed systems</p>
           </div>
         </div>
 
         <article class="question" id="q14-card" data-correct="c" data-section="production">
           <fieldset>
-            <legend>14. Events are partitioned by <code>country</code>. Eighty percent of traffic belongs to India, so one shard is saturated while the rest are idle. What should the redesign optimize?</legend>
-            <label><input type="radio" name="q14" value="a" required> Keep the same key and add empty shards; ownership will rebalance automatically.</label>
-            <label><input type="radio" name="q14" value="b"> Replicate the hot shard and allow every replica to accept conflicting writes independently.</label>
-            <label><input type="radio" name="q14" value="c"> Choose a higher-cardinality, better-distributed key—possibly a hash/composite key—while preserving required locality and handling unusually large tenants explicitly.</label>
-            <label><input type="radio" name="q14" value="d"> Cache all writes and never persist them to the owning shard.</label>
+            <legend>14. A partition key concentrates most writes on one owner</legend>
+            <dl class="question-context">
+              <div><dt>Current system</dt><dd>Events are partitioned by <code>country</code>. One partition owns India, while three other partitions own groups of less active countries.</dd></div>
+              <div><dt>Observed evidence</dt><dd>India produces 80% of writes. Its partition stays above 95% disk input/output while the other three remain below 20%; this overloaded owner is a <span class="term" title="A partition receiving much more traffic or data than the others">hot partition</span>.</dd></div>
+              <div><dt>Required behavior</dt><dd>Support four times the current write rate while keeping events for one account easy to query.</dd></div>
+              <div><dt>Known constraints</dt><dd>Queries are by <code>account_id</code>, not by country. Account IDs are well distributed, and no single account produces more than 0.1% of traffic.</dd></div>
+            </dl>
+            <p class="question-ask"><strong>Decision:</strong> Which ownership redesign lets additional partitions share the write load?</p>
+            <label><input type="radio" name="q14" value="a" required> Add empty machines but keep all Indian events permanently mapped to the one existing India owner.</label>
+            <label><input type="radio" name="q14" value="b"> Add read replicas for the India partition even though the measured ceiling is writes accepted by its one owner.</label>
+            <label><input type="radio" name="q14" value="c"> Repartition by a hash of <code>account_id</code>, then migrate account ownership so Indian traffic can be distributed across many partitions.</label>
+            <label><input type="radio" name="q14" value="d"> Add application servers while every event write still reaches the same saturated India partition.</label>
           </fieldset>
-          <p class="feedback" data-explanation="A partition key defines the unit of load and locality. Low-cardinality or skewed keys create hot shards, so adding owners does nothing unless data can move among them. The new key must balance distribution against the queries or transactions that should stay local."></p>
+          <div class="feedback" hidden>
+            <p class="feedback-verdict"></p>
+            <p class="feedback-facts"><strong>Given facts:</strong> Country creates severe skew, account-scoped queries are the real locality need, and account IDs distribute traffic well.</p>
+            <p class="feedback-reasoning"><strong>Reasoning:</strong> A partition key decides which owner receives each write. Hashing the account ID creates many routing values, allowing accounts—and therefore writes—to spread across owners.</p>
+            <p class="feedback-boundary"><strong>Boundary:</strong> Adding machines changes nothing until ownership can move to them. Repartitioning also requires a migration and routing plan while old and new placements coexist.</p>
+          </div>
         </article>
 
         <article class="question" id="q15-card" data-correct="a" data-section="production">
           <fieldset>
-            <legend>15. A money transfer debits an account on shard A and credits one on shard B. The invariant requires both changes or neither. What is the honest design statement?</legend>
-            <label><input type="radio" name="q15" value="a" required> Co-locate data that frequently changes atomically when possible; otherwise use cross-shard coordination such as a distributed transaction/2PC or redesign the workflow, acknowledging latency and failure complexity.</label>
-            <label><input type="radio" name="q15" value="b"> Replication makes two independent shard owners commit atomically without a protocol.</label>
-            <label><input type="radio" name="q15" value="c"> A cache can enforce the durable invariant because it is faster.</label>
-            <label><input type="radio" name="q15" value="d"> Put both writes in a queue, report success immediately, and assume they will either both happen or both fail.</label>
+            <legend>15. One money transfer crosses two independent partitions</legend>
+            <dl class="question-context">
+              <div><dt>Current system</dt><dd>Accounts are partitioned by account ID. A database transaction is atomic—both changes happen or neither happens—only when all changes are on one partition.</dd></div>
+              <div><dt>Observed evidence</dt><dd>A transfer must debit account 10 on partition A and credit account 92 on partition B. A crash can occur after either partition writes.</dd></div>
+              <div><dt>Required behavior</dt><dd>The transfer must commit both the debit and credit or commit neither. Reporting success while only one side is durable is forbidden.</dd></div>
+              <div><dt>Known constraints</dt><dd>Transfer pairs are arbitrary, so a partition key cannot place every possible pair together. The business will accept extra latency for correct transfers.</dd></div>
+            </dl>
+            <p class="question-ask"><strong>Decision:</strong> Which statement is honest about the mechanism required at this partition boundary?</p>
+            <label><input type="radio" name="q15" value="a" required> Use cross-partition coordination: a transaction coordinator must get both partitions ready before telling both to commit, with recovery rules for coordinator or network failure.</label>
+            <label><input type="radio" name="q15" value="b"> Send debit and credit as unrelated queue messages; eventual delivery guarantees that either both changes commit or neither does.</label>
+            <label><input type="radio" name="q15" value="c"> Add a replica of each partition; copies automatically make two different owners commit one atomic transaction.</label>
+            <label><input type="radio" name="q15" value="d"> Write the intended balances to a cache first; cache speed makes the two durable database writes atomic.</label>
           </fieldset>
-          <p class="feedback" data-explanation="Partitioning makes local work scalable but cross-owner invariants require coordination. Collocation avoids that boundary for common operations. When it cannot, protocols such as two-phase commit—or an explicitly different business workflow—carry latency, blocking, and recovery costs."></p>
+          <div class="feedback" hidden>
+            <p class="feedback-verdict"></p>
+            <p class="feedback-facts"><strong>Given facts:</strong> The invariant spans two owners, local transactions cover only one owner, arbitrary transfer pairs cannot all be co-located, and partial success is forbidden.</p>
+            <p class="feedback-reasoning"><strong>Reasoning:</strong> Both partitions need a shared decision. A coordinator can run a protocol such as two-phase commit: first prepare both participants, then issue one commit or abort decision.</p>
+            <p class="feedback-boundary"><strong>Boundary:</strong> Cross-partition coordination preserves the invariant but adds network round trips, failure recovery, and possible waiting when a participant or coordinator is unreachable.</p>
+          </div>
         </article>
 
         <article class="question" id="q16-card" data-correct="d" data-section="production">
           <fieldset>
-            <legend>16. A very hot cache key expires at noon. Thousands of requests miss simultaneously and all recompute the same database query, overloading the source. Which mitigation targets this failure?</legend>
-            <label><input type="radio" name="q16" value="a" required> Give every hot key the same expiry second so misses synchronize predictably.</label>
-            <label><input type="radio" name="q16" value="b"> Shorten the TTL further so stampedes occur more often.</label>
-            <label><input type="radio" name="q16" value="c"> Add another cache layer with the identical synchronized expiry and no request control.</label>
-            <label><input type="radio" name="q16" value="d"> Coalesce concurrent refreshes (single-flight) and use techniques such as jittered expiry, prewarming, or stale-while-revalidate.</label>
+            <legend>16. One cache expiry causes thousands of identical source reads</legend>
+            <dl class="question-context">
+              <div><dt>Current system</dt><dd>A popular homepage result is cached for five minutes. When it expires, any request that misses independently runs the same database query and stores the result.</dd></div>
+              <div><dt>Observed evidence</dt><dd>At exactly noon the entry expires. Five thousand near-simultaneous requests all miss, run the same query, and push the database above its connection limit.</dd></div>
+              <div><dt>Required behavior</dt><dd>Keep the database below 70% connection use and keep serving the homepage during refresh.</dd></div>
+              <div><dt>Known constraints</dt><dd>Only one fresh computation is needed. The previous value may be served for 30 additional seconds while refresh occurs.</dd></div>
+            </dl>
+            <p class="question-ask"><strong>Decision:</strong> Which refresh rule directly prevents the synchronized miss from multiplying database work?</p>
+            <label><input type="radio" name="q16" value="a" required> Give every popular key the same exact expiry instant so all refresh work starts together.</label>
+            <label><input type="radio" name="q16" value="b"> Let every miss query the database but add more application threads to launch the queries faster.</label>
+            <label><input type="radio" name="q16" value="c"> Add another cache with the same expiry and the same rule that every miss recomputes independently.</label>
+            <label><input type="radio" name="q16" value="d"> Allow one request to perform the refresh while the others reuse its result or briefly receive the permitted old value; vary expiry times or refresh early to avoid synchronized misses.</label>
           </fieldset>
-          <p class="feedback" data-explanation="This is a cache stampede: the optimization suddenly amplifies load onto the source. Request coalescing ensures one refresh, while jitter or proactive refresh prevents many hot keys from expiring together."></p>
+          <div class="feedback" hidden>
+            <p class="feedback-verdict"></p>
+            <p class="feedback-facts"><strong>Given facts:</strong> Thousands of requests need the same value, only one computation is necessary, and a 30-second old value is allowed during refresh.</p>
+            <p class="feedback-reasoning"><strong>Reasoning:</strong> Coalescing concurrent misses turns 5,000 source queries into one refresh. Briefly serving the previous value keeps callers moving while that refresh finishes.</p>
+            <p class="feedback-boundary"><strong>Boundary:</strong> Caching can protect the database during normal hits yet overload it at expiry. Expiry jitter, early refresh, and request coalescing must be explicit parts of the design.</p>
+          </div>
         </article>
 
         <article class="question" id="q17-card" data-correct="b" data-section="production">
           <fieldset>
-            <legend>17. Ten application replicas exist, but one load-balancer process is deployed on one machine. Its health check only proves the app process has a PID, not that it can serve traffic. What is the strongest correction?</legend>
-            <label><input type="radio" name="q17" value="a" required> Keep the single balancer; backend redundancy automatically protects the entry point.</label>
-            <label><input type="radio" name="q17" value="b"> Make the balancing layer redundant across appropriate failure domains and use readiness checks that represent the backend’s ability to handle real requests.</label>
-            <label><input type="radio" name="q17" value="c"> Replace health checks with permanent sticky sessions to unhealthy nodes.</label>
-            <label><input type="radio" name="q17" value="d"> Store the load balancer’s PID in the application cache.</label>
+            <legend>17. Redundant application servers still have one entry-point failure</legend>
+            <dl class="question-context">
+              <div><dt>Current system</dt><dd>The public hostname points to one self-managed load-balancer virtual machine. That machine distributes requests across ten application servers in two availability zones.</dd></div>
+              <div><dt>Observed evidence</dt><dd>When the load-balancer machine is stopped, every application server remains healthy, but clients cannot reach any of them because the hostname still leads to the stopped machine.</dd></div>
+              <div><dt>Required behavior</dt><dd>Survive the loss of any one virtual machine without a manual DNS change and restore request routing within 60 seconds.</dd></div>
+              <div><dt>Known constraints</dt><dd>The platform offers a managed regional load-balancing service with multiple internal instances and health-aware routing. Alternatively, a self-managed pair would need a health-aware public failover mechanism.</dd></div>
+            </dl>
+            <p class="question-ask"><strong>Decision:</strong> What does “the load balancer also needs redundancy” mean in this exact system?</p>
+            <label><input type="radio" name="q17" value="a" required> Keep the one entry machine; ten healthy backends automatically make its public address reachable after it stops.</label>
+            <label><input type="radio" name="q17" value="b"> Use the managed multi-instance balancing entry, or an equivalent pair with automatic public failover, so losing one balancing instance does not remove the only path to the backends.</label>
+            <label><input type="radio" name="q17" value="c"> Start a second load-balancer machine but keep the hostname permanently pointing only to the first and configure no failover.</label>
+            <label><input type="radio" name="q17" value="d"> Add twenty more application servers behind the same single load-balancer machine.</label>
           </fieldset>
-          <p class="feedback" data-explanation="Redundant backends do not help if the only entry point fails. The balancing layer needs its own availability design. Backend probes must also approximate service readiness; a process that is alive but cannot serve should not keep receiving traffic."></p>
+          <div class="feedback" hidden>
+            <p class="feedback-verdict"></p>
+            <p class="feedback-facts"><strong>Given facts:</strong> Every client must pass through one load-balancer machine, its failure makes all healthy backends unreachable, and automatic recovery is required.</p>
+            <p class="feedback-reasoning"><strong>Reasoning:</strong> Redundancy must cover the entry path itself. Clients need a healthy balancing instance to be selected automatically; merely creating a second hidden instance does not make it reachable.</p>
+            <p class="feedback-boundary"><strong>Boundary:</strong> Backend redundancy protects against backend failure. Balancer redundancy protects the route to those backends. Each layer must avoid becoming the next single point of failure.</p>
+          </div>
         </article>
 
         <article class="question" id="q18-card" data-correct="c" data-section="production">
           <fieldset>
-            <legend>18. The API still enqueues jobs in 30 ms, but queue age has grown from 10 seconds to two hours because producers are faster than consumers. Which status report is accurate?</legend>
-            <label><input type="radio" name="q18" value="a" required> The system is healthy because enqueue latency is low; completion time no longer matters.</label>
-            <label><input type="radio" name="q18" value="b"> Add more producers so the queue drains faster.</label>
-            <label><input type="radio" name="q18" value="c"> Intake remains available, but business completion latency is degrading; scale/fix consumers, monitor oldest-message age, and apply backpressure or admission limits if needed.</label>
-            <label><input type="radio" name="q18" value="d"> Convert every job into one infinite batch so the backlog counter disappears.</label>
+            <legend>18. Fast queue intake hides slow business completion</legend>
+            <dl class="question-context">
+              <div><dt>Current system</dt><dd>API producers durably enqueue 500 image jobs per second in about 30 milliseconds. Consumers collectively finish only 400 jobs per second.</dd></div>
+              <div><dt>Observed evidence</dt><dd>The oldest pending job has grown from 10 seconds old to two hours old. The difference of 100 jobs per second has accumulated roughly 720,000 pending jobs in two hours.</dd></div>
+              <div><dt>Required behavior</dt><dd>Continue accepting jobs only while 95% can finish within five minutes. Accepted jobs must not be silently discarded.</dd></div>
+              <div><dt>Known constraints</dt><dd>Consumer capacity can be increased. Producers can receive a temporary “try later” response if the system cannot honor the completion target.</dd></div>
+            </dl>
+            <p class="question-ask"><strong>Decision:</strong> Which operational conclusion follows from the written rates and end-to-end requirement?</p>
+            <label><input type="radio" name="q18" value="a" required> The service is healthy because enqueueing takes 30 milliseconds; job completion time is unrelated to the requirement.</label>
+            <label><input type="radio" name="q18" value="b"> Add more producers so incoming work grows faster than the existing consumers can finish it.</label>
+            <label><input type="radio" name="q18" value="c"> Intake is responsive but the business target is failing; increase or repair consumer throughput and apply backpressure or admission limits until completion age recovers.</label>
+            <label><input type="radio" name="q18" value="d"> Delete old pending jobs to make the age graph look healthy even though accepted jobs must not be discarded.</label>
           </fieldset>
-          <p class="feedback" data-explanation="A queue absorbs a rate mismatch temporarily; it cannot erase it. Queue depth and oldest-message age expose the growing debt. Availability of the intake endpoint is not availability of the completed business outcome."></p>
+          <div class="feedback" hidden>
+            <p class="feedback-verdict"></p>
+            <p class="feedback-facts"><strong>Given facts:</strong> Work arrives 100 jobs per second faster than it finishes, pending age is two hours, and the required completion time is five minutes.</p>
+            <p class="feedback-reasoning"><strong>Reasoning:</strong> A queue can absorb a temporary burst, but a sustained rate deficit grows forever. Consumer throughput must exceed arrivals long enough to drain the backlog; intake may need limiting while it recovers.</p>
+            <p class="feedback-boundary"><strong>Boundary:</strong> Fast enqueue latency proves only that intake is responsive. It does not prove that the promised business result is available on time.</p>
+          </div>
         </article>
 
         <article class="question" id="q19-card" data-correct="a" data-section="production">
           <fieldset>
-            <legend>19. A marketplace has repeated catalog reads that may be 30 seconds stale, strict inventory writes, receipt emails that may lag, and analytics due the next morning. Which decomposition preserves those different contracts?</legend>
-            <label><input type="radio" name="q19" value="a" required> Cache catalog reads with a freshness policy; commit inventory to its owning, replicated data path with the required consistency; enqueue email only after durable state; run analytics as batch work.</label>
-            <label><input type="radio" name="q19" value="b"> Treat cached inventory as authoritative, then reconcile overselling in the nightly report.</label>
-            <label><input type="radio" name="q19" value="c"> Send email before the order is durable and call the order complete when the queue accepts it.</label>
-            <label><input type="radio" name="q19" value="d"> Execute the full analytics scan synchronously inside each inventory write so every component has the same latency target.</label>
+            <legend>19. One checkout flow contains four different timing and correctness contracts</legend>
+            <dl class="question-context">
+              <div><dt>Current system</dt><dd>Checkout synchronously reads catalog details, reserves inventory, sends a receipt email, and scans the day’s orders for analytics before returning success.</dd></div>
+              <div><dt>Observed evidence</dt><dd>The response takes 3.8 seconds. Catalog reads repeat heavily, email takes about one second, and the analytics scan grows throughout the day.</dd></div>
+              <div><dt>Required behavior</dt><dd>Confirm checkout within 500 milliseconds only after inventory is durably reserved. Send email within five minutes after that commit. Publish complete analytics by 6:00 AM next day.</dd></div>
+              <div><dt>Known constraints</dt><dd>Catalog data may be 30 seconds stale. Inventory must not oversell and must have a failover copy. Duplicate receipt emails are not allowed.</dd></div>
+            </dl>
+            <p class="question-ask"><strong>Decision:</strong> Which decomposition respects every stated contract rather than forcing all work onto one request path?</p>
+            <label><input type="radio" name="q19" value="a" required> Cache catalog reads for at most 30 seconds; synchronously commit inventory to its authoritative replicated database path; after commit enqueue email with order-ID deduplication; run analytics as an overnight batch.</label>
+            <label><input type="radio" name="q19" value="b"> Treat the 30-second catalog cache as the authoritative inventory count and repair overselling in the next morning’s report.</label>
+            <label><input type="radio" name="q19" value="c"> Keep email and the growing analytics scan inside checkout because every task in one feature must share the 500-millisecond deadline.</label>
+            <label><input type="radio" name="q19" value="d"> Send the receipt before reserving inventory and report checkout success as soon as the email message is queued.</label>
           </fieldset>
-          <p class="feedback" data-explanation="The architecture should follow each business contract. Stale catalog reads are a cache fit; inventory correctness belongs on the durable coordinated write path; email is asynchronous after commit; and next-morning analytics is throughput-oriented batch work."></p>
+          <div class="feedback" hidden>
+            <p class="feedback-verdict"></p>
+            <p class="feedback-facts"><strong>Given facts:</strong> Catalog permits bounded staleness, inventory requires a durable synchronous decision and failover copy, email has a five-minute window with no duplicates, and analytics is due next morning.</p>
+            <p class="feedback-reasoning"><strong>Reasoning:</strong> Each mechanism matches one contract: cache repeated tolerant reads, replicate the authoritative inventory path, queue post-commit email with deduplication, and batch deadline-based analytics.</p>
+            <p class="feedback-boundary"><strong>Boundary:</strong> “Asynchronous” must not move the correctness point. Checkout can return only after inventory commits; queue acceptance proves email work was accepted, not that inventory was reserved.</p>
+          </div>
         </article>
 
         <article class="question" id="q20-card" data-correct="d" data-section="production">
           <fieldset>
-            <legend>20. A page takes 800 ms. Tracing shows 520 ms in one unindexed database scan, 180 ms in application work, and 100 ms in network time. Only 2% of requests repeat, app CPU is 25%, and users are near the region. What should the candidate say first?</legend>
-            <label><input type="radio" name="q20" value="a" required> Add a cache because every slow page is a cache problem, even with almost no reuse.</label>
-            <label><input type="radio" name="q20" value="b"> Add a load balancer because it reduces the duration of each database scan.</label>
-            <label><input type="radio" name="q20" value="c"> Move application logic to the edge even though most time is still spent reaching and scanning the central database.</label>
-            <label><input type="radio" name="q20" value="d"> Fix and index the measured query path first, then remeasure; introduce a component only if its mechanism attacks the remaining constraint.</label>
+            <legend>20. Select an optimization from a measured latency trace</legend>
+            <dl class="question-context">
+              <div><dt>Current system</dt><dd>A JSON product-search API takes 800 milliseconds: 520 milliseconds in one database scan, 180 milliseconds in application code, and 100 milliseconds in network travel.</dd></div>
+              <div><dt>Observed evidence</dt><dd>The database scans 20 million rows to return 20 rows because the filter has no index. Only 2% of API requests repeat, and application CPU is 25%.</dd></div>
+              <div><dt>Required behavior</dt><dd>Reduce the API to below 400 milliseconds while returning the latest database state.</dd></div>
+              <div><dt>Known constraints</dt><dd>Static files already use a content delivery network (CDN); the 800 milliseconds is only the API call. Users are near the server region. Code moved to an edge location would still call the same central database.</dd></div>
+            </dl>
+            <p class="question-ask"><strong>Decision:</strong> Which first experiment attacks the largest measured cost and can plausibly meet the target?</p>
+            <label><input type="radio" name="q20" value="a" required> Add another CDN for the already-cached static files; the trace shows those files are outside the 800-millisecond API timing.</label>
+            <label><input type="radio" name="q20" value="b"> Move the 180 milliseconds of application code to the edge while it still waits for the same central 520-millisecond scan.</label>
+            <label><input type="radio" name="q20" value="c"> Add application servers even though application CPU has headroom and every request still performs the same scan.</label>
+            <label><input type="radio" name="q20" value="d"> Add and verify an index that supports the database filter, inspect the new query plan, and remeasure the full request before adding another component.</label>
           </fieldset>
-          <p class="feedback" data-explanation="Component selection follows evidence. Here the dominant cost is a database scan, reuse is too low to justify a general cache, app capacity is idle, and distance is not dominant. Fixing the query targets 520 ms directly; remeasurement tells you what remains."></p>
+          <div class="feedback" hidden>
+            <p class="feedback-verdict"></p>
+            <p class="feedback-facts"><strong>Given facts:</strong> The unindexed scan consumes 520 of 800 milliseconds, the target requires saving more than 400 milliseconds, reuse is only 2%, and distance is not dominant.</p>
+            <p class="feedback-reasoning"><strong>Reasoning:</strong> An appropriate index lets the database locate the 20 matching rows without scanning 20 million. It targets the only measured cost large enough to meet the goal by itself.</p>
+            <p class="feedback-boundary"><strong>Boundary:</strong> A CDN serves reusable content near users. Edge computing runs code near users. Neither removes a central database scan when the request still requires the newest central state.</p>
+          </div>
         </article>
       </section>
 
@@ -671,8 +954,10 @@
         label.classList.remove("answer-key", "wrong-choice");
       });
       const feedback = question.querySelector(".feedback");
+      feedback.className = "feedback";
+      feedback.hidden = true;
       feedback.style.display = "none";
-      feedback.textContent = "";
+      feedback.querySelector(".feedback-verdict").textContent = "";
     }
 
     form.addEventListener("change", updateProgress);
@@ -711,7 +996,10 @@
 
         const feedback = question.querySelector(".feedback");
         feedback.className = `feedback ${isCorrect ? "correct" : "incorrect"}`;
-        feedback.textContent = `${isCorrect ? "Correct." : "Not quite."} ${feedback.dataset.explanation}`;
+        feedback.querySelector(".feedback-verdict").textContent = isCorrect
+          ? "Correct."
+          : "Not quite. The highlighted answer is the one supported by the written facts.";
+        feedback.hidden = false;
         feedback.style.display = "block";
       });
 
@@ -719,7 +1007,9 @@
       const rankedSections = Object.entries(sections)
         .map(([key, section]) => ({ key, ...section, ratio: section.correct / section.total }))
         .sort((a, b) => a.ratio - b.ratio || a.label.localeCompare(b.label));
-      const weakest = rankedSections[0];
+      const lowestRatio = rankedSections[0].ratio;
+      const weakestSections = rankedSections.filter((section) => section.ratio === lowestRatio);
+      const perfectScore = score === questions.length;
       const breakdown = Object.values(sections)
         .map((section) => `<span><strong>${section.label}</strong><br>${section.correct} / ${section.total}</span>`)
         .join("");
@@ -733,13 +1023,19 @@
           : score >= 11
             ? "Useful baseline. You recognize several tools, but the reading should tighten when each one applies and what it does not guarantee."
             : "The diagnostic found the right reading target: build one mechanism-first mental model instead of memorizing six definitions.";
-      const code = `SD-COMP-PRE-${score}OF${questions.length}-${weakest.key.toUpperCase()}`;
+      const focusText = perfectScore
+        ? "No weak section was detected. Use the explanations to rehearse all three reasoning chains rather than treating one section as a deficiency."
+        : `${weakestSections.map((section) => `${section.label} (${section.correct}/${section.total})`).join(" and ")}. Tied sections are shown together instead of selecting one arbitrarily.`;
+      const codeSuffix = perfectScore
+        ? "ALL-SECTIONS"
+        : weakestSections.map((section) => section.key.toUpperCase()).join("-");
+      const code = `SD-COMP-PRE-${score}OF${questions.length}-${codeSuffix}`;
 
       result.innerHTML = `
         <h2>${score} / ${questions.length} correct (${percentage}%)</h2>
         <p>${message}</p>
         <div class="breakdown">${breakdown}</div>
-        <p><strong>First reading focus:</strong> ${weakest.label} (${weakest.correct}/${weakest.total}). Still read the full lesson—the final section depends on composing all six mechanisms.</p>
+        <p><strong>${perfectScore ? "Review status" : "First reading focus"}:</strong> ${focusText}</p>
         <p><strong>Missed-question map:</strong></p>
         ${missedLinks}
         <p>Completion code:</p>
