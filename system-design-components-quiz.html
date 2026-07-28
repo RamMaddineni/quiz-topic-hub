@@ -436,8 +436,8 @@
           <fieldset>
             <legend>1. Uneven traffic across application servers</legend>
             <dl class="question-context">
-              <div><dt>Current system</dt><dd>Six identical, stateless application servers can each handle any request. Static network routing currently sends every request to server A.</dd></div>
-              <div><dt>Observed evidence</dt><dd>Server A stays above 95% CPU and 95% of its requests take 1.8 seconds. Servers B–F stay near 20% CPU and answer in about 120 milliseconds. The database is below 35% utilization.</dd></div>
+              <div><dt>Current system</dt><dd>Six identical application servers keep no user session data locally, so any one can handle any request. Static network routing currently sends every request to server A.</dd></div>
+              <div><dt>Observed evidence</dt><dd>Server A stays above 95% processor utilization and 95% of its requests take 1.8 seconds. Servers B–F stay near 20% processor utilization and answer in about 120 milliseconds. The database is below 35% utilization.</dd></div>
               <div><dt>Required behavior</dt><dd>Use the existing six servers to keep 95% of requests below 300 milliseconds and stop routing to an application server when it fails.</dd></div>
               <div><dt>Known constraints</dt><dd>Requests perform similar work and responses are user-specific, so there is no reusable response to cache.</dd></div>
             </dl>
@@ -445,7 +445,7 @@
             <label><input type="radio" name="q1" value="a" required> Add a database read replica while leaving all application requests routed to server A.</label>
             <label><input type="radio" name="q1" value="b"> Put a load balancer in front of all six servers; have it check which servers can serve requests and distribute new requests only among healthy servers.</label>
             <label><input type="radio" name="q1" value="c"> Put every page request into a message queue and return “accepted” instead of the requested page.</label>
-            <label><input type="radio" name="q1" value="d"> Partition the database by user ID while leaving application routing unchanged.</label>
+            <label><input type="radio" name="q1" value="d"> Partition the database by user identifier while leaving application routing unchanged.</label>
           </fieldset>
           <div class="feedback" hidden>
             <p class="feedback-verdict"></p>
@@ -459,15 +459,15 @@
           <fieldset>
             <legend>2. Repeating the same expensive product read</legend>
             <dl class="question-context">
-              <div><dt>Current system</dt><dd>Every product-page request runs the same read-only database join. For a given product, the computed result is identical for every visitor.</dd></div>
-              <div><dt>Observed evidence</dt><dd>The join takes 650 milliseconds and accounts for most database load. Ninety-two percent of traffic is for the same 100 products; application CPU is only 25%.</dd></div>
+              <div><dt>Current system</dt><dd>Every product-page request runs the same read-only database join, which combines rows from several tables. For a given product, the computed result is identical for every visitor.</dd></div>
+              <div><dt>Observed evidence</dt><dd>The join takes 650 milliseconds and accounts for most database load. Ninety-two percent of traffic is for the same 100 products; application processor utilization is only 25%.</dd></div>
               <div><dt>Required behavior</dt><dd>Return the page within 250 milliseconds. Product data may be stale for at most 30 seconds.</dd></div>
               <div><dt>Known constraints</dt><dd>Products change at most once per hour. The write path can delete or replace a stored result when a product changes.</dd></div>
             </dl>
             <p class="question-ask"><strong>Decision:</strong> Which first change uses the repeated work and the written freshness allowance?</p>
             <label><input type="radio" name="q2" value="a" required> Add more application servers; each one will still wait 650 milliseconds for the same database join.</label>
             <label><input type="radio" name="q2" value="b"> Add a database read replica but continue running the 650-millisecond join for every request.</label>
-            <label><input type="radio" name="q2" value="c"> Cache the computed result by product ID, invalidate it when that product changes, and set an expiry no longer than 30 seconds as a safety bound.</label>
+            <label><input type="radio" name="q2" value="c"> Cache the computed result by product identifier, invalidate it when that product changes, and set an expiry no longer than 30 seconds as a safety bound.</label>
             <label><input type="radio" name="q2" value="d"> Enqueue each page read for a worker and ask the visitor to return later for the result.</label>
           </fieldset>
           <div class="feedback" hidden>
@@ -528,7 +528,7 @@
           <fieldset>
             <legend>5. Slow thumbnail work blocks a fast upload response</legend>
             <dl class="question-context">
-              <div><dt>Current system</dt><dd>The upload API stores an original image and then generates three thumbnails before returning to the client. Thumbnail generation takes 4–20 seconds.</dd></div>
+              <div><dt>Current system</dt><dd>The upload endpoint stores an original image and then generates three thumbnails before returning to the client. Thumbnail generation takes 4–20 seconds.</dd></div>
               <div><dt>Observed evidence</dt><dd>Traffic bursts cause request timeouts. Clients retry timed-out uploads, creating more work while the service is already busy.</dd></div>
               <div><dt>Required behavior</dt><dd>Return within 300 milliseconds only after the original image and the thumbnail job are durably accepted. Show “processing,” and finish 95% of thumbnails within two minutes.</dd></div>
               <div><dt>Known constraints</dt><dd>The thumbnail is not needed in the upload response. More worker instances can be added when pending work grows.</dd></div>
@@ -536,7 +536,7 @@
             <p class="question-ask"><strong>Decision:</strong> Which request flow matches all four written facts?</p>
             <label><input type="radio" name="q5" value="a" required> Return success before storing either the image or the job, then rely on the client to retry anything lost.</label>
             <label><input type="radio" name="q5" value="b"> Store the original, durably enqueue a thumbnail job, return “accepted/processing,” and have independently scalable workers consume the job.</label>
-            <label><input type="radio" name="q5" value="c"> Add more API servers but keep every request open for at least the 4–20 seconds of thumbnail work.</label>
+            <label><input type="radio" name="q5" value="c"> Add more upload-endpoint servers but keep every request open for at least the 4–20 seconds of thumbnail work.</label>
             <label><input type="radio" name="q5" value="d"> Collect uploads for one nightly batch even though 95% must finish within two minutes.</label>
           </fieldset>
           <div class="feedback" hidden>
@@ -585,15 +585,15 @@
             <legend>7. A load balancer cannot manufacture backend capacity</legend>
             <dl class="question-context">
               <div><dt>Current system</dt><dd>A load balancer already distributes equal-cost requests evenly across ten identical application servers.</dd></div>
-              <div><dt>Observed evidence</dt><dd>Every server remains above 95% CPU for ten minutes, each server’s request queue grows, and traffic is within 3% of an even split. The database is below 35% utilization.</dd></div>
+              <div><dt>Observed evidence</dt><dd>Every server remains above 95% processor utilization for ten minutes, each server’s request queue grows, and traffic is within 3% of an even split. The database is below 35% utilization.</dd></div>
               <div><dt>Required behavior</dt><dd>Handle the current arrival rate without a growing queue and keep 95% of responses below 400 milliseconds.</dd></div>
               <div><dt>Known constraints</dt><dd>Responses are personalized and rarely repeat. There is no idle application server to which the balancer could redirect more work.</dd></div>
             </dl>
             <p class="question-ask"><strong>Decision:</strong> Which next action directly addresses the remaining bottleneck?</p>
-            <label><input type="radio" name="q7" value="a" required> Add application capacity or reduce the CPU work per request, then confirm that total service capacity exceeds the arrival rate.</label>
-            <label><input type="radio" name="q7" value="b"> Change from round-robin to random routing while keeping the same ten saturated servers and the same work.</label>
+            <label><input type="radio" name="q7" value="a" required> Add application capacity or reduce the processor work per request, then confirm that total service capacity exceeds the arrival rate.</label>
+            <label><input type="radio" name="q7" value="b"> Change from round-robin routing (cycle through servers in order) to random routing while keeping the same ten saturated servers and the same work.</label>
             <label><input type="radio" name="q7" value="c"> Add a second load-balancer instance but make no change to the saturated application fleet.</label>
-            <label><input type="radio" name="q7" value="d"> Partition the lightly used database even though application CPU and queues contain the measured delay.</label>
+            <label><input type="radio" name="q7" value="d"> Partition the lightly used database even though application processor utilization and queues contain the measured delay.</label>
           </fieldset>
           <div class="feedback" hidden>
             <p class="feedback-verdict"></p>
@@ -656,13 +656,13 @@
               <div><dt>Current system</dt><dd>Customer records are split into eight partitions. Each partition exists on exactly one machine; there are no live replicas or other copies that can serve requests.</dd></div>
               <div><dt>Observed evidence</dt><dd>Machine 3 has failed. It was the sole owner of partition 3. Machines 1, 2, and 4–8 remain healthy.</dd></div>
               <div><dt>Required behavior</dt><dd>Continue serving every record that is still reachable, and report unavailable records honestly.</dd></div>
-              <div><dt>Known constraints</dt><dd>The request router knows which partition owns each customer ID and does not require a query to contact every partition.</dd></div>
+              <div><dt>Known constraints</dt><dd>The request router knows which partition owns each customer identifier and does not require a query to contact every partition.</dd></div>
             </dl>
             <p class="question-ask"><strong>Decision:</strong> What can this system serve before machine 3 is recovered?</p>
             <label><input type="radio" name="q10" value="a" required> Every customer, because eight partitions mean eight copies of every record.</label>
             <label><input type="radio" name="q10" value="b"> No customer, because one failed partition always forces all independent partitions to stop.</label>
             <label><input type="radio" name="q10" value="c"> Customers owned by the seven healthy partitions remain reachable; partition 3’s customers are unavailable because partitioning did not create another copy.</label>
-            <label><input type="radio" name="q10" value="d"> Partition 3’s customers remain reachable because the application load balancer can reconstruct missing records from incoming requests.</label>
+            <label><input type="radio" name="q10" value="d"> Route partition 3’s customer requests to one of the healthy partitions even though those machines do not store partition 3’s records.</label>
           </fieldset>
           <div class="feedback" hidden>
             <p class="feedback-verdict"></p>
@@ -684,13 +684,13 @@
             <p class="question-ask"><strong>Decision:</strong> Which routing rule provides the stated “see my own write” behavior without strengthening every read?</p>
             <label><input type="radio" name="q11" value="a" required> After a user writes, route that user’s follow-up reads to the primary—or to a replica confirmed to have copied that write—until the replicas catch up.</label>
             <label><input type="radio" name="q11" value="b"> Add more asynchronous replicas and keep choosing one randomly; a larger set guarantees the selected copy is current.</label>
-            <label><input type="radio" name="q11" value="c"> Keep random replica routing and rename the stale value so the client cannot recognize it.</label>
-            <label><input type="radio" name="q11" value="d"> Cache the old profile for ten minutes so every follow-up read consistently returns the same stale name.</label>
+            <label><input type="radio" name="q11" value="c"> Prefer the replica with the lowest average lag but do not verify whether that replica copied this user’s specific write.</label>
+            <label><input type="radio" name="q11" value="d"> Keep random replica routing and have the client retry until the value changes, with no bound on attempts or completion time.</label>
           </fieldset>
           <div class="feedback" hidden>
             <p class="feedback-verdict"></p>
             <p class="feedback-facts"><strong>Given facts:</strong> The primary acknowledges before replicas finish copying, random routing can choose a lagging copy, and only the writer’s next read needs to observe the write.</p>
-            <p class="feedback-reasoning"><strong>Reasoning:</strong> The read must go to a copy known to contain that write. Temporarily routing the writer to the primary, or checking a replication position, establishes that fact.</p>
+            <p class="feedback-reasoning"><strong>Reasoning:</strong> The read must go to a copy known to contain that write. Temporarily routing the writer to the primary, or checking the write’s recorded sequence number against the replica’s copied sequence number, establishes that fact.</p>
             <p class="feedback-boundary"><strong>Boundary:</strong> Replication adds read capacity, but asynchronous copies do not by themselves guarantee the newest value. Stronger read rules add routing, waiting, or coordination.</p>
           </div>
         </article>
@@ -728,10 +728,10 @@
               <div><dt>Known constraints</dt><dd>No user is waiting interactively for an individual record, and all 1,000 records use the same operation.</dd></div>
             </dl>
             <p class="question-ask"><strong>Decision:</strong> Why does grouping records improve the stated goal even though an individual record may finish later?</p>
-            <label><input type="radio" name="q13" value="a" required> Batching removes the one millisecond of useful work from every record, so no record ever waits.</label>
+            <label><input type="radio" name="q13" value="a" required> Run 1,000 single-record imports concurrently while each still pays its own two-second setup; concurrency removes the repeated setup cost.</label>
             <label><input type="radio" name="q13" value="b"> One group shares the two-second setup cost, increasing total records per minute; an individual record may wait for the group’s start time and earlier records.</label>
-            <label><input type="radio" name="q13" value="c"> Throughput and individual response time are the same measurement, so improving one always improves the other equally.</label>
-            <label><input type="radio" name="q13" value="d"> A batch makes each record immediately visible before the transaction begins.</label>
+            <label><input type="radio" name="q13" value="c"> Divide the batch’s three-second completion time by 1,000 and conclude that every record, including its waiting time, has a three-millisecond latency.</label>
+            <label><input type="radio" name="q13" value="d"> Exclude the time spent waiting for the batch to begin from latency, because latency starts only after processing starts.</label>
           </fieldset>
           <div class="feedback" hidden>
             <p class="feedback-verdict"></p>
@@ -769,7 +769,7 @@
           <div class="feedback" hidden>
             <p class="feedback-verdict"></p>
             <p class="feedback-facts"><strong>Given facts:</strong> Country creates severe skew, account-scoped queries are the real locality need, and account IDs distribute traffic well.</p>
-            <p class="feedback-reasoning"><strong>Reasoning:</strong> A partition key decides which owner receives each write. Hashing the account ID creates many routing values, allowing accounts—and therefore writes—to spread across owners.</p>
+            <p class="feedback-reasoning"><strong>Reasoning:</strong> A partition key decides which owner receives each write. Hashing the account identifier creates many routing values, allowing accounts—and therefore writes—to spread across owners.</p>
             <p class="feedback-boundary"><strong>Boundary:</strong> Adding machines changes nothing until ownership can move to them. Repartitioning also requires a migration and routing plan while old and new placements coexist.</p>
           </div>
         </article>
@@ -778,7 +778,7 @@
           <fieldset>
             <legend>15. One money transfer crosses two independent partitions</legend>
             <dl class="question-context">
-              <div><dt>Current system</dt><dd>Accounts are partitioned by account ID. A database transaction is atomic—both changes happen or neither happens—only when all changes are on one partition.</dd></div>
+              <div><dt>Current system</dt><dd>Accounts are partitioned by account identifier. A database transaction is atomic—both changes happen or neither happens—only when all changes are on one partition.</dd></div>
               <div><dt>Observed evidence</dt><dd>A transfer must debit account 10 on partition A and credit account 92 on partition B. A crash can occur after either partition writes.</dd></div>
               <div><dt>Required behavior</dt><dd>The transfer must commit both the debit and credit or commit neither. Reporting success while only one side is durable is forbidden.</dd></div>
               <div><dt>Known constraints</dt><dd>Transfer pairs are arbitrary, so a partition key cannot place every possible pair together. The business will accept extra latency for correct transfers.</dd></div>
@@ -824,9 +824,9 @@
           <fieldset>
             <legend>17. Redundant application servers still have one entry-point failure</legend>
             <dl class="question-context">
-              <div><dt>Current system</dt><dd>The public hostname points to one self-managed load-balancer virtual machine. That machine distributes requests across ten application servers in two availability zones.</dd></div>
+              <div><dt>Current system</dt><dd>The public hostname points to one self-managed load-balancer virtual machine. That machine distributes requests across ten application servers in two availability zones—separate data-center groups intended to have independent power and network failure boundaries.</dd></div>
               <div><dt>Observed evidence</dt><dd>When the load-balancer machine is stopped, every application server remains healthy, but clients cannot reach any of them because the hostname still leads to the stopped machine.</dd></div>
-              <div><dt>Required behavior</dt><dd>Survive the loss of any one virtual machine without a manual DNS change and restore request routing within 60 seconds.</dd></div>
+              <div><dt>Required behavior</dt><dd>Survive the loss of any one virtual machine without a manual public-hostname change and restore request routing within 60 seconds.</dd></div>
               <div><dt>Known constraints</dt><dd>The platform offers a managed regional load-balancing service with multiple internal instances and health-aware routing. Alternatively, a self-managed pair would need a health-aware public failover mechanism.</dd></div>
             </dl>
             <p class="question-ask"><strong>Decision:</strong> What does “the load balancer also needs redundancy” mean in this exact system?</p>
@@ -847,7 +847,7 @@
           <fieldset>
             <legend>18. Fast queue intake hides slow business completion</legend>
             <dl class="question-context">
-              <div><dt>Current system</dt><dd>API producers durably enqueue 500 image jobs per second in about 30 milliseconds. Consumers collectively finish only 400 jobs per second.</dd></div>
+              <div><dt>Current system</dt><dd>Request handlers durably enqueue 500 image jobs per second in about 30 milliseconds. Consumers collectively finish only 400 jobs per second.</dd></div>
               <div><dt>Observed evidence</dt><dd>The oldest pending job has grown from 10 seconds old to two hours old. The difference of 100 jobs per second has accumulated roughly 720,000 pending jobs in two hours.</dd></div>
               <div><dt>Required behavior</dt><dd>Continue accepting jobs only while 95% can finish within five minutes. Accepted jobs must not be silently discarded.</dd></div>
               <div><dt>Known constraints</dt><dd>Consumer capacity can be increased. Producers can receive a temporary “try later” response if the system cannot honor the completion target.</dd></div>
@@ -876,7 +876,7 @@
               <div><dt>Known constraints</dt><dd>Catalog data may be 30 seconds stale. Inventory must not oversell and must have a failover copy. Duplicate receipt emails are not allowed.</dd></div>
             </dl>
             <p class="question-ask"><strong>Decision:</strong> Which decomposition respects every stated contract rather than forcing all work onto one request path?</p>
-            <label><input type="radio" name="q19" value="a" required> Cache catalog reads for at most 30 seconds; synchronously commit inventory to its authoritative replicated database path; after commit enqueue email with order-ID deduplication; run analytics as an overnight batch.</label>
+            <label><input type="radio" name="q19" value="a" required> Cache catalog reads for at most 30 seconds; synchronously commit inventory to its authoritative replicated database path; after commit enqueue email with order-identifier deduplication; run analytics as an overnight batch.</label>
             <label><input type="radio" name="q19" value="b"> Treat the 30-second catalog cache as the authoritative inventory count and repair overselling in the next morning’s report.</label>
             <label><input type="radio" name="q19" value="c"> Keep email and the growing analytics scan inside checkout because every task in one feature must share the 500-millisecond deadline.</label>
             <label><input type="radio" name="q19" value="d"> Send the receipt before reserving inventory and report checkout success as soon as the email message is queued.</label>
@@ -893,15 +893,15 @@
           <fieldset>
             <legend>20. Select an optimization from a measured latency trace</legend>
             <dl class="question-context">
-              <div><dt>Current system</dt><dd>A JSON product-search API takes 800 milliseconds: 520 milliseconds in one database scan, 180 milliseconds in application code, and 100 milliseconds in network travel.</dd></div>
-              <div><dt>Observed evidence</dt><dd>The database scans 20 million rows to return 20 rows because the filter has no index. Only 2% of API requests repeat, and application CPU is 25%.</dd></div>
-              <div><dt>Required behavior</dt><dd>Reduce the API to below 400 milliseconds while returning the latest database state.</dd></div>
-              <div><dt>Known constraints</dt><dd>Static files already use a content delivery network (CDN); the 800 milliseconds is only the API call. Users are near the server region. Code moved to an edge location would still call the same central database.</dd></div>
+              <div><dt>Current system</dt><dd>A product-search data endpoint takes 800 milliseconds: 520 milliseconds in one database scan, 180 milliseconds in application code, and 100 milliseconds in network travel.</dd></div>
+              <div><dt>Observed evidence</dt><dd>The database scans 20 million rows to return 20 rows because the filter has no index. Only 2% of endpoint requests repeat, and application processor utilization is 25%.</dd></div>
+              <div><dt>Required behavior</dt><dd>Reduce the data-endpoint response to below 400 milliseconds while returning the latest database state.</dd></div>
+              <div><dt>Known constraints</dt><dd>Static files already use a content delivery network (CDN); the 800 milliseconds is only the data-endpoint call. Users are near the server region. Code moved to an edge location would still call the same central database.</dd></div>
             </dl>
             <p class="question-ask"><strong>Decision:</strong> Which first experiment attacks the largest measured cost and can plausibly meet the target?</p>
-            <label><input type="radio" name="q20" value="a" required> Add another CDN for the already-cached static files; the trace shows those files are outside the 800-millisecond API timing.</label>
+            <label><input type="radio" name="q20" value="a" required> Add another CDN for the already-cached static files; the trace shows those files are outside the 800-millisecond data-endpoint timing.</label>
             <label><input type="radio" name="q20" value="b"> Move the 180 milliseconds of application code to the edge while it still waits for the same central 520-millisecond scan.</label>
-            <label><input type="radio" name="q20" value="c"> Add application servers even though application CPU has headroom and every request still performs the same scan.</label>
+            <label><input type="radio" name="q20" value="c"> Add application servers even though application processor capacity has headroom and every request still performs the same scan.</label>
             <label><input type="radio" name="q20" value="d"> Add and verify an index that supports the database filter, inspect the new query plan, and remeasure the full request before adding another component.</label>
           </fieldset>
           <div class="feedback" hidden>
