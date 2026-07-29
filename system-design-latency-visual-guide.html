@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A beginner visual guide to end-to-end latency, request traces, percentiles, tail latency, CDNs, database indexes, caching, and edge computing.">
+  <title>Latency Visual Guide | Learning Library</title>
+  <link rel="stylesheet" href="assets/nfr-visual-guides.css">
+</head>
+<body>
+  <div class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="index.html">Learning Library</a>
+      <span class="topbar-note">System Design · Learn</span>
+    </div>
+  </div>
+
+  <main class="shell">
+    <header class="hero">
+      <a class="back-link" href="topic.html?topic=latency">← Latency</a>
+      <p class="eyebrow">Beginner visual guide</p>
+      <h1>Latency is the clock around one request.</h1>
+      <p class="lead">From the client’s point of view, response time starts when it sends the request and stops when the response arrives. The only reliable optimization method is to split that clock into measured parts, fix the dominant part, and measure again.</p>
+    </header>
+
+    <section class="mental-model" aria-label="Latency mental model">
+      <article>
+        <strong>1 · Trace one request</strong>
+        <p>Separate network travel, waiting, application work, database work, and response creation.</p>
+      </article>
+      <article>
+        <strong>2 · Inspect the distribution</strong>
+        <p>Use p50, p95, and p99 rather than allowing an average to hide slow requests.</p>
+      </article>
+      <article>
+        <strong>3 · Match mechanism to time</strong>
+        <p>A Content Delivery Network, index, cache, or edge function attacks a different segment.</p>
+      </article>
+    </section>
+
+    <section class="diagram-section" aria-labelledby="trace-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="trace-title">Where did the 800 ms go?</h2>
+          <p>This is a measured example, not a universal breakdown. Width represents elapsed time. Network latency includes the request and response travelling between the client and the application region.</p>
+        </div>
+        <span class="diagram-number">VISUAL 1 OF 3</span>
+      </div>
+      <figure>
+        <div class="latency-bar" role="img" aria-label="An 800 millisecond request consists of 180 milliseconds of network travel, 120 milliseconds waiting in a server queue, 40 milliseconds of application computation, 420 milliseconds of database work, and 40 milliseconds encoding the response">
+          <div class="latency-segment segment-network" style="flex: 180">
+            <strong>180 ms</strong>
+            <small>network round trip</small>
+          </div>
+          <div class="latency-segment segment-queue" style="flex: 120">
+            <strong>120 ms</strong>
+            <small>waiting in queue</small>
+          </div>
+          <div class="latency-segment segment-app" style="flex: 40">
+            <strong>40 ms</strong>
+            <small>app logic</small>
+          </div>
+          <div class="latency-segment segment-db" style="flex: 420">
+            <strong>420 ms</strong>
+            <small>database query</small>
+          </div>
+          <div class="latency-segment segment-encode" style="flex: 40">
+            <strong>40 ms</strong>
+            <small>encode response</small>
+          </div>
+        </div>
+        <p class="trace-total">Total client-observed latency: <strong>800 ms</strong></p>
+
+        <div class="explain-grid">
+          <article class="explain-card">
+            <h3>What the trace says</h3>
+            <p>The database is the largest measured segment at 420 ms. Investigate whether it scans too many rows, waits on a lock, performs many round trips, or calls another dependency. “The page is slow” is not enough evidence to choose a component.</p>
+          </article>
+          <article class="explain-card">
+            <h3>What it does not yet say</h3>
+            <p>The trace does not prove that an index is the fix. An index helps a query that spends time finding rows through an avoidable scan. It does not remove lock waiting, a slow downstream service, or network distance.</p>
+          </article>
+        </div>
+        <figcaption><strong>The causal rule:</strong> an optimization helps only if it removes or shortens a measured segment. Even eliminating all 40 ms of application computation would leave this request at roughly 760 ms.</figcaption>
+      </figure>
+    </section>
+
+    <section class="diagram-section" aria-labelledby="percentile-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="percentile-title">Percentiles show who is waiting</h2>
+          <p>Sort 100 request times from fastest to slowest. A percentile is a threshold in that ordered list, not the arithmetic average.</p>
+        </div>
+        <span class="diagram-number">VISUAL 2 OF 3</span>
+      </div>
+      <figure>
+        <div class="percentile-track" role="img" aria-label="Among 100 sorted requests, request 50 completes by 120 milliseconds, request 95 by 300 milliseconds, request 99 by 800 milliseconds, and the slowest request by 5 seconds">
+          <div class="percentile-block p50">
+            <strong>Requests 1–50</strong>
+            <small>p50 ≤ 120 ms</small>
+          </div>
+          <div class="percentile-block p95">
+            <strong>51–95</strong>
+            <small>p95 ≤ 300 ms</small>
+          </div>
+          <div class="percentile-block p99">
+            <strong>96–99</strong>
+            <small>p99 ≤ 800 ms</small>
+          </div>
+          <div class="percentile-block p100">
+            <strong>#100</strong>
+            <small>worst = 5 s</small>
+          </div>
+        </div>
+        <div class="percentile-labels" aria-label="Percentile interpretations">
+          <span>p50 = the fastest 50% finish within 120 ms</span>
+          <span>p95 = the fastest 95% finish within 300 ms</span>
+          <span>p99 = the fastest 99% finish within 800 ms</span>
+        </div>
+        <figcaption><strong>Tail latency</strong> is the slow end of the distribution, commonly observed through p95, p99, or p99.9. If the service handles one million requests a day, even the slowest 1% represents about 10,000 requests. A good median can therefore coexist with many visibly poor experiences.</figcaption>
+      </figure>
+      <div class="explain-grid">
+        <article class="explain-card">
+          <h3>Why averages can mislead</h3>
+          <p>A few extremely slow requests may be diluted by many fast requests. Percentiles tell you the latency threshold experienced by a chosen fraction of traffic and make a tail target testable.</p>
+        </article>
+        <article class="explain-card">
+          <h3>Why p99 is harder to improve</h3>
+          <p>The slowest requests can come from rare garbage collection pauses, overloaded servers, retries, lock contention, cache misses, or dependency failures. You must separate those causes rather than optimize the already-fast path.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="diagram-section" aria-labelledby="mechanism-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="mechanism-title">CDN, database index, cache, or edge computing?</h2>
+          <p>A <strong>Content Delivery Network (CDN)</strong> stores response bytes near users. <strong>Edge computing</strong> runs code near users. Neither automatically shortens a database call in the main application region.</p>
+        </div>
+        <span class="diagram-number">VISUAL 3 OF 3</span>
+      </div>
+      <figure>
+        <div class="mechanism-grid">
+          <article class="mechanism-card">
+            <div class="signal">Evidence: static file or cacheable response travels to a distant origin</div>
+            <div>
+              <strong>Use a CDN</strong>
+              <p>On a cache hit, a nearby CDN location returns stored HTML, CSS, JavaScript, an image, or a cacheable API response. The origin application and its database are skipped for that request.</p>
+            </div>
+          </article>
+          <article class="mechanism-card">
+            <div class="signal">Evidence: query plan scans many rows to find a small result</div>
+            <div>
+              <strong>Use a database index</strong>
+              <p>The database follows an ordered lookup structure to reach matching rows with less work. The index costs storage and makes writes update another structure.</p>
+            </div>
+          </article>
+          <article class="mechanism-card">
+            <div class="signal">Evidence: many requests repeat the same expensive read</div>
+            <div>
+              <strong>Use an application cache</strong>
+              <p>The application looks up a key such as <code>product:42</code>. A hit returns a copied value without querying the database; invalidation and stale values become new concerns.</p>
+            </div>
+          </article>
+          <article class="mechanism-card">
+            <div class="signal">Evidence: code can decide using request data or data already present at the edge</div>
+            <div>
+              <strong>Use edge computing</strong>
+              <p>A nearby edge function can validate a token with a local public key, redirect by country, transform a request, or compute from edge-held data. It avoids a trip to the origin for that logic.</p>
+            </div>
+          </article>
+          <article class="mechanism-card">
+            <div class="signal">Evidence: edge code must synchronously read the only database in a distant region</div>
+            <div>
+              <strong>Edge alone does not solve it</strong>
+              <p>The edge function still waits for the long edge-to-database round trip. Move or replicate the required data closer, redesign the operation to avoid the synchronous read, or keep the compute near the database.</p>
+            </div>
+          </article>
+          <article class="mechanism-card">
+            <div class="signal">Evidence: requests wait in queues because some servers are busy while others are idle</div>
+            <div>
+              <strong>Improve load distribution</strong>
+              <p>A load balancer can route work to idle healthy servers. If every server is saturated, balancing cannot create capacity; reduce work or add resources.</p>
+            </div>
+          </article>
+        </div>
+        <figcaption><strong>Decision rule:</strong> measure the request path, name the dominant delay and its cause, choose a mechanism that removes that cause, and compare the same percentile before and after. Never select CDN, cache, index, or edge merely because the total is 800 ms.</figcaption>
+      </figure>
+    </section>
+
+    <section class="next-step">
+      <h2>Next: measure how much work finishes</h2>
+      <p>Latency follows one request. Throughput counts completed requests or jobs per unit of time—and exposes the bottleneck that limits the whole flow.</p>
+      <a class="button" href="topic.html?topic=throughput">Continue to Throughput →</a>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell">Learning Library · System Design · Latency</div>
+  </footer>
+</body>
+</html>
