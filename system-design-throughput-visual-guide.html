@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A beginner visual guide to throughput, bottlenecks, concurrency, saturation, replication, sharding, message queues, and consumers.">
+  <title>Throughput Visual Guide | Learning Library</title>
+  <link rel="stylesheet" href="assets/nfr-visual-guides.css">
+</head>
+<body>
+  <div class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="index.html">Learning Library</a>
+      <span class="topbar-note">System Design · Learn</span>
+    </div>
+  </div>
+
+  <main class="shell">
+    <header class="hero">
+      <a class="back-link" href="topic.html?topic=throughput">← Throughput</a>
+      <p class="eyebrow">Beginner visual guide</p>
+      <h1>Throughput counts completed work, not admitted work.</h1>
+      <p class="lead">Define the operation—requests served, payments committed, messages processed—then measure how many complete per second or per minute. In a pipeline, the slowest required stage limits sustainable throughput.</p>
+    </header>
+
+    <section class="mental-model" aria-label="Throughput mental model">
+      <article>
+        <strong>1 · Name the unit</strong>
+        <p>“120 successful database writes per second” is meaningful; “high throughput” is not.</p>
+      </article>
+      <article>
+        <strong>2 · Find the bottleneck</strong>
+        <p>Compare arrival rate, completion rate, queue growth, and utilization at every stage.</p>
+      </article>
+      <article>
+        <strong>3 · Scale the owner</strong>
+        <p>Replicas scale eligible reads; shards divide writes; consumers scale independent jobs.</p>
+      </article>
+    </section>
+
+    <section class="diagram-section" aria-labelledby="bottleneck-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="bottleneck-title">One slow stage limits the whole pipeline</h2>
+          <p>This service receives 250 requests per second. Every successful request must pass through ingress, application logic, and the database.</p>
+        </div>
+        <span class="diagram-number">VISUAL 1 OF 3</span>
+      </div>
+      <figure>
+        <div class="pipeline" role="img" aria-label="A pipeline receives 250 requests per second; ingress can handle 500, the application 300, and the database only 120, so the database is the bottleneck and only 120 requests per second complete">
+          <div class="stage">
+            <strong>Arrivals</strong>
+            <span class="capacity">250 / s</span>
+            <small>requests entering</small>
+          </div>
+          <div class="flow-arrow" aria-hidden="true">→</div>
+          <div class="stage">
+            <strong>Ingress</strong>
+            <span class="capacity">500 / s</span>
+            <small>routing capacity</small>
+          </div>
+          <div class="flow-arrow" aria-hidden="true">→</div>
+          <div class="stage">
+            <strong>Application</strong>
+            <span class="capacity">300 / s</span>
+            <small>compute capacity</small>
+          </div>
+          <div class="flow-arrow" aria-hidden="true">→</div>
+          <div class="stage bottleneck">
+            <strong>Database</strong>
+            <span class="capacity">120 / s</span>
+            <small>sustainable write capacity</small>
+          </div>
+        </div>
+        <div class="queue-growth"><strong>Completion rate = 120 / s.</strong> If 250 / s continue arriving, unfinished work grows by roughly 130 / s until requests time out, are rejected, or the queue fills.</div>
+        <figcaption><strong>Why the minimum wins:</strong> work is complete only after every required stage finishes. Making ingress twice as fast changes nothing while the database remains at 120 writes per second. Optimize or divide the database work, reduce arrival rate, or accept a growing backlog.</figcaption>
+      </figure>
+      <div class="explain-grid">
+        <article class="explain-card">
+          <h3>Throughput versus latency</h3>
+          <p>Latency is the time for one operation. Throughput is the number completed per unit time. They influence each other, but are not opposites: several operations can run concurrently, so a system can complete many slow operations each second.</p>
+        </article>
+        <article class="explain-card">
+          <h3>Accepted is not completed</h3>
+          <p>If an API puts 1,000 jobs per second into a queue but workers finish only 600, ingestion throughput is 1,000 per second while business completion throughput is 600. The 400-per-second difference becomes backlog.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="diagram-section" aria-labelledby="concurrency-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="concurrency-title">Concurrency helps—until a resource saturates</h2>
+          <p><strong>Concurrency</strong> is the number of operations in progress at the same time. It can keep a system busy while some operations wait for network or disk input/output.</p>
+        </div>
+        <span class="diagram-number">VISUAL 2 OF 3</span>
+      </div>
+      <figure>
+        <div class="saturation-board" role="img" aria-label="At low concurrency resources are idle; useful concurrency raises throughput; beyond saturation throughput flattens while latency rises">
+          <article class="saturation-card">
+            <div class="saturation-bars">
+              <span class="throughput-bar" style="height: 35%"></span>
+              <span class="latency-rise" style="height: 22%"></span>
+            </div>
+            <h3>Too little concurrency</h3>
+            <p>CPU or database connections sit idle while a few requests wait on input/output. More in-flight work can use the idle capacity.</p>
+          </article>
+          <article class="saturation-card">
+            <div class="saturation-bars">
+              <span class="throughput-bar" style="height: 82%"></span>
+              <span class="latency-rise" style="height: 38%"></span>
+            </div>
+            <h3>Useful concurrency</h3>
+            <p>More operations overlap waiting time. Completion rate rises while queues remain controlled.</p>
+          </article>
+          <article class="saturation-card">
+            <div class="saturation-bars">
+              <span class="throughput-bar" style="height: 87%"></span>
+              <span class="latency-rise" style="height: 100%"></span>
+            </div>
+            <h3>Past saturation</h3>
+            <p>CPU, disk, a lock, or a connection pool is full. Extra work waits; latency rises while throughput barely moves.</p>
+          </article>
+        </div>
+
+        <div class="formula" role="img" aria-label="Approximate in-flight work equals throughput multiplied by average time in the system">
+          In-flight work ≈ throughput × average time in the system
+        </div>
+        <p class="trace-total">Example: <strong>100 requests/s × 0.2 s = about 20 requests in flight.</strong></p>
+        <figcaption>This relationship is a practical form of <strong>Little’s Law</strong> for a stable system. It explains why decreasing per-request time can raise throughput with the same concurrency, and why unlimited concurrency is not capacity: after saturation it mostly increases waiting and memory use.</figcaption>
+      </figure>
+      <p class="decision-rule"><strong>Decision rule:</strong> increase concurrency while completion throughput rises and latency remains within its target. Stop when the constrained resource saturates; then reduce work, remove contention, or add/divide capacity at that resource.</p>
+    </section>
+
+    <section class="diagram-section" aria-labelledby="scale-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="scale-title">Three flows, three ways to scale</h2>
+          <p>Choose from the ownership of the expensive work. These mechanisms increase capacity only when the work can be distributed safely.</p>
+        </div>
+        <span class="diagram-number">VISUAL 3 OF 3</span>
+      </div>
+      <figure>
+        <div class="scale-grid">
+          <article class="scale-card">
+            <header>
+              <h3>Read throughput · replication</h3>
+              <p>Copies of the same data serve eligible reads in parallel.</p>
+            </header>
+            <div class="mini-flow" role="img" aria-label="Application sends reads to three database replicas">
+              <span class="mini-node">App reads</span>
+              <span class="mini-arrow" aria-hidden="true">→</span>
+              <span class="mini-stack">
+                <span class="mini-node">Replica A</span>
+                <span class="mini-node">Replica B</span>
+                <span class="mini-node">Replica C</span>
+              </span>
+            </div>
+            <footer><strong>Gain:</strong> more read capacity. <strong>Boundary:</strong> replicas may lag, so a recent write may not be visible immediately.</footer>
+          </article>
+
+          <article class="scale-card">
+            <header>
+              <h3>Write throughput · sharding</h3>
+              <p>Each shard owns a different subset of keys.</p>
+            </header>
+            <div class="mini-flow" role="img" aria-label="A router sends account IDs 1 and 9 to shard A, and account IDs 2 and 10 to shard B">
+              <span class="mini-node">Write<br><code>account_id</code></span>
+              <span class="mini-arrow" aria-hidden="true">→</span>
+              <span class="mini-stack">
+                <span class="mini-node">Shard A<br>IDs 1, 9…</span>
+                <span class="mini-node">Shard B<br>IDs 2, 10…</span>
+              </span>
+            </div>
+            <footer><strong>Gain:</strong> writes and storage are divided. <strong>Boundary:</strong> a hot account can overload one shard; cross-shard queries and transactions become harder.</footer>
+          </article>
+
+          <article class="scale-card">
+            <header>
+              <h3>Job throughput · queue + consumers</h3>
+              <p>Independent jobs wait durably and workers pull them in parallel.</p>
+            </header>
+            <div class="mini-flow" role="img" aria-label="A producer adds jobs to a queue, and three consumers process jobs in parallel">
+              <span class="mini-node">Producer</span>
+              <span class="mini-arrow" aria-hidden="true">→</span>
+              <span class="mini-node">Queue</span>
+              <span class="mini-arrow" aria-hidden="true">→</span>
+              <span class="mini-stack">
+                <span class="mini-node">Worker A</span>
+                <span class="mini-node">Worker B</span>
+                <span class="mini-node">Worker C</span>
+              </span>
+            </div>
+            <footer><strong>Gain:</strong> consumers scale independent work and absorb bursts. <strong>Boundary:</strong> completion is delayed; retries can deliver a job more than once, so handlers may need idempotency.</footer>
+          </article>
+        </div>
+        <figcaption><strong>Do not mix the mechanisms:</strong> replication copies the same data and mainly spreads reads; sharding divides ownership and can spread writes; a queue separates arrival from later processing. Each introduces a different correctness and operational cost.</figcaption>
+      </figure>
+
+      <div class="explain-grid">
+        <article class="explain-card">
+          <h3>What to measure before scaling</h3>
+          <p>Record arrival rate, successful completion rate, error and timeout rate, queue depth over time, and utilization of CPU, disk, database connections, and locks. A growing queue is evidence that arrivals exceed sustainable completion.</p>
+        </article>
+        <article class="explain-card">
+          <h3>What high throughput does not guarantee</h3>
+          <p>It does not guarantee low latency, correct results, freshness, or availability. A batch system can complete millions of records per hour while each record waits ten minutes; a fast pipeline can also process duplicates incorrectly.</p>
+        </article>
+      </div>
+      <p class="decision-rule"><strong>Decision rule:</strong> define the completed operation and target rate, locate the saturated stage, and scale that stage with the mechanism its work permits. Re-measure completion—not merely requests accepted at the front door.</p>
+    </section>
+
+    <section class="next-step">
+      <h2>Introduction complete</h2>
+      <p>You now have three separate questions for future designs: Can the service continue through failure? How long does one operation take? How many operations can finish per unit time?</p>
+      <a class="button" href="category.html?category=system-design">Return to System Design</a>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell">Learning Library · System Design · Throughput</div>
+  </footer>
+</body>
+</html>
