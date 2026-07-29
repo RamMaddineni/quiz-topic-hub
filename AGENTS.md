@@ -16,8 +16,9 @@
 Current published sequence:
 
 - DSA: Non-overlapping Intervals → Perfect Rectangle → Inversions and Adjacent Swaps
-- System Design: API Authentication → API Authorization → API Gateway → Non-functional Requirements → CAP Theorem → System Design Components
+- System Design: API Authentication → API Authorization → API Gateway → Non-functional Requirements → CAP Theorem → System Design Components → High Availability → Latency → Throughput
 - C# / .NET: Value Semantics and Boxing
+- C / POSIX: Mutex vs Binary Semaphore
 
 Before publishing catalogue changes, run:
 
@@ -42,6 +43,16 @@ Assume the learner is new to System Design unless the user explicitly asks for r
   6. a decision rule for when to use it
 - Use structured cards, flows, examples, and visuals so depth does not become a wall of text.
 - Keep quiz explanations mechanism-focused, but keep learning sections sufficiently detailed for first-time understanding.
+
+## Introductory topics are visual-first
+
+Do not create a quiz merely to fill the Quiz section.
+
+- For an introductory overview whose purpose is to recognize vocabulary and build a first mental map, publish a visual learning guide by default.
+- A visual guide must still explain the data or request flow, the causal mechanism, its boundary, and one decision rule in beginner language. A labeled collection of component names is not enough.
+- Add a quiz only when the topic contains meaningful decisions, failure reasoning, or misconceptions that can support non-trivial self-contained questions, or when the user explicitly asks for one.
+- If the only honest questions are direct definition recall, omit the quiz and let the topic page show that no quiz resource has been added.
+- Do not create active-recall cards until there are durable ideas worth retrieving after the learner has completed the introduction.
 
 ## Quiz questions must be self-contained
 
