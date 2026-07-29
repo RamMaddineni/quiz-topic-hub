@@ -126,6 +126,54 @@ window.LEARNING_CATALOG = {
       ]
     },
     {
+      id: "high-availability",
+      categoryId: "system-design",
+      order: 7,
+      title: "High Availability",
+      description: "Downtime budgets, failure domains, redundancy, health checks, and the failover path that keeps a service operating.",
+      resources: [
+        {
+          type: "learn",
+          title: "High availability visual guide",
+          description: "Three beginner visuals connect availability targets to failure domains, detection, routing, database failover, and concrete technology roles.",
+          href: "system-design-high-availability-visual-guide.html",
+          meta: "3 visual explanations"
+        }
+      ]
+    },
+    {
+      id: "latency",
+      categoryId: "system-design",
+      order: 8,
+      title: "Latency",
+      description: "End-to-end response time, request-path breakdowns, percentiles, tail latency, and mechanism-specific optimization.",
+      resources: [
+        {
+          type: "learn",
+          title: "Latency visual guide",
+          description: "Trace an 800 ms request, read p50/p95/p99 correctly, and decide when a CDN, index, cache, load balancing, or edge computing helps.",
+          href: "system-design-latency-visual-guide.html",
+          meta: "3 visual explanations"
+        }
+      ]
+    },
+    {
+      id: "throughput",
+      categoryId: "system-design",
+      order: 9,
+      title: "Throughput",
+      description: "Completed work per unit time, bottlenecks, concurrency, saturation, and mechanism-specific ways to scale a data flow.",
+      resources: [
+        {
+          type: "learn",
+          title: "Throughput visual guide",
+          description: "Three beginner visuals explain bottleneck capacity, concurrency and saturation, plus read, write, and asynchronous job scale-out.",
+          href: "system-design-throughput-visual-guide.html",
+          meta: "3 visual explanations"
+        }
+      ]
+    },
+    {
       id: "cap-theorem",
       categoryId: "system-design",
       order: 5,
