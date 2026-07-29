@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A beginner visual guide to high availability, downtime budgets, failure domains, redundancy, health checks, and failover.">
+  <title>High Availability Visual Guide | Learning Library</title>
+  <link rel="stylesheet" href="assets/nfr-visual-guides.css">
+</head>
+<body>
+  <div class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="index.html">Learning Library</a>
+      <span class="topbar-note">System Design · Learn</span>
+    </div>
+  </div>
+
+  <main class="shell">
+    <header class="hero">
+      <a class="back-link" href="topic.html?topic=high-availability">← High Availability</a>
+      <p class="eyebrow">Beginner visual guide</p>
+      <h1>High availability means failures do not become long outages.</h1>
+      <p class="lead">Machines, networks, and dependencies will fail. An available design limits how much of the service is lost and how long recovery takes. The complete mechanism is <strong>redundancy + failure detection + traffic or data failover</strong>—not simply “run two copies.”</p>
+    </header>
+
+    <section class="mental-model" aria-label="High availability mental model">
+      <article>
+        <strong>1 · Set the target</strong>
+        <p>Translate the availability percentage into an allowed downtime budget.</p>
+      </article>
+      <article>
+        <strong>2 · Name the failure</strong>
+        <p>One process, one machine, one Availability Zone, or an entire region?</p>
+      </article>
+      <article>
+        <strong>3 · Trace recovery</strong>
+        <p>Who detects the fault, stops routing, switches state, and restores capacity?</p>
+      </article>
+    </section>
+
+    <section class="diagram-section" aria-labelledby="budget-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="budget-title">Availability is a time budget</h2>
+          <p>The percentage becomes meaningful only when it is tied to a measurement window and a definition of “working.” These annual figures show how quickly another nine shrinks the allowed outage.</p>
+        </div>
+        <span class="diagram-number">VISUAL 1 OF 3</span>
+      </div>
+      <figure>
+        <div class="formula" role="img" aria-label="Availability equals operational time divided by total evaluated time, multiplied by 100">
+          Availability = operational time ÷ total evaluated time × 100
+        </div>
+        <div class="budget-grid">
+          <article class="budget-card">
+            <span class="nines">99.9%</span>
+            <span class="downtime">8 h 45 m / year</span>
+            <p>Three nines. There is enough budget for several short incidents, but not a full working day.</p>
+          </article>
+          <article class="budget-card">
+            <span class="nines">99.99%</span>
+            <span class="downtime">52 m 34 s / year</span>
+            <p>Four nines. Detection, failover, deployment, and repair time all consume the same small budget.</p>
+          </article>
+          <article class="budget-card">
+            <span class="nines">99.999%</span>
+            <span class="downtime">5 m 15 s / year</span>
+            <p>Five nines. Slow human recovery is no longer enough; most recovery paths must be automatic.</p>
+          </article>
+        </div>
+        <figcaption><strong>Service Level Agreement (SLA):</strong> a written commitment to customers. It should define the measured service, the time window, what counts as unavailable, and the remedy if the target is missed. “Highly available” without those details is not yet a testable requirement.</figcaption>
+      </figure>
+      <div class="explain-grid">
+        <article class="explain-card">
+          <h3>What the percentage does not say</h3>
+          <p>A yearly 99.9% target does not tell you whether one 8-hour outage is acceptable or whether every incident must recover within 30 seconds. State both the aggregate target and the acceptable duration of one incident.</p>
+        </article>
+        <article class="explain-card">
+          <h3>Availability is not durability</h3>
+          <p>Availability asks, “Can users use the service now?” Durability asks, “Will stored data survive over time?” A read-only copy can keep a page available while the write path is unavailable; a reachable system can still corrupt data.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="diagram-section" aria-labelledby="failover-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="failover-title">What must happen after a component fails</h2>
+          <p>This example spans two Availability Zones. An <strong>Availability Zone (AZ)</strong> is an isolated cloud location inside one geographic region, designed so a failure in one zone does not automatically fail the other.</p>
+        </div>
+        <span class="diagram-number">VISUAL 2 OF 3</span>
+      </div>
+      <figure>
+        <div class="flow-board" role="img" aria-label="Users reach a redundant load-balancing layer, which routes around a failed application in Availability Zone A to a healthy application in Availability Zone B; the database has a primary and standby copy">
+          <div class="flow-node">
+            <strong>Users</strong>
+            <small>one stable service address</small>
+          </div>
+          <div class="flow-arrow" aria-hidden="true">→</div>
+          <div class="flow-stack">
+            <div class="healthy">
+              <strong>Load-balancing layer</strong>
+              <small>multiple internal instances; health-aware routing</small>
+            </div>
+          </div>
+          <div class="flow-arrow" aria-hidden="true">→</div>
+          <div class="flow-stack">
+            <div class="failed">
+              <strong>AZ A · App A failed ✕</strong>
+              <small>removed from the healthy target list</small>
+            </div>
+            <div class="healthy">
+              <strong>AZ B · App B serving ✓</strong>
+              <small>receives new requests and retries</small>
+            </div>
+            <span class="vertical-arrow" aria-hidden="true">↓</span>
+            <div>
+              <strong>Database primary + standby</strong>
+              <small>same state is copied so a standby can be promoted</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="flow-steps" aria-label="Five failover steps">
+          <div class="flow-step"><span>1</span>Health checks repeatedly test the real serving path.</div>
+          <div class="flow-step"><span>2</span>Several failed checks mark App A unhealthy.</div>
+          <div class="flow-step"><span>3</span>The load balancer stops sending new traffic to App A.</div>
+          <div class="flow-step"><span>4</span>If the primary database failed, a monitor promotes the standby.</div>
+          <div class="flow-step"><span>5</span>Clients retry; surviving capacity serves the work.</div>
+        </div>
+        <figcaption><strong>Why redundancy helps:</strong> the failed resource is no longer the only path. <strong>Why redundancy alone is insufficient:</strong> an unused copy does nothing until the system detects the failure, redirects traffic, and—when state is involved—selects a safe database copy to accept writes.</figcaption>
+      </figure>
+
+      <div class="explain-grid">
+        <article class="explain-card">
+          <h3>Why the load balancer also needs redundancy</h3>
+          <p>If one ordinary load-balancer machine is the only public entry point, its failure hides every healthy application behind it. A managed load balancer normally presents one logical endpoint while the provider runs redundant nodes. A self-managed design needs multiple balancers plus a way for the public address to reach a healthy one.</p>
+        </article>
+        <article class="explain-card">
+          <h3>What this still does not guarantee</h3>
+          <p>Failover is not necessarily instant or lossless. Health checks can be too slow or too sensitive. An asynchronously replicated standby may be missing the latest writes. The surviving zone can also overload if it was not provisioned to absorb the failed zone’s traffic.</p>
+        </article>
+      </div>
+      <p class="decision-rule"><strong>Decision rule:</strong> for every box whose failure would violate the availability target, identify a redundant path, the detector, the failover action, the expected recovery time, and the capacity remaining after failover.</p>
+    </section>
+
+    <section class="diagram-section" aria-labelledby="domain-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="domain-title">Place copies outside the failure you want to survive</h2>
+          <p>A <strong>failure domain</strong> is a group of resources that can fail together. Two copies in the same domain are redundant for a process crash, but not for the shared failure.</p>
+        </div>
+        <span class="diagram-number">VISUAL 3 OF 3</span>
+      </div>
+      <figure>
+        <div class="domain-grid" role="img" aria-label="Four redundancy scopes: same machine, different machines, different availability zones, and different regions">
+          <article class="domain-card">
+            <strong>Two processes<br>one machine</strong>
+            <small>One process can restart, but a machine or power failure removes both.</small>
+            <span class="coverage">Covers: process crash</span>
+          </article>
+          <article class="domain-card">
+            <strong>Two machines<br>one AZ</strong>
+            <small>A machine can fail, but a zonal network or power event can remove both.</small>
+            <span class="coverage">Covers: machine failure</span>
+          </article>
+          <article class="domain-card">
+            <strong>Two AZs<br>one region</strong>
+            <small>A zone can fail while the other serves, but the design shares a geographic region.</small>
+            <span class="coverage">Covers: zonal failure</span>
+          </article>
+          <article class="domain-card">
+            <strong>Two regions</strong>
+            <small>A larger regional event can be survived, at greater data, routing, cost, and operational complexity.</small>
+            <span class="coverage">Covers: regional failure</span>
+          </article>
+        </div>
+
+        <table class="reference-table">
+          <thead>
+            <tr>
+              <th>Job in the design</th>
+              <th>Example technologies from the reading</th>
+              <th>What to explain in an interview</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Route only to healthy application instances</td>
+              <td>HAProxy; AWS Elastic Load Balancing; Google Cloud Load Balancing; Azure Load Balancer</td>
+              <td>Health signal, routing scope, and whether the balancing layer is itself redundant.</td>
+            </tr>
+            <tr>
+              <td>Maintain enough healthy compute</td>
+              <td>AWS EC2 Auto Scaling; Google Managed Instance Groups; Azure Virtual Machine Scale Sets</td>
+              <td>Minimum surviving capacity, replacement delay, and protection from resource exhaustion.</td>
+            </tr>
+            <tr>
+              <td>Fail over stateful data</td>
+              <td>Amazon RDS Multi-AZ; Cloud SQL high availability; Azure SQL high availability</td>
+              <td>Replication mode, promotion process, reconnect behavior, and possible data loss.</td>
+            </tr>
+          </tbody>
+        </table>
+        <figcaption><strong>Product names are implementation examples, not the answer.</strong> Start with the failure you must survive, then explain the mechanism. Multi-region deployment is not automatically “better”; it is justified only when a regional outage exceeds the business’s acceptable risk.</figcaption>
+      </figure>
+    </section>
+
+    <section class="next-step">
+      <h2>Next: measure how long one successful request takes</h2>
+      <p>Availability answers whether the service can respond. Latency asks how long the response takes when the service is operating.</p>
+      <a class="button" href="topic.html?topic=latency">Continue to Latency →</a>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell">Learning Library · System Design · High Availability</div>
+  </footer>
+</body>
+</html>
