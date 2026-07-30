@@ -17,7 +17,7 @@ Current published sequence:
 
 - DSA: Non-overlapping Intervals → Perfect Rectangle → Inversions and Adjacent Swaps
 - System Design: API Authentication → API Authorization → API Gateway → Non-functional Requirements → CAP Theorem → System Design Components → High Availability → Latency → Throughput
-- C# / .NET: Value Semantics and Boxing
+- C# / .NET: Value Semantics and Boxing → Equality Contracts, Records and Hash Codes
 - C / POSIX: Mutex vs Binary Semaphore
 
 Before publishing catalogue changes, run:
@@ -81,3 +81,4 @@ Before publishing a quiz that uses the standalone scenario-card format, run:
 ```sh
 node scripts/validate-quiz-questions.js path/to/quiz.html
 ```
+
