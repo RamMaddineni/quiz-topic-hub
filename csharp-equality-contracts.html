@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A complete beginner-first C# guide to identity, value equality, Equals, equality operators, IEquatable, hash codes, records, immutability, and hash-based collections, followed by ten exercises.">
+  <title>C# Equality Contracts, Records &amp; Hash Codes | Learning Library</title>
+  <link rel="stylesheet" href="assets/csharp-equality-guide.css">
+  <script src="assets/csharp-equality-guide.js" defer></script>
+</head>
+<body>
+  <div class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="index.html">Learning Library</a>
+      <span class="topbar-note">C# / .NET · Topic 2 · Learn + Exercises</span>
+    </div>
+  </div>
+
+  <main class="shell">
+    <header class="hero">
+      <a class="back-link" href="topic.html?topic=equality-contracts">← Equality topic</a>
+      <p class="eyebrow">Beginner-first · Interview-focused · Finite path</p>
+      <h1>Equality is a contract, not just an <code>==</code> sign.</h1>
+      <p class="lead">By the end, you will be able to decide what “equal” means for a type, predict which C# comparison runs, implement <code>IEquatable&lt;T&gt;</code> safely, keep <code>GetHashCode</code> consistent, choose between classes and records, and avoid mutable-key bugs.</p>
+      <p class="scope-note"><strong>Prerequisite:</strong> only Topic 1’s basic idea that a class variable stores a reference. Any generic, nullable, collection, or record syntax needed here is introduced before it is used. You do not need to know the later roadmap topics.</p>
+    </header>
+
+    <section class="progress-panel" aria-labelledby="progress-title">
+      <div class="progress-topline">
+        <div>
+          <h2 id="progress-title">Your finite route through Topic 2</h2>
+          <p>This page has exactly 10 learning checkpoints and 10 exercises. Check an item only after you can explain or attempt it without copying.</p>
+        </div>
+        <span class="progress-score" id="progress-score" aria-live="polite">0 / 20 · 0%</span>
+      </div>
+      <progress id="topic-progress" value="0" max="20">0%</progress>
+      <div class="progress-footer">
+        <span id="progress-breakdown">Learning 0/10 · Exercises 0/10</span>
+        <span>Progress is kept only in this browser tab session.</span>
+        <button class="reset-button" id="reset-progress" type="button">Reset checks</button>
+      </div>
+    </section>
+
+    <section class="route-map" aria-label="Recommended learning route">
+      <article>
+        <strong>Phase 1 · Meaning</strong>
+        <p>Checkpoints 1–4: identity, value equality, dispatch, and the laws every equality implementation must obey.</p>
+      </article>
+      <article>
+        <strong>Phase 2 · Mechanism</strong>
+        <p>Checkpoints 5–9: implement equality, understand comparers and hashing, protect keys, and use records correctly.</p>
+      </article>
+      <article>
+        <strong>Phase 3 · Apply</strong>
+        <p>Checkpoint 10 plus 10 exercises: choose semantics, handle edge cases, debug broken contracts, and explain the topic.</p>
+      </article>
+    </section>
+
+    <nav class="toc" aria-label="Page contents">
+      <a href="#identity">1 · Identity vs value</a>
+      <a href="#tools">2 · Equality tools</a>
+      <a href="#dispatch">3 · Which code runs?</a>
+      <a href="#laws">4 · Equality laws</a>
+      <a href="#implementation">5 · Complete class</a>
+      <a href="#comparers">6 · Comparers</a>
+      <a href="#hashing">7 · Hashing</a>
+      <a href="#immutability">8 · Stable keys</a>
+      <a href="#records">9 · Records</a>
+      <a href="#decisions">10 · Decisions</a>
+      <a href="#exercises">Exercises 1–10</a>
+      <a href="#references">Official references</a>
+    </nav>
+
+    <section class="lesson" id="identity" aria-labelledby="identity-title">
+      <div class="section-heading">
+        <div>
+          <span class="section-number">Learning checkpoint 1 of 10</span>
+          <h2 id="identity-title">First choose the question: identity or value?</h2>
+          <p>Many equality mistakes happen because the program asks one question while the developer mentally answers the other.</p>
+        </div>
+        <label class="checkpoint-toggle">
+          <input type="checkbox" data-progress="learn-1" data-kind="learn">
+          <span>I can explain both</span>
+        </label>
+      </div>
+
+      <div class="two-column">
+        <article class="definition-card identity">
+          <span class="mini-label">Identity / reference equality</span>
+          <h3>“Is this the exact same object?”</h3>
+          <p>Two variables have reference equality when both references lead to one object. The object’s property values do not decide the answer.</p>
+        </article>
+        <article class="definition-card">
+          <span class="mini-label">Value equality / equivalence</span>
+          <h3>“Should these represent the same value?”</h3>
+          <p>Two separate objects can be value-equal when the type’s chosen data matches. The type author defines which data matters.</p>
+        </article>
+      </div>
+
+      <figure class="identity-board">
+        <div class="variable-stack" role="group" aria-label="Variables">
+          <div class="variable-node">first</div>
+          <div class="variable-node">alias</div>
+          <div class="variable-node">separate</div>
+        </div>
+        <div class="object-stack" role="group" aria-label="Objects">
+          <div class="object-node">
+            <strong>User object A</strong>
+            <small><code>Name = "Maya"</code><br><code>first</code> and <code>alias</code> point here.</small>
+          </div>
+          <div class="object-node">
+            <strong>User object B</strong>
+            <small><code>Name = "Maya"</code><br><code>separate</code> points here.</small>
+          </div>
+        </div>
+      </figure>
+      <p class="visual-caption"><strong>Identity:</strong> <code>first</code> and <code>alias</code> are the same object; <code>first</code> and <code>separate</code> are not. <strong>Value:</strong> whether A and B are equal depends on the equality policy of <code>User</code>.</p>
+
+      <article class="example-card">
+        <h3>A plain class starts with identity-based equality</h3>
+        <pre><code>public sealed class User
+{
+    public string Name { get; }
+
+    public User(string name) =&gt; Name = name;
+}
+
+var first = new User("Maya");
+var alias = first;
+var separate = new User("Maya");
+
+Console.WriteLine(ReferenceEquals(first, alias));    // True
+Console.WriteLine(ReferenceEquals(first, separate)); // False
+Console.WriteLine(first == separate);                // False
+Console.WriteLine(first.Equals(separate));           // False</code></pre>
+        <p class="output"><strong>Why:</strong> this class has not defined value equality or overloaded <code>==</code>. Matching <code>Name</code> values do not automatically change the inherited identity behavior.</p>
+      </article>
+    </section>
+
+    <section class="lesson" id="tools" aria-labelledby="tools-title">
+      <div class="section-heading">
+        <div>
+          <span class="section-number">Learning checkpoint 2 of 10</span>
+          <h2 id="tools-title">C# gives you five related equality tools</h2>
+          <p>They overlap, but they are not interchangeable. Start by knowing the question and dispatch rule of each tool.</p>
+        </div>
+        <label class="checkpoint-toggle">
+          <input type="checkbox" data-progress="learn-2" data-kind="learn">
+          <span>I know the five tools</span>
+        </label>
+      </div>
+
+      <div class="table-scroll">
+        <table class="tool-table">
+        <thead>
+          <tr>
+            <th>Tool</th>
+            <th>What it asks</th>
+            <th>Important boundary</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>ReferenceEquals(a, b)</code></td>
+            <td>Do both references identify the same object?</td>
+            <td>Cannot be overridden. Value-type arguments are boxed, so it is the wrong tool for comparing values.</td>
+          </tr>
+          <tr>
+            <td><code>a == b</code></td>
+            <td>Run the equality operator selected from the operands’ compile-time types.</td>
+            <td>A plain class uses reference equality; a type may overload the operator. <code>string</code> and records provide value-based operators.</td>
+          </tr>
+          <tr>
+            <td><code>a.Equals(b)</code></td>
+            <td>Ask the runtime object referenced by <code>a</code> whether it equals <code>b</code>.</td>
+            <td>Virtual dispatch can reach an override. Calling it when <code>a</code> is <code>null</code> throws <code>NullReferenceException</code>.</td>
+          </tr>
+          <tr>
+            <td><code>object.Equals(a, b)</code></td>
+            <td>Perform a null-safe equality check, then delegate to <code>a.Equals(b)</code>.</td>
+            <td>Both null is true; exactly one null is false. This is not the same as forcing reference equality.</td>
+          </tr>
+          <tr>
+            <td><code>EqualityComparer&lt;T&gt;.Default.Equals(a, b)</code></td>
+            <td>Use the default typed equality policy for <code>T</code>.</td>
+            <td>Generic collections use this pattern. It prefers <code>IEquatable&lt;T&gt;</code> when the type implements it.</td>
+          </tr>
+        </tbody>
+        </table>
+      </div>
+
+      <div class="two-column">
+        <article class="card">
+          <h3>Null-safe versus instance call</h3>
+          <pre><code>User? left = null;
+User? right = null;
+
+Console.WriteLine(object.Equals(left, right));    // True
+Console.WriteLine(ReferenceEquals(left, right));  // True
+Console.WriteLine(left is null);                  // True
+
+// left.Equals(right) would throw:
+// left does not reference an object to receive the call.</code></pre>
+          <p><strong>Syntax note:</strong> <code>User?</code> says the reference is allowed to be null. Nullable reference types are a later topic; that one reading is enough for this page.</p>
+        </article>
+        <article class="callout warning">
+          <h3>Use <code>is null</code> inside an overloaded operator</h3>
+          <p>A type can overload <code>==</code>, so <code>left == null</code> may call your operator again and recurse. The pattern <code>left is null</code> performs a null test without invoking an overloaded equality operator.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="lesson" id="dispatch" aria-labelledby="dispatch-title">
+      <div class="section-heading">
+        <div>
+          <span class="section-number">Learning checkpoint 3 of 10</span>
+          <h2 id="dispatch-title">For <code>==</code>, compile-time types choose the operator</h2>
+          <p>This is the most important prediction rule in the topic. The same two runtime objects can produce different <code>==</code> results after their references are stored in variables of another static type.</p>
+        </div>
+        <label class="checkpoint-toggle">
+          <input type="checkbox" data-progress="learn-3" data-kind="learn">
+          <span>I can predict dispatch</span>
+        </label>
+      </div>
+
+      <div class="dispatch-board" role="img" aria-label="Three steps for choosing equality behavior">
+        <div class="dispatch-step">
+          <strong>1 · Read static types</strong>
+          <p>Look at the declared types of the two operand expressions.</p>
+        </div>
+        <div class="dispatch-step">
+          <strong>2 · Select operator</strong>
+          <p>The compiler binds an available <code>==</code> operator for those types.</p>
+        </div>
+        <div class="dispatch-step">
+          <strong>3 · Run it</strong>
+          <p>The selected operator executes; ordinary <code>==</code> is not a virtual method call.</p>
+        </div>
+      </div>
+
+      <article class="example-card">
+        <h3>One pair of strings, three different questions</h3>
+        <pre><code>string left = new string(new[] { 'h', 'i' });
+string right = new string(new[] { 'h', 'i' });
+
+object leftAsObject = left;
+object rightAsObject = right;
+
+Console.WriteLine(left == right);                    // True
+Console.WriteLine(leftAsObject == rightAsObject);    // False
+Console.WriteLine(leftAsObject.Equals(rightAsObject)); // True
+Console.WriteLine(ReferenceEquals(left, right));     // False</code></pre>
+        <div class="output">
+          <strong>Line 1:</strong> both operands are statically <code>string</code>, so the value-based string operator runs.<br>
+          <strong>Line 2:</strong> both operands are statically <code>object</code>, so <code>object == object</code> compares references.<br>
+          <strong>Line 3:</strong> <code>Equals</code> is virtual, so the runtime string override compares text.<br>
+          <strong>Line 4:</strong> the two separately created string objects have different identities.
+        </div>
+      </article>
+
+      <div class="table-scroll">
+        <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Expression</th>
+            <th>Selection time</th>
+            <th>Can runtime type change the implementation?</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>a == b</code></td>
+            <td>Compile time, from operand types and available operators</td>
+            <td>Normally no. The compiler has already selected a static operator.</td>
+          </tr>
+          <tr>
+            <td><code>a.Equals(b)</code></td>
+            <td>The method signature is checked at compile time</td>
+            <td>Yes. Virtual dispatch selects the override of the runtime object referenced by <code>a</code>.</td>
+          </tr>
+          <tr>
+            <td><code>ReferenceEquals(a, b)</code></td>
+            <td>Fixed static method</td>
+            <td>No. It always tests object identity and cannot be overridden.</td>
+          </tr>
+        </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="lesson" id="laws" aria-labelledby="laws-title">
+      <div class="section-heading">
+        <div>
+          <span class="section-number">Learning checkpoint 4 of 10</span>
+          <h2 id="laws-title">A valid equality implementation obeys laws</h2>
+          <p>The code is correct only if callers can safely reason about its results. These laws are the reusable test checklist.</p>
+        </div>
+        <label class="checkpoint-toggle">
+          <input type="checkbox" data-progress="learn-4" data-kind="learn">
+          <span>I know the contract</span>
+        </label>
+      </div>
+
+      <div class="law-grid">
+        <article class="law-card">
+          <strong>Reflexive</strong>
+          <p>Every non-null value equals itself.</p>
+          <span class="law-expression">x.Equals(x) == true</span>
+        </article>
+        <article class="law-card">
+          <strong>Symmetric</strong>
+          <p>Neither operand gets a privileged answer.</p>
+          <span class="law-expression">x.Equals(y) == y.Equals(x)</span>
+        </article>
+        <article class="law-card">
+          <strong>Transitive</strong>
+          <p>A chain of equality cannot contradict itself.</p>
+          <span class="law-expression">x=y and y=z ⇒ x=z</span>
+        </article>
+        <article class="law-card">
+          <strong>Consistent</strong>
+          <p>Repeated checks agree while equality-relevant state is unchanged.</p>
+          <span class="law-expression">same state ⇒ same answer</span>
+        </article>
+        <article class="law-card">
+          <strong>Non-null</strong>
+          <p>A real instance is not equal to null.</p>
+          <span class="law-expression">x.Equals(null) == false</span>
+        </article>
+        <article class="law-card">
+          <strong>Hash consistent</strong>
+          <p>Equal values must produce the same hash code.</p>
+          <span class="law-expression">x=y ⇒ hash(x)=hash(y)</span>
+        </article>
+      </div>
+
+      <article class="callout danger">
+        <h3>Inheritance can break symmetry</h3>
+        <p>If a base class compares only base fields but a derived class also compares a new field, the base object may accept the derived object while the derived object rejects the base object.</p>
+        <pre><code>public class Point
+{
+    public int X { get; }
+    public int Y { get; }
+
+    public Point(int x, int y) =&gt; (X, Y) = (x, y);
+
+    public override bool Equals(object? obj) =&gt;
+        obj is Point other &amp;&amp; X == other.X &amp;&amp; Y == other.Y;
+
+    public override int GetHashCode() =&gt; HashCode.Combine(X, Y);
+}
+
+public sealed class ColoredPoint : Point
+{
+    public string Color { get; }
+
+    public ColoredPoint(int x, int y, string color) : base(x, y) =&gt;
+        Color = color;
+
+    public override bool Equals(object? obj) =&gt;
+        obj is ColoredPoint other &amp;&amp;
+        base.Equals(other) &amp;&amp;
+        Color == other.Color;
+
+    public override int GetHashCode() =&gt;
+        HashCode.Combine(base.GetHashCode(), Color);
+}
+
+Point plain = new Point(1, 2);
+Point colored = new ColoredPoint(1, 2, "Red");
+
+Console.WriteLine(plain.Equals(colored)); // True
+Console.WriteLine(colored.Equals(plain)); // False — broken symmetry</code></pre>
+        <p><strong>Safe default:</strong> make a value-like custom class <code>sealed</code>. If it must support inheritance, define and test an exact runtime-type policy deliberately. Records generate an equality type boundary for record inheritance.</p>
+      </article>
+    </section>
+
+    <section class="lesson" id="implementation" aria-labelledby="implementation-title">
+      <div class="section-heading">
+        <div>
+          <span class="section-number">Learning checkpoint 5 of 10</span>
+          <h2 id="implementation-title">Implement one source of truth, then connect every entry point</h2>
+          <p>This complete value-object class compares an amount and a normalized currency code. Study the direction of delegation.</p>
+        </div>
+        <label class="checkpoint-toggle">
+          <input type="checkbox" data-progress="learn-5" data-kind="learn">
+          <span>I can implement this</span>
+        </label>
+      </div>
+
+      <article class="example-card">
+        <h3>Complete custom equality for a sealed class</h3>
+        <pre><code>#nullable enable
+using System;
+
+public sealed class Money : IEquatable&lt;Money&gt;
+{
+    public decimal Amount { get; }
+    public string Currency { get; }
+
+    public Money(decimal amount, string currency)
+    {
+        if (string.IsNullOrWhiteSpace(currency))
+        {
+            throw new ArgumentException(
+                "Currency is required.", nameof(currency));
+        }
+
+        Amount = amount;
+        Currency = currency.Trim().ToUpperInvariant();
+    }
+
+    // The typed method is the single source of equality truth.
+    public bool Equals(Money? other) =&gt;
+        other is not null &amp;&amp;
+        Amount == other.Amount &amp;&amp;
+        Currency == other.Currency;
+
+    // Object-based callers delegate to the typed method.
+    public override bool Equals(object? obj) =&gt;
+        obj is Money other &amp;&amp; Equals(other);
+
+    // Use exactly the same equality-relevant data.
+    public override int GetHashCode() =&gt;
+        HashCode.Combine(Amount, Currency);
+
+    // Operators follow the same policy and handle null safely.
+    public static bool operator ==(Money? left, Money? right) =&gt;
+        ReferenceEquals(left, right) ||
+        (left is not null &amp;&amp; left.Equals(right));
+
+    public static bool operator !=(Money? left, Money? right) =&gt;
+        !(left == right);
+}</code></pre>
+      </article>
+
+      <div class="three-column">
+        <article class="card">
+          <h3>Why <code>sealed</code>?</h3>
+          <p>No derived type can add new equality-relevant state and create the base/derived symmetry problem shown earlier.</p>
+        </article>
+        <article class="card">
+          <h3>Why normalize currency?</h3>
+          <p><code>"usd"</code> and <code>"USD"</code> become one representation. Equality and hashing then use the same simple value.</p>
+        </article>
+        <article class="card">
+          <h3>Why check identity first?</h3>
+          <p>If both operands are the same reference—including both null—the answer is immediately true. Otherwise the typed equality method decides.</p>
+        </article>
+      </div>
+
+      <div class="callout success">
+        <h3>The delegation direction</h3>
+        <p><code>Equals(Money?)</code> contains the real field comparison. <code>Equals(object?)</code> validates the type and delegates. <code>==</code> handles identity/null and delegates. <code>!=</code> negates <code>==</code>. <code>GetHashCode</code> uses the same fields. One policy, five consistent entry points.</p>
+      </div>
+    </section>
+
+    <section class="lesson" id="comparers" aria-labelledby="comparers-title">
+      <div class="section-heading">
+        <div>
+          <span class="section-number">Learning checkpoint 6 of 10</span>
+          <h2 id="comparers-title"><code>IEquatable&lt;T&gt;</code> is intrinsic; <code>IEqualityComparer&lt;T&gt;</code> is contextual</h2>
+          <p>The angle-bracket <code>T</code> is a type placeholder. For <code>IEquatable&lt;Money&gt;</code>, the placeholder is replaced with <code>Money</code>.</p>
+        </div>
+        <label class="checkpoint-toggle">
+          <input type="checkbox" data-progress="learn-6" data-kind="learn">
+          <span>I know both roles</span>
+        </label>
+      </div>
+
+      <div class="two-column">
+        <article class="definition-card">
+          <span class="mini-label">Inside the type</span>
+          <h3><code>IEquatable&lt;T&gt;</code></h3>
+          <p>The type declares its natural, reusable meaning of equality through <code>bool Equals(T other)</code>. Generic collections can call the typed method directly. For value types, this also avoids boxing during typed comparisons.</p>
+        </article>
+        <article class="definition-card identity">
+          <span class="mini-label">Supplied by a caller</span>
+          <h3><code>IEqualityComparer&lt;T&gt;</code></h3>
+          <p>An external object supplies <code>Equals(T, T)</code> and <code>GetHashCode(T)</code> for a particular context. It lets two collections use different valid policies without changing the type.</p>
+        </article>
+      </div>
+
+      <div class="hash-flow" role="img" aria-label="How a generic collection selects default equality">
+        <div class="hash-step">
+          <strong>Collection has T</strong>
+          <p>For example, <code>HashSet&lt;Money&gt;</code> knows its element type.</p>
+        </div>
+        <div class="hash-step">
+          <strong>Default comparer</strong>
+          <p><code>EqualityComparer&lt;T&gt;.Default</code> selects the type’s default policy.</p>
+        </div>
+        <div class="hash-step">
+          <strong>Typed equality</strong>
+          <p>If <code>T</code> implements <code>IEquatable&lt;T&gt;</code>, that typed implementation is used.</p>
+        </div>
+      </div>
+
+      <article class="example-card">
+        <h3>Context-specific equality without changing <code>string</code></h3>
+        <pre><code>using System;
+using System.Collections.Generic;
+
+var exact = new HashSet&lt;string&gt;();
+exact.Add("admin");
+
+var usernames =
+    new HashSet&lt;string&gt;(StringComparer.OrdinalIgnoreCase);
+usernames.Add("admin");
+
+Console.WriteLine(exact.Contains("ADMIN"));     // False
+Console.WriteLine(usernames.Contains("ADMIN")); // True</code></pre>
+        <p class="output"><strong>Decision rule:</strong> put equality inside the type when it is the type’s stable natural meaning. Pass an external comparer when the policy belongs to one operation or collection.</p>
+      </article>
+
+      <article class="callout warning">
+        <h3>Do not implement only the typed method and forget <code>object.Equals</code></h3>
+        <p>Some callers hold a value as <code>object</code>; others use generic APIs. Keep both paths consistent by overriding <code>Equals(object?)</code> and delegating it to <code>Equals(T?)</code>. If you define equality, also provide the matching <code>GetHashCode</code>.</p>
+      </article>
+    </section>
+
+    <section class="lesson" id="hashing" aria-labelledby="hashing-title">
+      <div class="section-heading">
+        <div>
+          <span class="section-number">Learning checkpoint 7 of 10</span>
+          <h2 id="hashing-title">A hash code chooses candidates; <code>Equals</code> confirms</h2>
+          <p>A hash code is not a unique ID and does not prove equality. It helps a hash-based collection avoid comparing the new key with every existing key.</p>
+        </div>
+        <label class="checkpoint-toggle">
+          <input type="checkbox" data-progress="learn-7" data-kind="learn">
+          <span>I understand buckets</span>
+        </label>
+      </div>
+
+      <div class="hash-flow" role="img" aria-label="Hash collection lookup flow">
+        <div class="hash-step">
+          <strong>1 · Compute hash</strong>
+          <p>The collection asks its comparer for the key’s integer hash code.</p>
+        </div>
+        <div class="hash-step">
+          <strong>2 · Choose bucket</strong>
+          <p>The hash narrows the search to a smaller group of candidate keys.</p>
+        </div>
+        <div class="hash-step">
+          <strong>3 · Confirm equality</strong>
+          <p>The comparer calls equality on candidates because different values may share one hash.</p>
+        </div>
+      </div>
+
+      <div class="hash-contract">
+        <div class="contract-yes">
+          <strong>Required implication</strong><br>
+          If <code>x.Equals(y)</code> is true, then <code>x.GetHashCode() == y.GetHashCode()</code> must be true.
+        </div>
+        <div class="contract-no">
+          <strong>Not a valid reverse implication</strong><br>
+          If two hash codes match, the objects may still be unequal. This ordinary situation is a hash collision.
+        </div>
+      </div>
+
+      <article class="callout danger">
+        <h3>Broken contract: equality uses <code>Id</code>, hashing uses <code>Name</code></h3>
+        <pre><code>// Deliberately wrong — do not copy.
+public bool Equals(Customer? other) =&gt;
+    other is not null &amp;&amp; Id == other.Id;
+
+public override int GetHashCode() =&gt;
+    Name.GetHashCode();</code></pre>
+        <p>Two customers with the same <code>Id</code> but different names are declared equal, yet can be routed to different buckets. A <code>HashSet&lt;Customer&gt;</code> or <code>Dictionary&lt;Customer, ...&gt;</code> can then fail to find an equal candidate.</p>
+        <pre><code>// Correct: use the same equality-relevant data.
+public override int GetHashCode() =&gt; Id.GetHashCode();</code></pre>
+      </article>
+
+      <div class="two-column">
+        <article class="card">
+          <h3>A good hash implementation</h3>
+          <ul class="rule-list">
+            <li>Uses every field that participates in equality, in a compatible way.</li>
+            <li>Returns the same value while equality-relevant state is unchanged.</li>
+            <li>Distributes ordinary values reasonably; collisions remain allowed.</li>
+            <li>Can use <code>HashCode.Combine(a, b, ...)</code> for multiple fields.</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h3>A hash code is not</h3>
+          <ul class="rule-list">
+            <li>A globally unique identifier.</li>
+            <li>Proof that two values are equal.</li>
+            <li>A security hash or encryption mechanism.</li>
+            <li>A value you should persist or transmit; it is not guaranteed stable across processes or runtime versions.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="lesson" id="immutability" aria-labelledby="immutability-title">
+      <div class="section-heading">
+        <div>
+          <span class="section-number">Learning checkpoint 8 of 10</span>
+          <h2 id="immutability-title">Hash keys need stable equality-relevant state</h2>
+          <p>A collection remembers where it placed a key using the hash computed at insertion. Mutating a field used by equality and hashing can make the stored key unreachable through normal lookup.</p>
+        </div>
+        <label class="checkpoint-toggle">
+          <input type="checkbox" data-progress="learn-8" data-kind="learn">
+          <span>I can protect keys</span>
+        </label>
+      </div>
+
+      <article class="example-card">
+        <h3>The mutable-key failure</h3>
+        <pre><code>public sealed class MutableKey : IEquatable&lt;MutableKey&gt;
+{
+    public int Id { get; set; }
+
+    public bool Equals(MutableKey? other) =&gt;
+        other is not null &amp;&amp; Id == other.Id;
+
+    public override bool Equals(object? obj) =&gt;
+        obj is MutableKey other &amp;&amp; Equals(other);
+
+    public override int GetHashCode() =&gt; Id.GetHashCode();
+}
+
+var key = new MutableKey { Id = 10 };
+var set = new HashSet&lt;MutableKey&gt; { key };
+
+key.Id = 99; // The object is still stored under the old hash path.
+
+bool found = set.Contains(key); // Lookup behavior is now unreliable.</code></pre>
+        <p class="output"><strong>Mechanism:</strong> insertion used the hash for <code>10</code>; lookup now starts from the hash for <code>99</code>. The collection does not automatically move the existing entry when a property changes.</p>
+      </article>
+
+      <div class="three-column">
+        <article class="card">
+          <h3>Best fix</h3>
+          <p>Make equality-relevant properties read-only after construction. Immutable value objects are naturally safe keys.</p>
+        </article>
+        <article class="card">
+          <h3>Alternative</h3>
+          <p>Remove the key before changing it, mutate it, and add it again. This is easy to misuse and is usually less robust.</p>
+        </article>
+        <article class="card">
+          <h3>Another design</h3>
+          <p>Use an immutable stable identifier—such as an integer or string ID—as the dictionary key instead of the mutable object.</p>
+        </article>
+      </div>
+
+      <article class="callout warning">
+        <h3><code>init</code> and get-only properties are not automatically deep immutability</h3>
+        <p>They stop a property reference from being replaced after initialization, but a referenced mutable object—such as a <code>List&lt;T&gt;</code>—can still change internally. Deep immutability requires every reachable equality-relevant value to be immutable or protected.</p>
+      </article>
+    </section>
+
+    <section class="lesson" id="records" aria-labelledby="records-title">
+      <div class="section-heading">
+        <div>
+          <span class="section-number">Learning checkpoint 9 of 10</span>
+          <h2 id="records-title">Records generate value equality—but not deep equality</h2>
+          <p>A record is ideal when the object primarily represents a bundle of values. The compiler generates the routine equality members, but each member still follows its own equality behavior.</p>
+        </div>
+        <label class="checkpoint-toggle">
+          <input type="checkbox" data-progress="learn-9" data-kind="learn">
+          <span>I understand records</span>
+        </label>
+      </div>
+
+      <article class="example-card">
+        <h3>The compact record version of a value object</h3>
+        <pre><code>public sealed record MoneyRecord(decimal Amount, string Currency);
+
+var first = new MoneyRecord(10m, "USD");
+var second = new MoneyRecord(10m, "USD");
+
+Console.WriteLine(ReferenceEquals(first, second)); // False
+Console.WriteLine(first == second);                // True
+Console.WriteLine(first.Equals(second));           // True
+Console.WriteLine(first.GetHashCode() ==
+                  second.GetHashCode());           // True</code></pre>
+        <p>The compiler provides value-based <code>Equals</code>, <code>IEquatable&lt;MoneyRecord&gt;</code>, compatible <code>GetHashCode</code>, <code>==</code>/<code>!=</code>, and a readable <code>ToString</code>. Positional record properties use <code>init</code> by default.</p>
+      </article>
+
+      <div class="table-scroll">
+        <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Type choice</th>
+            <th>Default equality</th>
+            <th>Typical use</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Plain <code>class</code></td>
+            <td>Reference identity unless you override/overload</td>
+            <td>Services, mutable objects, or entities where object identity is meaningful</td>
+          </tr>
+          <tr>
+            <td>Sealed class with custom equality</td>
+            <td>Your explicitly implemented policy</td>
+            <td>Value objects needing validation, normalization, or a specialized equality rule</td>
+          </tr>
+          <tr>
+            <td><code>record class</code></td>
+            <td>Generated value equality; still a reference type</td>
+            <td>Data-centric values, messages, immutable-style models, configuration snapshots</td>
+          </tr>
+          <tr>
+            <td><code>readonly record struct</code></td>
+            <td>Generated value equality; copied as a value type</td>
+            <td>Small immutable values when value-type copying is appropriate</td>
+          </tr>
+        </tbody>
+        </table>
+      </div>
+
+      <h3>Two record traps you must know</h3>
+      <div class="two-column">
+        <article class="card">
+          <h3>Trap 1 · <code>with</code> is a shallow copy</h3>
+          <pre><code>public sealed record Order(
+    string Number,
+    List&lt;string&gt; Items);
+
+var original = new Order(
+    "A-1",
+    new List&lt;string&gt; { "Keyboard" });
+
+var copy = original with { Number = "B-1" };
+copy.Items.Add("Mouse");
+
+Console.WriteLine(original.Items.Count); // 2
+Console.WriteLine(
+    ReferenceEquals(original.Items, copy.Items)); // True</code></pre>
+          <p>The record object is new, but both <code>Items</code> properties hold a copy of the same list reference.</p>
+        </article>
+        <article class="card">
+          <h3>Trap 2 · Member equality can be reference equality</h3>
+          <pre><code>public sealed record Packet(byte[] Data);
+
+var first = new Packet(new byte[] { 1, 2 });
+var second = new Packet(new byte[] { 1, 2 });
+
+Console.WriteLine(first == second); // False</code></pre>
+          <p>The two arrays contain equal bytes, but arrays use reference equality for <code>Equals</code>. Generated record equality delegates to the member type’s equality; it does not automatically compare collection elements.</p>
+        </article>
+      </div>
+
+      <div class="copy-board" role="img" aria-label="A record with expression creates a new outer record but shares a nested list reference">
+        <div class="copy-node">
+          <strong>Original record</strong>
+          <p><code>Number = "A-1"</code></p>
+          <div class="shared-reference">Items → shared List object</div>
+        </div>
+        <div class="copy-arrow" aria-hidden="true">→</div>
+        <div class="copy-node">
+          <strong>New outer record</strong>
+          <p><code>Number = "B-1"</code></p>
+          <div class="shared-reference">Items → same List object</div>
+        </div>
+      </div>
+
+      <article class="callout success">
+        <h3>Record inheritance has an equality type boundary</h3>
+        <p>Generated record equality checks the runtime record type through an equality contract, so a base record and a derived record do not become equal merely because their base data matches. This protects symmetry. It does not make ordinary custom class inheritance automatically safe.</p>
+      </article>
+    </section>
+
+    <section class="lesson" id="decisions" aria-labelledby="decisions-title">
+      <div class="section-heading">
+        <div>
+          <span class="section-number">Learning checkpoint 10 of 10</span>
+          <h2 id="decisions-title">Choose semantics before choosing syntax</h2>
+          <p>Do not start with “Should I override <code>Equals</code>?” Start with “What real-world fact makes two instances interchangeable in this domain?”</p>
+        </div>
+        <label class="checkpoint-toggle">
+          <input type="checkbox" data-progress="learn-10" data-kind="learn">
+          <span>I can choose a design</span>
+        </label>
+      </div>
+
+      <div class="decision-grid">
+        <article class="decision-card entity">
+          <h3>Entity: continuity through change</h3>
+          <p>A customer can change name and address but remain the same customer.</p>
+          <ul>
+            <li>Use a stable identity such as <code>CustomerId</code>.</li>
+            <li>Do not include mutable descriptive fields in equality or hashing.</li>
+            <li>A class with ID-based custom equality—or reference identity inside one unit of work—may fit.</li>
+          </ul>
+        </article>
+        <article class="decision-card">
+          <h3>Value object: meaning is its data</h3>
+          <p><code>Money(10, "USD")</code> is interchangeable with another value carrying the same normalized amount and currency.</p>
+          <ul>
+            <li>Include all data that determines the value.</li>
+            <li>Keep that data immutable.</li>
+            <li>A record or sealed class with custom value equality usually fits.</li>
+          </ul>
+        </article>
+      </div>
+
+      <h3>Interview edges worth remembering</h3>
+      <div class="edge-grid">
+        <article class="card">
+          <h3><code>string</code></h3>
+          <p>It is a reference type, but <code>string == string</code> and <code>string.Equals</code> compare text values. As seen earlier, casting both operands to <code>object</code> changes which <code>==</code> operator is selected.</p>
+        </article>
+        <article class="card">
+          <h3>Arrays and ordinary lists</h3>
+          <p>Their default object equality is reference-based. Equal elements do not make two separate arrays equal. Element-by-element comparison needs an explicit operation such as LINQ’s <code>SequenceEqual</code>.</p>
+        </article>
+        <article class="card">
+          <h3>Floating-point <code>NaN</code></h3>
+          <p>For two <code>double.NaN</code> variables, <code>x == y</code> is false while <code>x.Equals(y)</code> is true. Built-in numeric contracts can contain deliberate edge behavior.</p>
+        </article>
+        <article class="card">
+          <h3>Value types and identity</h3>
+          <p><code>ReferenceEquals(10, 10)</code> is false because each value argument is boxed separately. Use value equality for value types, not object identity.</p>
+        </article>
+        <article class="card">
+          <h3>Null pair</h3>
+          <p><code>object.Equals(null, null)</code> and <code>ReferenceEquals(null, null)</code> are true. An instance call such as <code>left.Equals(right)</code> cannot run when <code>left</code> is null.</p>
+        </article>
+        <article class="card">
+          <h3>Hash collisions</h3>
+          <p>Different values may share a hash code. A correct dictionary still distinguishes them by running equality among candidates in the bucket.</p>
+        </article>
+      </div>
+
+      <div class="quick-answer">
+        <strong>60-second interview answer</strong>
+        C# equality can mean identity or value equivalence. <code>ReferenceEquals</code> always checks identity. The <code>==</code> operator is selected at compile time from the operands’ static types, while an overridden instance <code>Equals</code> uses virtual dispatch. A value-like custom type should keep typed <code>IEquatable&lt;T&gt;.Equals</code>, <code>Equals(object)</code>, optional <code>==</code>/<code>!=</code>, and <code>GetHashCode</code> consistent. Equality must be reflexive, symmetric, transitive, stable, null-safe, and hash-consistent. Hash collections compute a hash to find candidates and then call equality, so equal objects need the same stable hash and mutable equality fields make dangerous keys. Records generate value equality and shallow <code>with</code> copies, but nested reference members still use their own equality.
+      </div>
+    </section>
+
+    <section class="exercise-section" id="exercises" aria-labelledby="exercises-title">
+      <div class="section-heading">
+        <div>
+          <span class="section-number">Exercises · 10 finite attempts</span>
+          <h2 id="exercises-title">Try before opening the solution</h2>
+          <p>The first four exercises test prediction, the next four test implementation and debugging, and the final two test design and interview reasoning.</p>
+        </div>
+      </div>
+
+      <p class="exercise-intro"><strong>How to use these:</strong> write or say your answer first. Open the hint only if blocked. Open the solution after committing to an answer. Then check “Attempted and reviewed.” The check records completion, not correctness.</p>
+
+      <div class="exercise-list">
+        <article class="exercise-card" id="exercise-1">
+          <div class="exercise-header">
+            <div>
+              <p class="exercise-number">Exercise 1 of 10</p>
+              <h3>Predict identity for a plain class</h3>
+            </div>
+            <span class="difficulty">Foundation</span>
+          </div>
+          <div class="exercise-body">
+            <p>Predict all three lines. <code>Ticket</code> does not override equality or overload operators.</p>
+            <pre><code>var first = new Ticket(7);
+var alias = first;
+var separate = new Ticket(7);
+
+Console.WriteLine(first == alias);
+Console.WriteLine(first == separate);
+Console.WriteLine(first.Equals(separate));</code></pre>
+            <details>
+              <summary>Hint</summary>
+              <div class="details-body"><p>Matching property values do not automatically create value equality for a plain class.</p></div>
+            </details>
+            <details>
+              <summary>Solution</summary>
+              <div class="details-body">
+                <p><strong>True, False, False.</strong> <code>first</code> and <code>alias</code> point to one object. <code>separate</code> is a different object, and the class inherits identity-based <code>object.Equals</code>.</p>
+              </div>
+            </details>
+          </div>
+          <label class="checkpoint-toggle">
+            <input type="checkbox" data-progress="exercise-1" data-kind="exercise">
+            <span>Attempted and reviewed</span>
+          </label>
+        </article>
+
+        <article class="exercise-card" id="exercise-2">
+          <div class="exercise-header">
+            <div>
+              <p class="exercise-number">Exercise 2 of 10</p>
+              <h3>Follow the static types</h3>
+            </div>
+            <span class="difficulty">Foundation</span>
+          </div>
+          <div class="exercise-body">
+            <p>Predict the three results and name the mechanism responsible for each.</p>
+            <pre><code>string a = new string(new[] { 'o', 'k' });
+string b = new string(new[] { 'o', 'k' });
+object x = a;
+object y = b;
+
+Console.WriteLine(a == b);
+Console.WriteLine(x == y);
+Console.WriteLine(object.Equals(x, y));</code></pre>
+            <details>
+              <summary>Hint</summary>
+              <div class="details-body"><p>The first two lines contain different compile-time operand types. The third call is null-safe and delegates to the left runtime object’s virtual equality.</p></div>
+            </details>
+            <details>
+              <summary>Solution</summary>
+              <div class="details-body">
+                <p><strong>True, False, True.</strong> <code>string == string</code> compares text. <code>object == object</code> compares references. <code>object.Equals(x, y)</code> delegates to the runtime string’s value-based override.</p>
+              </div>
+            </details>
+          </div>
+          <label class="checkpoint-toggle">
+            <input type="checkbox" data-progress="exercise-2" data-kind="exercise">
+            <span>Attempted and reviewed</span>
+          </label>
+        </article>
+
+        <article class="exercise-card" id="exercise-3">
+          <div class="exercise-header">
+            <div>
+              <p class="exercise-number">Exercise 3 of 10</p>
+              <h3>Make the null behavior explicit</h3>
+            </div>
+            <span class="difficulty">Foundation</span>
+          </div>
+          <div class="exercise-body">
+            <p>Assume <code>Customer</code> is a plain class. Which expressions return true, which return false, and which throw?</p>
+            <pre><code>Customer? a = null;
+Customer? b = null;
+
+object.Equals(a, b)
+ReferenceEquals(a, b)
+a == b
+a is null
+a.Equals(b)</code></pre>
+            <details>
+              <summary>Hint</summary>
+              <div class="details-body"><p>Four expressions can evaluate without dereferencing <code>a</code>. The final expression requires an object to receive an instance method call.</p></div>
+            </details>
+            <details>
+              <summary>Solution</summary>
+              <div class="details-body">
+                <p>The first four expressions are <strong>true</strong>. Both operands are null, and the plain class operator treats the references as equal. <code>a.Equals(b)</code> throws <code>NullReferenceException</code> because <code>a</code> has no object.</p>
+              </div>
+            </details>
+          </div>
+          <label class="checkpoint-toggle">
+            <input type="checkbox" data-progress="exercise-3" data-kind="exercise">
+            <span>Attempted and reviewed</span>
+          </label>
+        </article>
+
+        <article class="exercise-card" id="exercise-4">
+          <div class="exercise-header">
+            <div>
+              <p class="exercise-number">Exercise 4 of 10</p>
+              <h3>Catch a built-in edge case</h3>
+            </div>
+            <span class="difficulty">Foundation</span>
+          </div>
+          <div class="exercise-body">
+            <p>Predict both results. Then explain why “<code>==</code> and <code>Equals</code> always agree” is not a safe universal rule.</p>
+            <pre><code>double x = double.NaN;
+double y = double.NaN;
+
+Console.WriteLine(x == y);
+Console.WriteLine(x.Equals(y));</code></pre>
+            <details>
+              <summary>Hint</summary>
+              <div class="details-body"><p>IEEE floating-point operator semantics and .NET’s typed <code>Double.Equals</code> contract intentionally answer this edge case differently.</p></div>
+            </details>
+            <details>
+              <summary>Solution</summary>
+              <div class="details-body">
+                <p><strong>False, True.</strong> The floating-point <code>==</code> operator treats NaN as unequal to every value, including NaN. <code>Double.Equals</code> treats two NaN values as equal, which allows typed equality-based collections to handle NaN consistently.</p>
+              </div>
+            </details>
+          </div>
+          <label class="checkpoint-toggle">
+            <input type="checkbox" data-progress="exercise-4" data-kind="exercise">
+            <span>Attempted and reviewed</span>
+          </label>
+        </article>
+
+        <article class="exercise-card" id="exercise-5">
+          <div class="exercise-header">
+            <div>
+              <p class="exercise-number">Exercise 5 of 10</p>
+              <h3>Implement a coordinate value object</h3>
+            </div>
+            <span class="difficulty">Implementation</span>
+          </div>
+          <div class="exercise-body">
+            <p>Create a sealed <code>Coordinate</code> class whose equality uses <code>X</code> and <code>Y</code>. Implement typed equality, object equality, hash code, and both equality operators.</p>
+            <details>
+              <summary>Hint</summary>
+              <div class="details-body"><p>Use <code>Equals(Coordinate?)</code> as the single field-comparison source. Use <code>HashCode.Combine(X, Y)</code>. Inside <code>==</code>, use <code>ReferenceEquals</code> and <code>is not null</code>.</p></div>
+            </details>
+            <details>
+              <summary>Solution</summary>
+              <div class="details-body">
+                <pre><code>#nullable enable
+using System;
+
+public sealed class Coordinate : IEquatable&lt;Coordinate&gt;
+{
+    public int X { get; }
+    public int Y { get; }
+
+    public Coordinate(int x, int y) =&gt; (X, Y) = (x, y);
+
+    public bool Equals(Coordinate? other) =&gt;
+        other is not null &amp;&amp; X == other.X &amp;&amp; Y == other.Y;
+
+    public override bool Equals(object? obj) =&gt;
+        obj is Coordinate other &amp;&amp; Equals(other);
+
+    public override int GetHashCode() =&gt; HashCode.Combine(X, Y);
+
+    public static bool operator ==(
+        Coordinate? left, Coordinate? right) =&gt;
+        ReferenceEquals(left, right) ||
+        (left is not null &amp;&amp; left.Equals(right));
+
+    public static bool operator !=(
+        Coordinate? left, Coordinate? right) =&gt;
+        !(left == right);
+}</code></pre>
+              </div>
+            </details>
+          </div>
+          <label class="checkpoint-toggle">
+            <input type="checkbox" data-progress="exercise-5" data-kind="exercise">
+            <span>Attempted and reviewed</span>
+          </label>
+        </article>
+
+        <article class="exercise-card" id="exercise-6">
+          <div class="exercise-header">
+            <div>
+              <p class="exercise-number">Exercise 6 of 10</p>
+              <h3>Repair a broken hash contract</h3>
+            </div>
+            <span class="difficulty">Implementation</span>
+          </div>
+          <div class="exercise-body">
+            <p>This type declares products equal by <code>Sku</code>, ignoring case, but its hash code is wrong in two ways. Find both and repair it.</p>
+            <pre><code>public bool Equals(Product? other) =&gt;
+    other is not null &amp;&amp;
+    StringComparer.OrdinalIgnoreCase.Equals(Sku, other.Sku);
+
+public override int GetHashCode() =&gt;
+    Name.GetHashCode();</code></pre>
+            <details>
+              <summary>Hint</summary>
+              <div class="details-body"><p>The hash must use the same property and the same case-insensitive policy as equality.</p></div>
+            </details>
+            <details>
+              <summary>Solution</summary>
+              <div class="details-body">
+                <pre><code>public override int GetHashCode() =&gt;
+    StringComparer.OrdinalIgnoreCase.GetHashCode(Sku);</code></pre>
+                <p>The original used <code>Name</code> instead of <code>Sku</code>, and ordinary string hashing did not match the case-insensitive equality policy. The comparer provides compatible equality and hashing.</p>
+              </div>
+            </details>
+          </div>
+          <label class="checkpoint-toggle">
+            <input type="checkbox" data-progress="exercise-6" data-kind="exercise">
+            <span>Attempted and reviewed</span>
+          </label>
+        </article>
+
+        <article class="exercise-card" id="exercise-7">
+          <div class="exercise-header">
+            <div>
+              <p class="exercise-number">Exercise 7 of 10</p>
+              <h3>Diagnose the disappearing-key bug</h3>
+            </div>
+            <span class="difficulty">Debugging</span>
+          </div>
+          <div class="exercise-body">
+            <p>A <code>Session</code> uses mutable <code>Token</code> for equality and hashing. It is inserted into a dictionary and then its token changes. Explain why lookup can fail and give two safer designs.</p>
+            <details>
+              <summary>Hint</summary>
+              <div class="details-body"><p>Ask which hash chose the insertion bucket and which hash chooses the later lookup bucket.</p></div>
+            </details>
+            <details>
+              <summary>Solution</summary>
+              <div class="details-body">
+                <p>The entry remains stored through the old token’s hash path, while lookup begins through the new token’s hash path. The dictionary does not observe property changes and re-bucket the key.</p>
+                <p><strong>Safer designs:</strong> make <code>Token</code> immutable, or use the immutable token string itself as the dictionary key. A more fragile alternative is remove → mutate → add.</p>
+              </div>
+            </details>
+          </div>
+          <label class="checkpoint-toggle">
+            <input type="checkbox" data-progress="exercise-7" data-kind="exercise">
+            <span>Attempted and reviewed</span>
+          </label>
+        </article>
+
+        <article class="exercise-card" id="exercise-8">
+          <div class="exercise-header">
+            <div>
+              <p class="exercise-number">Exercise 8 of 10</p>
+              <h3>Trace a record’s shallow copy and equality</h3>
+            </div>
+            <span class="difficulty">Debugging</span>
+          </div>
+          <div class="exercise-body">
+            <p>Predict all three results after the mutation.</p>
+            <pre><code>public sealed record Cart(List&lt;string&gt; Items);
+
+var first = new Cart(new List&lt;string&gt; { "Book" });
+var copy = first with { };
+
+copy.Items.Add("Pen");
+
+Console.WriteLine(ReferenceEquals(first, copy));
+Console.WriteLine(ReferenceEquals(first.Items, copy.Items));
+Console.WriteLine(first == copy);</code></pre>
+            <details>
+              <summary>Hint</summary>
+              <div class="details-body"><p><code>with</code> creates a new outer record but copies the list reference. Record equality compares the list member using the list’s own equality.</p></div>
+            </details>
+            <details>
+              <summary>Solution</summary>
+              <div class="details-body">
+                <p><strong>False, True, True.</strong> The outer records are different objects. Both share one list. Generated record equality sees equal record types and the exact same list reference, so the records are equal. Adding <code>"Pen"</code> changes the one shared list seen by both.</p>
+              </div>
+            </details>
+          </div>
+          <label class="checkpoint-toggle">
+            <input type="checkbox" data-progress="exercise-8" data-kind="exercise">
+            <span>Attempted and reviewed</span>
+          </label>
+        </article>
+
+        <article class="exercise-card" id="exercise-9">
+          <div class="exercise-header">
+            <div>
+              <p class="exercise-number">Exercise 9 of 10</p>
+              <h3>Choose an external equality policy</h3>
+            </div>
+            <span class="difficulty">Design</span>
+          </div>
+          <div class="exercise-body">
+            <p>A login service must treat <code>"Ram"</code>, <code>"ram"</code>, and <code>"RAM"</code> as one username inside a set. You must not change <code>string</code> itself. Choose and show the collection configuration.</p>
+            <details>
+              <summary>Hint</summary>
+              <div class="details-body"><p>The policy belongs to this collection context, so pass an <code>IEqualityComparer&lt;string&gt;</code> implementation to the constructor.</p></div>
+            </details>
+            <details>
+              <summary>Solution</summary>
+              <div class="details-body">
+                <pre><code>var usernames =
+    new HashSet&lt;string&gt;(StringComparer.OrdinalIgnoreCase);
+
+Console.WriteLine(usernames.Add("Ram")); // True
+Console.WriteLine(usernames.Add("RAM")); // False
+Console.WriteLine(usernames.Count);      // 1</code></pre>
+                <p><code>StringComparer.OrdinalIgnoreCase</code> supplies matching case-insensitive equality and hashing. “Ordinal” makes this an identifier comparison, not a culture-sensitive linguistic comparison.</p>
+              </div>
+            </details>
+          </div>
+          <label class="checkpoint-toggle">
+            <input type="checkbox" data-progress="exercise-9" data-kind="exercise">
+            <span>Attempted and reviewed</span>
+          </label>
+        </article>
+
+        <article class="exercise-card" id="exercise-10">
+          <div class="exercise-header">
+            <div>
+              <p class="exercise-number">Exercise 10 of 10</p>
+              <h3>Design and test entity equality</h3>
+            </div>
+            <span class="difficulty">Interview</span>
+          </div>
+          <div class="exercise-body">
+            <p>A subscription keeps the same immutable <code>SubscriptionId</code> when its plan name changes. Define the equality policy, name the fields used by <code>GetHashCode</code>, and list five tests you would run.</p>
+            <details>
+              <summary>Hint</summary>
+              <div class="details-body"><p>This is an entity: continuity comes from a stable ID, not from all current descriptive properties. Use the equality laws as the test plan.</p></div>
+            </details>
+            <details>
+              <summary>Solution</summary>
+              <div class="details-body">
+                <p><strong>Policy:</strong> two subscriptions are equal when their immutable <code>SubscriptionId</code> values are equal. Changing <code>PlanName</code> must not affect equality. <code>GetHashCode</code> must use only <code>SubscriptionId</code>.</p>
+                <p><strong>Tests:</strong> (1) one instance equals itself; (2) two instances with the same ID are symmetric; (3) three instances sharing an ID are transitive; (4) equal instances have equal hash codes; (5) an instance is unequal to null and to a different ID. Also verify changing <code>PlanName</code> leaves equality and hash code unchanged.</p>
+                <pre><code>var a = new Subscription(42, "Basic");
+var b = new Subscription(42, "Premium");
+var c = new Subscription(42, "Team");
+
+Assert(a.Equals(a));                       // Reflexive
+Assert(a.Equals(b) == b.Equals(a));        // Symmetric
+Assert(a.Equals(b) &amp;&amp; b.Equals(c) &amp;&amp;
+       a.Equals(c));                       // Transitive
+Assert(a.GetHashCode() == b.GetHashCode());// Hash consistent
+Assert(!a.Equals(null));                   // Non-null</code></pre>
+              </div>
+            </details>
+          </div>
+          <label class="checkpoint-toggle">
+            <input type="checkbox" data-progress="exercise-10" data-kind="exercise">
+            <span>Attempted and reviewed</span>
+          </label>
+        </article>
+      </div>
+    </section>
+
+    <section class="done-banner" id="done-banner" data-visible="false" aria-live="polite">
+      <strong>20 / 20 complete.</strong> You have finished the defined Topic 2 route. The next useful step is a fresh diagnostic—not more reading—followed by review only of the mistakes it exposes.
+    </section>
+
+    <section class="reference-section" id="references" aria-labelledby="references-title">
+      <div class="section-heading">
+        <div>
+          <span class="section-number">Verification trail</span>
+          <h2 id="references-title">Official Microsoft references</h2>
+          <p>Use these when you want specification-level details or need to verify an edge beyond this learning scope.</p>
+        </div>
+      </div>
+      <div class="source-grid">
+        <a class="source-card" href="https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/statements-expressions-operators/equality-comparisons">
+          <strong>Equality comparisons</strong>
+          <span>Reference identity versus value equality.</span>
+        </a>
+        <a class="source-card" href="https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/equality-operators">
+          <strong>C# equality operators</strong>
+          <span>Built-in and user-defined <code>==</code>/<code>!=</code> behavior.</span>
+        </a>
+        <a class="source-card" href="https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/statements-expressions-operators/how-to-define-value-equality-for-a-type">
+          <strong>Define value equality</strong>
+          <span>Implementation guidance for classes and structs.</span>
+        </a>
+        <a class="source-card" href="https://learn.microsoft.com/en-us/dotnet/api/system.iequatable-1">
+          <strong><code>IEquatable&lt;T&gt;</code></strong>
+          <span>The typed equality contract used by generic collections.</span>
+        </a>
+        <a class="source-card" href="https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.equalitycomparer-1.default">
+          <strong><code>EqualityComparer&lt;T&gt;.Default</code></strong>
+          <span>How the default generic equality policy is selected.</span>
+        </a>
+        <a class="source-card" href="https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/record">
+          <strong>C# records</strong>
+          <span>Generated equality, equality contracts, and shallow <code>with</code> copies.</span>
+        </a>
+        <a class="source-card" href="https://learn.microsoft.com/en-us/dotnet/api/system.object.gethashcode">
+          <strong><code>Object.GetHashCode</code></strong>
+          <span>Hash-code guarantees, limitations, and mutable-object guidance.</span>
+        </a>
+        <a class="source-card" href="https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2">
+          <strong><code>Dictionary&lt;TKey,TValue&gt;</code></strong>
+          <span>Key uniqueness, comparers, and the stable-key requirement.</span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell">Learning Library · C# / .NET · Topic 2 · Equality Contracts, Records &amp; Hash Codes</div>
+  </footer>
+</body>
+</html>
