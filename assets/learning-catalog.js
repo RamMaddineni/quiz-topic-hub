@@ -261,6 +261,22 @@ window.LEARNING_CATALOG = {
       ]
     },
     {
+      id: "equality-contracts",
+      categoryId: "csharp-dotnet",
+      order: 2,
+      title: "Equality Contracts, Records and Hash Codes",
+      description: "Identity versus value equality, operator dispatch, IEquatable<T>, equality laws, hashing, immutable keys, records, and shallow-copy boundaries.",
+      resources: [
+        {
+          type: "learn",
+          title: "Complete equality learning guide",
+          description: "Ten beginner-first checkpoints plus ten exercises covering equality dispatch, implementation, hash collections, stable keys, records, and interview reasoning.",
+          href: "csharp-equality-contracts.html",
+          meta: "10 checkpoints + 10 exercises"
+        }
+      ]
+    },
+    {
       id: "mutex-binary-semaphore",
       categoryId: "c-posix",
       order: 1,
@@ -288,3 +304,4 @@ window.LEARNING_CATALOG = {
     }
   ]
 };
+
