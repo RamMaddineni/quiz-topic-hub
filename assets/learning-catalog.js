@@ -277,6 +277,57 @@ window.LEARNING_CATALOG = {
       ]
     },
     {
+      id: "object-oriented-design-patterns",
+      categoryId: "csharp-dotnet",
+      order: 3,
+      title: "Object-Oriented Design Patterns",
+      description: "Visual C# guides to object construction, interchangeable behavior, and runtime composition.",
+      resources: [
+        {
+          type: "learn",
+          title: "Builder",
+          description: "Assemble a complex object through named construction steps, then validate and create it.",
+          href: "eli5-builder-pattern-csharp.html",
+          meta: "5 visual steps"
+        },
+        {
+          type: "learn",
+          title: "Factory Method",
+          description: "Separate product creation from use, and distinguish Factory Method from Simple Factory.",
+          href: "eli5-factory-method-csharp.html",
+          meta: "5 visual steps"
+        },
+        {
+          type: "learn",
+          title: "Abstract Factory",
+          description: "Create compatible families of related products without naming their concrete classes.",
+          href: "eli5-abstract-factory-csharp.html",
+          meta: "5 visual steps"
+        },
+        {
+          type: "learn",
+          title: "Prototype",
+          description: "Copy configured objects while making shallow-versus-deep copy semantics explicit.",
+          href: "eli5-prototype-csharp.html",
+          meta: "5 visual steps"
+        },
+        {
+          type: "learn",
+          title: "Strategy",
+          description: "Move interchangeable algorithms behind one behavior contract and select them at runtime.",
+          href: "eli5-strategy-csharp.html",
+          meta: "5 visual steps"
+        },
+        {
+          type: "learn",
+          title: "Decorator",
+          description: "Stack optional behavior around individual objects without creating a subclass for every combination.",
+          href: "eli5-decorator-csharp.html",
+          meta: "5 visual steps"
+        }
+      ]
+    },
+    {
       id: "mutex-binary-semaphore",
       categoryId: "c-posix",
       order: 1,
