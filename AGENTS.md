@@ -16,7 +16,7 @@
 Current published sequence:
 
 - DSA: Non-overlapping Intervals → Perfect Rectangle → Inversions and Adjacent Swaps
-- System Design: API Authentication → API Authorization → API Gateway → Non-functional Requirements → CAP Theorem → System Design Components → High Availability → Latency → Throughput
+- System Design: HTTP and HTTPS → API Authentication → API Authorization → API Gateway → Non-functional Requirements → CAP Theorem → System Design Components → High Availability → Latency → Throughput
 - C# / .NET: Value Semantics and Boxing → Equality Contracts, Records and Hash Codes
 - C / POSIX: Mutex vs Binary Semaphore
 

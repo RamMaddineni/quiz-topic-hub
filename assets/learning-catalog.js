@@ -32,6 +32,22 @@ window.LEARNING_CATALOG = {
 
   topics: [
     {
+      id: "http-https",
+      categoryId: "system-design",
+      order: 1,
+      title: "HTTP and HTTPS",
+      description: "Requests, responses, TLS, certificates, cookies, caching, and safe retries through one decision at a time.",
+      resources: [
+        {
+          type: "learn",
+          title: "Deliver the Page — decision game",
+          description: "Learn through five short chapters, then apply the complete HTTPS flow in a final mission. Optional depth and missed-decision review.",
+          href: "http-https-decision-game.html",
+          meta: "30 decisions · 6 short chapters"
+        }
+      ]
+    },
+    {
       id: "perfect-rectangle",
       categoryId: "dsa",
       order: 2,
@@ -82,7 +98,7 @@ window.LEARNING_CATALOG = {
     {
       id: "non-functional-requirements",
       categoryId: "system-design",
-      order: 4,
+      order: 5,
       title: "Non-functional Requirements",
       description: "Availability, scalability, latency, consistency, their mechanisms, and architectural trade-offs.",
       resources: [
@@ -105,7 +121,7 @@ window.LEARNING_CATALOG = {
     {
       id: "system-design-components",
       categoryId: "system-design",
-      order: 6,
+      order: 7,
       title: "System Design Components",
       description: "Load balancing, caching, partitioning, replication, queues, and batch processing—matched to the pressure each mechanism actually solves.",
       resources: [
@@ -128,7 +144,7 @@ window.LEARNING_CATALOG = {
     {
       id: "high-availability",
       categoryId: "system-design",
-      order: 7,
+      order: 8,
       title: "High Availability",
       description: "Downtime budgets, failure domains, redundancy, health checks, and the failover path that keeps a service operating.",
       resources: [
@@ -144,7 +160,7 @@ window.LEARNING_CATALOG = {
     {
       id: "latency",
       categoryId: "system-design",
-      order: 8,
+      order: 9,
       title: "Latency",
       description: "End-to-end response time, request-path breakdowns, percentiles, tail latency, and mechanism-specific optimization.",
       resources: [
@@ -160,7 +176,7 @@ window.LEARNING_CATALOG = {
     {
       id: "throughput",
       categoryId: "system-design",
-      order: 9,
+      order: 10,
       title: "Throughput",
       description: "Completed work per unit time, bottlenecks, concurrency, saturation, and mechanism-specific ways to scale a data flow.",
       resources: [
@@ -176,7 +192,7 @@ window.LEARNING_CATALOG = {
     {
       id: "cap-theorem",
       categoryId: "system-design",
-      order: 5,
+      order: 6,
       title: "CAP Theorem",
       description: "Understand the forced consistency-versus-availability choice during a network partition.",
       resources: [
@@ -192,7 +208,7 @@ window.LEARNING_CATALOG = {
     {
       id: "api-authentication",
       categoryId: "system-design",
-      order: 1,
+      order: 2,
       title: "API Authentication",
       description: "API keys, sessions, cookies, CSRF, JWT validation, signing algorithms, and token lifecycles.",
       resources: [
@@ -208,7 +224,7 @@ window.LEARNING_CATALOG = {
     {
       id: "api-authorization",
       categoryId: "system-design",
-      order: 2,
+      order: 3,
       title: "API Authorization",
       description: "RBAC, ABAC, OAuth scopes, resource permissions, tenant isolation, and hybrid policy design.",
       resources: [
@@ -224,7 +240,7 @@ window.LEARNING_CATALOG = {
     {
       id: "api-gateway",
       categoryId: "system-design",
-      order: 3,
+      order: 4,
       title: "API Gateway",
       description: "Client-facing routing, cross-cutting concerns, reliability trade-offs, and responsibility boundaries.",
       resources: [
@@ -355,4 +371,5 @@ window.LEARNING_CATALOG = {
     }
   ]
 };
+
 
